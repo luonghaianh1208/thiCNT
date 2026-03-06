@@ -1,11 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, BookOpen, BarChart3, Plus, UserCircle, CheckCircle, Pencil, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+
+const getEmbedUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("youtube.com/embed/")) return url;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+};
 
 export function TeacherDashboard() {
   const [students, setStudents] = useState<any[]>([]);
@@ -32,12 +40,13 @@ export function TeacherDashboard() {
       toast.error("Vui lòng nhập đủ thông tin bài giảng");
       return;
     }
+    const formattedYoutubeUrl = getEmbedUrl(youtubeUrl);
     const added = Storage.addLesson({
       title: newLessonTitle,
       description: "Bài giảng với nội dung lý thuyết từ AI hoặc Giáo viên cung cấp.",
       chapter: newLessonChapter,
       theoryContent: theoryContent,
-      youtubeUrl: youtubeUrl,
+      youtubeUrl: formattedYoutubeUrl,
       practiceConfig: { mcq: mcqCount, tf: tfCount, short: shortCount },
       type: "theory"
     });
@@ -68,12 +77,13 @@ export function TeacherDashboard() {
 
   const handleUpdateLesson = (e: React.FormEvent) => {
     e.preventDefault();
+    const formattedYoutubeUrl = getEmbedUrl(editingLesson.youtubeUrl);
     Storage.updateLesson({
       id: editingLesson.id,
       title: editingLesson.title,
       chapter: editingLesson.chapter,
       theoryContent: editingLesson.theoryContent,
-      youtubeUrl: editingLesson.youtubeUrl,
+      youtubeUrl: formattedYoutubeUrl,
       practiceConfig: { mcq: editingLesson.mcqCount, tf: editingLesson.tfCount, short: editingLesson.shortCount }
     });
     setLessons(Storage.getLessons());
