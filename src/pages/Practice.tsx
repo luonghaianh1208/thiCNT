@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Storage } from "@/lib/storage";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export function Practice() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const question = {
     id: 1,
@@ -44,7 +46,7 @@ export function Practice() {
   };
 
   const handleNext = () => {
-    window.location.href = "/analytics";
+    navigate('/analytics');
   };
 
   const reportIssue = () => {

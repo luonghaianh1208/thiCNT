@@ -6,10 +6,12 @@ import { cn } from "@/lib/utils";
 
 import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
+import { useNavigate } from "react-router-dom";
 
 export function LearningPath() {
    const [chapters, setChapters] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
+   const navigate = useNavigate();
 
    useEffect(() => {
      setTimeout(() => {
@@ -34,12 +36,18 @@ export function LearningPath() {
              status: status,
              progress: 0,
              isRecommended: anyInProgress,
-             lessons: chapterLessons.map((l: any) => ({
+             lessons: chapterLessons.map((l: any, lessonIndex: number) => ({
+                 id: l.id,
                  title: l.title,
-                 status: l.status === 'not_started' && isFirst ? 'in-progress' : (l.status === 'not_started' ? 'locked' : (l.status === 'in_progress' ? 'in-progress' : 'completed'))
-             }))
+                 type: l.type,
+                 status: l.status === 'not_started' && isFirst && lessonIndex === 0 ? 'in-progress' : (l.status === 'not_started' ? (anyInProgress ? 'locked' : (isFirst ? 'locked' : 'locked')) : (l.status === 'in_progress' ? 'in-progress' : 'completed'))
+             })) // Adjusted visual unlock logic slightly
            };
          });
+         // Make sure at least the first lesson is unlocked 
+         if (formattedChapters.length > 0 && formattedChapters[0].lessons.length > 0 && formattedChapters[0].lessons[0].status === 'locked') {
+            formattedChapters[0].lessons[0].status = 'in-progress';
+         }
          setChapters(formattedChapters);
          setLoading(false);
      }, 300);
@@ -111,11 +119,15 @@ export function LearningPath() {
                           Bài {idx + 1}: {lesson.title}
                         </span>
                       </div>
-                      {lesson.status === "in-progress" && (
-                        <Button size="sm" variant="ghost" className="h-8 gap-1 text-indigo-600">
-                          Học tiếp <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      )}
+                      <Button 
+                        size="sm" 
+                        variant={lesson.status === "in-progress" ? "default" : "outline"} 
+                        className="h-8 gap-1"
+                        disabled={lesson.status === "locked"}
+                        onClick={() => navigate(lesson.type === 'practice' ? '/practice' : `/lessons?id=${lesson.id}`)}
+                      >
+                        {lesson.status === "completed" ? "Ôn tập" : (lesson.status === "locked" ? "Chưa mở" : "Học tiếp")} <ArrowRight className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>

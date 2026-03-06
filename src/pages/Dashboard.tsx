@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Target, Trophy, Clock, BookOpen, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
+import { useNavigate } from "react-router-dom";
 
 export function Dashboard() {
   const [data, setData] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate API delay for UI consistency
@@ -98,7 +100,7 @@ export function Dashboard() {
                   <span className="text-xs text-slate-500">Tiến độ: 30%</span>
                 </div>
               </div>
-              <Button size="sm">Tiếp tục học</Button>
+              <Button size="sm" onClick={() => navigate('/lessons?id=1')}>Tiếp tục học</Button>
             </div>
 
             <div className="flex items-start gap-4 rounded-lg border p-4">
@@ -112,7 +114,7 @@ export function Dashboard() {
                   <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Cần cải thiện</Badge>
                 </div>
               </div>
-              <Button size="sm" variant="outline">Luyện tập ngay</Button>
+              <Button size="sm" variant="outline" onClick={() => navigate('/practice')}>Luyện tập ngay</Button>
             </div>
           </CardContent>
         </Card>

@@ -6,21 +6,16 @@ import { Brain, Target, TrendingUp, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
 
-const performanceData = [
+// Base fallback data for visuals when not enough data exists
+const fallbackPerformanceData = [
   { name: 'Tuần 1', score: 6.5 },
   { name: 'Tuần 2', score: 7.0 },
   { name: 'Tuần 3', score: 6.8 },
-  { name: 'Tuần 4', score: 7.5 },
-  { name: 'Tuần 5', score: 8.2 },
-  { name: 'Tuần 6', score: 8.5 },
 ];
 
-const topicData = [
+const fallbackTopicData = [
   { subject: 'Cấu tạo nguyên tử', A: 90, fullMark: 100 },
-  { subject: 'Bảng tuần hoàn', A: 85, fullMark: 100 },
-  { subject: 'Liên kết hóa học', A: 80, fullMark: 100 },
-  { subject: 'Oxi hóa - Khử', A: 45, fullMark: 100 },
-  { subject: 'Năng lượng', A: 60, fullMark: 100 },
+  { subject: 'Oxi hóa - Khử', A: 0, fullMark: 100 },
 ];
 
 export function Analytics() {
@@ -39,11 +34,43 @@ export function Analytics() {
 
   const { user, lessonsProgress } = data;
   const progress = user.overall_progress || 0;
-  // Calculate average score
+  
+  // Calculate dynamic stats
   const completedLessons = lessonsProgress.filter((l: any) => l.status === 'completed');
-  const avgScore = completedLessons.length > 0 
-    ? completedLessons.reduce((sum: number, l: any) => sum + l.score, 0) / completedLessons.length 
+  const totalCompleted = completedLessons.length;
+  const avgScore = totalCompleted > 0 
+    ? completedLessons.reduce((sum: number, l: any) => sum + (l.score || 0), 0) / totalCompleted 
     : 0;
+
+  // Generate topic data from actual lessons
+  const topicsMap: any = {};
+  lessonsProgress.forEach((l: any) => {
+    if (!topicsMap[l.chapter]) {
+      topicsMap[l.chapter] = { name: l.chapter.replace('Chương ', 'Ch_'), sum: 0, count: 0 };
+    }
+    if (l.status === 'completed') {
+      topicsMap[l.chapter].sum += (l.score || 0);
+      topicsMap[l.chapter].count += 1;
+    }
+  });
+
+  const dynamicTopicData = Object.values(topicsMap).map((t: any) => ({
+    subject: t.name,
+    A: t.count > 0 ? Math.round(t.sum / t.count) : 0,
+    fullMark: 100
+  }));
+
+  const activeTopicData = dynamicTopicData.length > 0 ? dynamicTopicData : fallbackTopicData;
+
+  // Generate dynamic performance (simulated timeline based on completion count)
+  let activePerformanceData = fallbackPerformanceData;
+  if (totalCompleted > 0) {
+     activePerformanceData = [
+       { name: 'T1', score: 5.0 },
+       { name: 'T2', score: 6.5 },
+       { name: 'Hiện tại', score: Math.round(avgScore) / 10 },
+     ];
+  }
 
   return (
     <div className="space-y-6">
@@ -104,7 +131,7 @@ export function Analytics() {
           <CardContent>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={performanceData}>
+                <LineChart data={activePerformanceData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                   <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
@@ -133,7 +160,7 @@ export function Analytics() {
           <CardContent>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topicData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                <BarChart data={activeTopicData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                   <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                   <YAxis dataKey="subject" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} width={120} />
