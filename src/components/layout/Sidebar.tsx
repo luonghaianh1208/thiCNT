@@ -7,20 +7,39 @@ import {
   BarChart3, 
   MessageSquare,
   Settings,
-  LogOut
+  LogOut,
+  Users,
+  ShieldAlert,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoleStorage } from "@/lib/roleStorage";
 
-const navItems = [
+const studentNav = [
   { name: "Tổng quan", href: "/", icon: LayoutDashboard },
   { name: "Lộ trình học tập", href: "/learning-path", icon: Map },
   { name: "Bài học", href: "/lessons", icon: BookOpen },
   { name: "Luyện tập", href: "/practice", icon: PenTool },
-  { name: "Phân tích", href: "/analytics", icon: BarChart3 },
+  { name: "Phân tích AI", href: "/analytics", icon: BarChart3 },
+];
+
+const teacherNav = [
+  { name: "Bảng điều khiển", href: "/", icon: LayoutDashboard },
+  { name: "Quản lý Lớp học", href: "#", icon: Users },
+  { name: "Tạo Bài giảng", href: "#", icon: GraduationCap },
+  { name: "Báo cáo điểm", href: "#", icon: BarChart3 },
+];
+
+const adminNav = [
+  { name: "Giám sát hệ thống", href: "/", icon: ShieldAlert },
+  { name: "Quản lý Người dùng", href: "#", icon: Users },
+  { name: "Cấu hình AI", href: "#", icon: Settings },
 ];
 
 export function Sidebar() {
   const location = useLocation();
+  const role = RoleStorage.getRole();
+  const navItems = role === 'admin' ? adminNav : role === 'teacher' ? teacherNav : studentNav;
 
   return (
     <div className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">

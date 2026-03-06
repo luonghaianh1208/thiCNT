@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { AITutorChat } from "../ai/AITutorChat";
+import { Toaster } from "sonner";
 
 export function Layout() {
   return (
@@ -14,6 +15,7 @@ export function Layout() {
         </main>
       </div>
       <AITutorChat />
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

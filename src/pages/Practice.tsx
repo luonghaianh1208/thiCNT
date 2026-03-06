@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Storage } from "@/lib/storage";
+import { toast } from "sonner";
 
 export function Practice() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -25,7 +24,15 @@ export function Practice() {
   const handleSubmit = async () => {
     if (selectedAnswer !== null) {
       setIsSubmitted(true);
-      const score = selectedAnswer === question.correctAnswer ? 100 : 0;
+      const isCorrect = selectedAnswer === question.correctAnswer;
+      const score = isCorrect ? 100 : 0;
+      
+      if (isCorrect) {
+        toast.success("Chính xác! Ghi nhận hoàn thành xuất sắc 🚀");
+      } else {
+        toast.error("Chưa chính xác! Hãy đọc kỹ phần giải thích nhé 👀", { duration: 4000 });
+      }
+
       try {
         Storage.updateProgress(2, 'completed', score);
       } catch (err) {
@@ -36,6 +43,10 @@ export function Practice() {
 
   const handleNext = () => {
     window.location.href = "/analytics";
+  };
+
+  const reportIssue = () => {
+    toast.info("Cảm ơn bạn! Đã gửi báo cáo lỗi câu hỏi này tới bộ phận Content.");
   };
 
   return (
@@ -122,7 +133,7 @@ export function Practice() {
           )}
         </CardContent>
         <CardFooter className="bg-slate-50 border-t p-4 flex justify-between">
-          <Button variant="outline" disabled={!isSubmitted}>Báo lỗi câu hỏi</Button>
+          <Button variant="outline" onClick={reportIssue}>Báo lỗi câu hỏi</Button>
           {!isSubmitted ? (
             <Button onClick={handleSubmit} disabled={selectedAnswer === null} className="min-w-[120px]">
               Kiểm tra
