@@ -59,12 +59,17 @@ Trả về duy nhất 1 object JSON với cấu trúc mảng "questions". Trả 
         }
     });
 
+    let finalJsonString = response.text;
+    if (!finalJsonString) {
+      throw new Error("Gemini returned empty response text");
+    }
+
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json'
       },
-      body: response.text
+      body: JSON.stringify({ rawResponse: finalJsonString })
     };
   } catch (error) {
     console.error('Lỗi khi gọi Gemini API:', error);
@@ -73,7 +78,7 @@ Trả về duy nhất 1 object JSON với cấu trúc mảng "questions". Trả 
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: "Sự cố kết nối AI khi tạo bài tập." })
+      body: JSON.stringify({ error: error.message || "Sự cố kết nối AI khi tạo bài tập." })
     };
   }
 };

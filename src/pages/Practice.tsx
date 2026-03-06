@@ -46,32 +46,43 @@ export function Practice() {
             body: JSON.stringify(bodyPayload)
          });
          
-         if (!res.ok) throw new Error("API error");
+         if (!res.ok) {
+           const errText = await res.text();
+           throw new Error(`API returned state ${res.status}: ${errText}`);
+         }
          const data = await res.json();
          // The prompt asked for { "questions": [...] }, but let's safely parse
          let generatedQuestions = [];
          
-         if (data.questions) {
+         const parseRawJSON = (rawString: string) => {
+            const cleanStr = rawString.replace(/```json/g, '').replace(/```/g, '');
+            return JSON.parse(cleanStr).questions || [];
+         };
+         
+         if (data.rawResponse) {
+             generatedQuestions = parseRawJSON(data.rawResponse);
+         } else if (data.questions) {
             generatedQuestions = data.questions;
          } else if (typeof data === 'string') {
-            try {
-               const parsedJSON = JSON.parse(data.replace(/```json/g, '').replace(/```/g, ''));
-               generatedQuestions = parsedJSON.questions || [];
-            } catch(e) { }
+            try { generatedQuestions = parseRawJSON(data); } catch(e) { console.error("Parse error DataString: ", e); }
          } else if (data.reply) {
-             const parsedJSON = JSON.parse(data.reply.replace(/```json/g, '').replace(/```/g, ''));
-             generatedQuestions = parsedJSON.questions || [];
+            try { generatedQuestions = parseRawJSON(data.reply); } catch(e) { console.error("Parse error DataReply: ", e); }
+         }
+
+         if (generatedQuestions.length === 0) {
+           throw new Error("Không có câu hỏi nào được lấy ra từ AI!");
          }
 
          setQuestions(generatedQuestions);
          setLoading(false);
-       } catch (error) {
-         toast.error("Không thể tạo câu hỏi thử thách. Khôi phục dữ liệu mẫu.");
+       } catch (error: any) {
+         console.error("AI Generation Process Failed:", error);
+         toast.error(`Lỗi tạo câu hỏi: ${error.message || "Không xác định"}. Khôi phục dữ liệu mẫu để chống lỗi.`);
          // Fallback
          setQuestions([
             { type: "mcq", text: "Trong phản ứng: Cu + 2AgNO3 → ... Chất khử là:", options: ["Cu", "AgNO3", "Cu(NO3)2", "Ag"], correctAnswer: 0, explanation: "Cu nhường e" },
-            { type: "tf", text: "Chất oxi hóa là chất nhường electron.", options: ["Đúng", "Sai"], correctAnswer: 1, explanation: "Chất oxi hóa nhận electron" },
-            { type: "short", text: "Ký hiệu hóa học của Natri là gì?", answer: "Na", explanation: "Natri ký hiệu là Na" }
+            { type: "tf", text: "Chất oxi hóa là chất nhường electron.", options: ["Đúng", "Sai"], correctAnswer: 1, explanation: "Chất oxi hóa nhận electron (sự khử)." },
+            { type: "short", text: "Ký hiệu hóa học của Natri là gì?", answer: "Na", explanation: "Natri ký hiệu là Na, có số nguyên tử 11." }
          ]);
          setLoading(false);
        }
