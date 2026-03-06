@@ -25,6 +25,7 @@ export function TeacherDashboard() {
   const [mcqCount, setMcqCount] = useState(5);
   const [tfCount, setTfCount] = useState(2);
   const [shortCount, setShortCount] = useState(2);
+  const [dueDate, setDueDate] = useState("");
   
   // Edit State
   const [editingLesson, setEditingLesson] = useState<any>(null);
@@ -48,7 +49,8 @@ export function TeacherDashboard() {
       theoryContent: theoryContent,
       youtubeUrl: formattedYoutubeUrl,
       practiceConfig: { mcq: mcqCount, tf: tfCount, short: shortCount },
-      type: "theory"
+      type: "theory",
+      dueDate: dueDate || null
     });
     setLessons([...lessons, added]);
     setNewLessonTitle("");
@@ -58,7 +60,7 @@ export function TeacherDashboard() {
     setMcqCount(5);
     setTfCount(2);
     setShortCount(2);
-    setShortCount(2);
+    setDueDate("");
     toast.success("Tạo bài giảng mới thành công!");
   };
 
@@ -72,6 +74,7 @@ export function TeacherDashboard() {
       mcqCount: lesson.practiceConfig?.mcq ?? 5,
       tfCount: lesson.practiceConfig?.tf ?? 2,
       shortCount: lesson.practiceConfig?.short ?? 2,
+      dueDate: lesson.dueDate || ""
     });
   };
 
@@ -84,7 +87,8 @@ export function TeacherDashboard() {
       chapter: editingLesson.chapter,
       theoryContent: editingLesson.theoryContent,
       youtubeUrl: formattedYoutubeUrl,
-      practiceConfig: { mcq: editingLesson.mcqCount, tf: editingLesson.tfCount, short: editingLesson.shortCount }
+      practiceConfig: { mcq: editingLesson.mcqCount, tf: editingLesson.tfCount, short: editingLesson.shortCount },
+      dueDate: editingLesson.dueDate || null
     });
     setLessons(Storage.getLessons());
     setEditingLesson(null);
@@ -167,6 +171,14 @@ export function TeacherDashboard() {
                       placeholder="VD: https://www.youtube.com/embed/..." 
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-orange-600">Hạn chót bài tập (Tùy chọn)</label>
+                    <Input 
+                      type="datetime-local"
+                      value={dueDate} 
+                      onChange={(e) => setDueDate(e.target.value)} 
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -227,6 +239,7 @@ export function TeacherDashboard() {
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                          {lesson.youtubeUrl && <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-700 hover:bg-red-200 border-0">YouTube</Badge>}
                          {lesson.practiceConfig && <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0">AI Practice</Badge>}
+                         {lesson.dueDate && <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 hover:bg-orange-200 border-0">Hạn: {new Date(lesson.dueDate).toLocaleString('vi-VN')}</Badge>}
                       </div>
                     </div>
                   </div>
@@ -306,6 +319,14 @@ export function TeacherDashboard() {
                       <Input 
                         value={editingLesson.youtubeUrl} 
                         onChange={(e) => setEditingLesson({...editingLesson, youtubeUrl: e.target.value})} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-orange-600">Hạn chót bài tập (Tùy chọn)</label>
+                      <Input 
+                        type="datetime-local"
+                        value={editingLesson.dueDate || ""} 
+                        onChange={(e) => setEditingLesson({...editingLesson, dueDate: e.target.value})} 
                       />
                     </div>
                   </div>

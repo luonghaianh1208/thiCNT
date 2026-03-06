@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Target, Trophy, Clock, BookOpen, AlertCircle } from "lucide-react";
+import { PlayCircle, Target, Trophy, Clock, BookOpen, AlertCircle, AlertTriangle, CalendarClock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
@@ -77,6 +77,45 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {lessonsProgress.filter((l: any) => l.dueDate && l.status !== 'completed').length > 0 && (
+        <Card className="border-orange-200 bg-orange-50/30 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-orange-900">
+              <CalendarClock className="h-5 w-5 text-orange-600" />
+              Bài tập cần hoàn thành
+            </CardTitle>
+            <CardDescription className="text-orange-700">Giáo viên đã giao bài tập có thời hạn, hãy hoàn thành sớm!</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {lessonsProgress
+              .filter((l: any) => l.dueDate && l.status !== 'completed')
+              .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+              .map((lesson: any) => {
+                const isOverdue = new Date(lesson.dueDate) < new Date();
+                return (
+                  <div key={lesson.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                     <div className="flex items-center gap-3">
+                       <div className={`p-2 rounded-full ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
+                         <AlertTriangle className="h-4 w-4" />
+                       </div>
+                       <div>
+                         <p className="font-semibold text-slate-900">{lesson.title}</p>
+                         <p className={`text-xs font-medium ${isOverdue ? 'text-red-600' : 'text-orange-600'}`}>
+                           {isOverdue ? 'Đã quá hạn: ' : 'Hạn chót: '} {new Date(lesson.dueDate).toLocaleString('vi-VN')}
+                         </p>
+                       </div>
+                     </div>
+                     <Button size="sm" onClick={() => navigate('/practice')} className={isOverdue ? "bg-red-600 hover:bg-red-700 text-white" : "bg-orange-600 hover:bg-orange-700 text-white"}>
+                       Làm bài ngay
+                     </Button>
+                  </div>
+                );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         {/* Current Learning Path */}

@@ -31,7 +31,8 @@ const DEFAULT_LESSONS = [
     type: "practice",
     order_index: 13,
     status: "not_started",
-    score: 0
+    score: 0,
+    dueDate: "2026-03-09T23:59"
   },
   {
     id: 3,
@@ -90,7 +91,8 @@ export const Storage = {
       id: newId,
       order_index: lessons.length + 1,
       status: "not_started",
-      score: 0
+      score: 0,
+      dueDate: lessonData.dueDate || null
     };
     lessons.push(newLesson);
     localStorage.setItem('lessons_data', JSON.stringify(lessons));

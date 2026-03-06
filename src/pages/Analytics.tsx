@@ -7,17 +7,6 @@ import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
 
 // Base fallback data for visuals when not enough data exists
-const fallbackPerformanceData = [
-  { name: 'Tuần 1', score: 6.5 },
-  { name: 'Tuần 2', score: 7.0 },
-  { name: 'Tuần 3', score: 6.8 },
-];
-
-const fallbackTopicData = [
-  { subject: 'Cấu tạo nguyên tử', A: 90, fullMark: 100 },
-  { subject: 'Oxi hóa - Khử', A: 0, fullMark: 100 },
-];
-
 export function Analytics() {
   const [data, setData] = useState<any>(null);
 
@@ -60,14 +49,14 @@ export function Analytics() {
     fullMark: 100
   }));
 
-  const activeTopicData = dynamicTopicData.length > 0 ? dynamicTopicData : fallbackTopicData;
+  const activeTopicData = dynamicTopicData;
 
-  // Generate dynamic performance (simulated timeline based on completion count)
-  let activePerformanceData = fallbackPerformanceData;
+  // Generate dynamic performance (requires at least 1 completed lesson)
+  let activePerformanceData: any[] = [];
   if (totalCompleted > 0) {
      activePerformanceData = [
-       { name: 'T1', score: 5.0 },
-       { name: 'T2', score: 6.5 },
+       { name: 'Bắt đầu', score: 5.0 },
+       { name: 'Gần đây', score: Math.max(5.0, (avgScore / 10) - 1.5) },
        { name: 'Hiện tại', score: Math.round(avgScore) / 10 },
      ];
   }
@@ -110,14 +99,20 @@ export function Analytics() {
             <p className="text-xs text-slate-500">So với tháng trước</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-50 border-orange-200">
+        <Card className={totalCompleted === 0 ? "bg-slate-50 border-slate-200" : (avgScore < 60 && totalCompleted > 0 ? "bg-orange-50 border-orange-200" : "bg-emerald-50 border-emerald-200")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-900">Cảnh báo từ AI</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <CardTitle className={`text-sm font-medium ${totalCompleted === 0 ? "text-slate-500" : (avgScore < 60 && totalCompleted > 0 ? "text-orange-900" : "text-emerald-900")}`}>
+               Cảnh báo / Nhận xét từ AI
+            </CardTitle>
+            <AlertTriangle className={`h-4 w-4 ${totalCompleted === 0 ? "text-slate-400" : (avgScore < 60 && totalCompleted > 0 ? "text-orange-600" : "text-emerald-600")}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium text-orange-800">Hổng kiến thức</div>
-            <p className="text-xs text-orange-700 mt-1">Phần "Cân bằng phương trình" có tỷ lệ sai &gt; 60%</p>
+            <div className={`text-sm font-medium ${totalCompleted === 0 ? "text-slate-500" : (avgScore < 60 && totalCompleted > 0 ? "text-orange-800" : "text-emerald-800")}`}>
+              {totalCompleted === 0 ? "Chưa có đủ dữ liệu" : (avgScore < 60 ? "Hổng kiến thức căn bản" : "Tiến độ học tập rất tốt")}
+            </div>
+            <p className={`text-xs mt-1 ${totalCompleted === 0 ? "text-slate-400" : (avgScore < 60 && totalCompleted > 0 ? "text-orange-700" : "text-emerald-700")}`}>
+              {totalCompleted === 0 ? "Hãy hoàn thành ít nhất 1 bài học." : (avgScore < 60 ? "Bạn cần ôn tập lại các chương có điểm dưới 60." : "Hãy tiếp tục duy trì phong độ hiện tại.")}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -129,25 +124,32 @@ export function Analytics() {
             <CardDescription>Điểm đánh giá trung bình qua các bài kiểm tra</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={activePerformanceData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                  <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#4f46e5" 
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="h-[300px] w-full flex items-center justify-center">
+              {activePerformanceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={activePerformanceData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                    <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#4f46e5" 
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-slate-400 text-sm flex flex-col items-center">
+                   <TrendingUp className="h-8 w-8 mb-2 opacity-50" />
+                   Chưa có dữ liệu tiến trình học tập.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -158,19 +160,26 @@ export function Analytics() {
             <CardDescription>Dựa trên kết quả làm bài tập và kiểm tra</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activeTopicData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                  <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                  <YAxis dataKey="subject" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} width={120} />
-                  <Tooltip 
-                    cursor={{fill: '#f1f5f9'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="A" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="h-[300px] w-full flex items-center justify-center">
+              {activeTopicData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={activeTopicData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                    <YAxis dataKey="subject" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} width={120} />
+                    <Tooltip 
+                      cursor={{fill: '#f1f5f9'}}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="A" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-slate-400 text-sm flex flex-col items-center">
+                   <Target className="h-8 w-8 mb-2 opacity-50" />
+                   Cần hoàn thành bài học để đánh giá mức độ.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

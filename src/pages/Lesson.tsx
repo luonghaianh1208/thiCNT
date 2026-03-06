@@ -7,6 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Storage } from "@/lib/storage";
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 export function Lesson() {
   const [activeTab, setActiveTab] = useState("theory");
@@ -112,7 +115,14 @@ export function Lesson() {
           {activeTab === 'theory' && (
             <div className="prose prose-slate max-w-none">
               <h3 className="text-lg font-semibold mb-4">Nội dung bài học</h3>
-              <p className="text-slate-700 whitespace-pre-line">{lesson.theoryContent || lesson.content || lesson.description}</p>
+              <div className="text-slate-700 leading-relaxed">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {lesson.theoryContent || lesson.content || lesson.description}
+                </ReactMarkdown>
+              </div>
               
               <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <p className="text-sm text-blue-800 font-medium">
