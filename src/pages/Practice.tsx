@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Storage } from "@/lib/storage";
 
 export function Practice() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -21,10 +22,20 @@ export function Practice() {
     explanation: "Cu nhường 2 electron để tạo thành ion Cu2+ (số oxi hóa tăng từ 0 lên +2), do đó Cu là chất khử."
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (selectedAnswer !== null) {
       setIsSubmitted(true);
+      const score = selectedAnswer === question.correctAnswer ? 100 : 0;
+      try {
+        Storage.updateProgress(2, 'completed', score);
+      } catch (err) {
+        console.error("Lỗi cập nhật tiến độ", err);
+      }
     }
+  };
+
+  const handleNext = () => {
+    window.location.href = "/analytics";
   };
 
   return (
@@ -117,8 +128,8 @@ export function Practice() {
               Kiểm tra
             </Button>
           ) : (
-            <Button className="min-w-[120px]">
-              Câu tiếp theo
+            <Button onClick={handleNext} className="min-w-[120px]">
+              Xem kết quả Analytics
             </Button>
           )}
         </CardFooter>

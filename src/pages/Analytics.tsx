@@ -3,6 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Brain, Target, TrendingUp, AlertTriangle } from "lucide-react";
 
+import { useState, useEffect } from "react";
+import { Storage } from "@/lib/storage";
+
 const performanceData = [
   { name: 'Tuần 1', score: 6.5 },
   { name: 'Tuần 2', score: 7.0 },
@@ -21,11 +24,32 @@ const topicData = [
 ];
 
 export function Analytics() {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setData({
+        user: Storage.getUser(),
+        lessonsProgress: Storage.getLessons()
+      });
+    }, 300);
+  }, []);
+
+  if (!data) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ phân tích...</div>;
+
+  const { user, lessonsProgress } = data;
+  const progress = user.overall_progress || 0;
+  // Calculate average score
+  const completedLessons = lessonsProgress.filter((l: any) => l.status === 'completed');
+  const avgScore = completedLessons.length > 0 
+    ? completedLessons.reduce((sum: number, l: any) => sum + l.score, 0) / completedLessons.length 
+    : 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Phân tích học tập (Learning Analytics)</h1>
-        <p className="text-slate-500">Báo cáo chi tiết về năng lực và tiến độ học tập của bạn.</p>
+        <p className="text-slate-500">Báo cáo chi tiết về năng lực và tiến độ học tập của {user.name}.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -35,8 +59,8 @@ export function Analytics() {
             <Brain className="h-4 w-4 text-indigo-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-indigo-600">72/100</div>
-            <p className="text-xs text-slate-500">Mức độ thông hiểu: Khá</p>
+            <div className="text-2xl font-bold text-indigo-600">{avgScore > 0 ? Math.round(avgScore) : 72}/100</div>
+            <p className="text-xs text-slate-500">{avgScore >= 80 ? 'Mức độ thông hiểu: Giỏi' : 'Mức độ thông hiểu: Khá'}</p>
           </CardContent>
         </Card>
         <Card>

@@ -3,13 +3,32 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlayCircle, Target, Trophy, Clock, BookOpen, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Storage } from "@/lib/storage";
 
 export function Dashboard() {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    // Simulate API delay for UI consistency
+    setTimeout(() => {
+      setData({
+        user: Storage.getUser(),
+        lessonsProgress: Storage.getLessons()
+      });
+    }, 300);
+  }, []);
+
+  if (!data) return <div className="p-8 text-center text-slate-500">Đang tải dữ liệu...</div>;
+
+  const { user, lessonsProgress } = data;
+  const progress = user.overall_progress || 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tổng quan học tập</h1>
-        <p className="text-slate-500">Chào mừng trở lại! Tiếp tục lộ trình học tập của bạn.</p>
+        <p className="text-slate-500">Chào mừng trở lại, {user.name}! Tiếp tục lộ trình học tập của bạn.</p>
       </div>
 
       {/* Stats Overview */}
@@ -20,9 +39,9 @@ export function Dashboard() {
             <Target className="h-4 w-4 text-indigo-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45%</div>
+            <div className="text-2xl font-bold">{progress}%</div>
             <p className="text-xs text-slate-500">+2% so với tuần trước</p>
-            <Progress value={45} className="mt-3" />
+            <Progress value={progress} className="mt-3" />
           </CardContent>
         </Card>
         <Card>

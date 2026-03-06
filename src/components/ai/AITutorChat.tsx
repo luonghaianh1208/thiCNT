@@ -12,19 +12,31 @@ export function AITutorChat() {
   ]);
   const [input, setInput] = useState("");
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     
-    setMessages([...messages, { role: "user", content: input }]);
+    const userMessage = input;
+    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setInput("");
     
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const res = await fetch('/.netlify/functions/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
+      });
+      const data = await res.json();
+      
       setMessages(prev => [...prev, { 
         role: "ai", 
-        content: "Mình đang phân tích câu hỏi của bạn. Để giải bài toán này, trước tiên chúng ta cần viết phương trình hóa học..." 
+        content: data.reply 
       }]);
-    }, 1000);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: "ai", 
+        content: "Xin lỗi, hiện tại mình không thể kết nối tới máy chủ AI." 
+      }]);
+    }
   };
 
   return (

@@ -4,64 +4,48 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Lock, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const chapters = [
-  {
-    id: 1,
-    title: "Chương 1: Cấu tạo nguyên tử",
-    status: "completed",
-    progress: 100,
-    lessons: [
-      { title: "Thành phần của nguyên tử", status: "completed" },
-      { title: "Nguyên tố hóa học", status: "completed" },
-      { title: "Cấu trúc lớp vỏ electron", status: "completed" },
-    ]
-  },
-  {
-    id: 2,
-    title: "Chương 2: Bảng tuần hoàn",
-    status: "completed",
-    progress: 100,
-    lessons: [
-      { title: "Cấu tạo bảng tuần hoàn", status: "completed" },
-      { title: "Xu hướng biến đổi tính chất", status: "completed" },
-    ]
-  },
-  {
-    id: 3,
-    title: "Chương 3: Liên kết hóa học",
-    status: "completed",
-    progress: 100,
-    lessons: [
-      { title: "Quy tắc octet", status: "completed" },
-      { title: "Liên kết ion", status: "completed" },
-      { title: "Liên kết cộng hóa trị", status: "completed" },
-    ]
-  },
-  {
-    id: 4,
-    title: "Chương 4: Phản ứng oxi hóa - khử",
-    status: "in-progress",
-    progress: 30,
-    isRecommended: true,
-    lessons: [
-      { title: "Số oxi hóa", status: "completed" },
-      { title: "Phản ứng oxi hóa - khử", status: "in-progress" },
-      { title: "Lập phương trình hóa học", status: "locked" },
-    ]
-  },
-  {
-    id: 5,
-    title: "Chương 5: Năng lượng hóa học",
-    status: "locked",
-    progress: 0,
-    lessons: [
-      { title: "Enthalpy tạo thành", status: "locked" },
-      { title: "Biến thiên enthalpy", status: "locked" },
-    ]
-  }
-];
+import { useState, useEffect } from "react";
+import { Storage } from "@/lib/storage";
 
 export function LearningPath() {
+   const [chapters, setChapters] = useState<any[]>([]);
+   const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+     setTimeout(() => {
+         const lessonsData = Storage.getLessons();
+         const grouped: any = {};
+         lessonsData.forEach((lesson: any) => {
+           if (!grouped[lesson.chapter]) grouped[lesson.chapter] = [];
+           grouped[lesson.chapter].push(lesson);
+         });
+         
+         const formattedChapters = Object.keys(grouped).map((chapterTitle, index) => {
+           const chapterLessons = grouped[chapterTitle];
+           const allCompleted = chapterLessons.length > 0 && chapterLessons.every((l: any) => l.status === 'completed');
+           const anyInProgress = chapterLessons.some((l: any) => l.status === 'in_progress');
+           // Unlock first if all are not_started
+           const isFirst = index === 0;
+           const status = allCompleted ? 'completed' : (anyInProgress || isFirst ? 'in-progress' : 'locked');
+           
+           return {
+             id: index,
+             title: chapterTitle,
+             status: status,
+             progress: 0,
+             isRecommended: anyInProgress,
+             lessons: chapterLessons.map((l: any) => ({
+                 title: l.title,
+                 status: l.status === 'not_started' && isFirst ? 'in-progress' : (l.status === 'not_started' ? 'locked' : (l.status === 'in_progress' ? 'in-progress' : 'completed'))
+             }))
+           };
+         });
+         setChapters(formattedChapters);
+         setLoading(false);
+     }, 300);
+   }, []);
+
+   if (loading) return <div className="p-8 text-center text-slate-500">Đang tải dữ liệu lộ trình...</div>;
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
