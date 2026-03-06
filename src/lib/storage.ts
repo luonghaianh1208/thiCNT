@@ -40,6 +40,14 @@ const DEFAULT_LESSONS = [
   }
 ];
 
+const DEFAULT_STUDENTS = [
+  { id: 1, name: "Nguyễn Văn A", email: "nva@gmail.com", grade: "Lớp 10A1", score: 85, status: "active" },
+  { id: 2, name: "Trần Thị B", email: "ttb@gmail.com", grade: "Lớp 10A1", score: 92, status: "active" },
+  { id: 3, name: "Lê Văn C", email: "lvc@gmail.com", grade: "Lớp 10A2", score: 78, status: "active" },
+  { id: 4, name: "Phạm Thu D", email: "ptd@gmail.com", grade: "Lớp 10A1", score: 65, status: "inactive" },
+  { id: 5, name: "Hoàng Minh E", email: "hme@gmail.com", grade: "Lớp 10A3", score: 88, status: "active" },
+];
+
 export const Storage = {
   initialize() {
     if (!localStorage.getItem('user_data')) {
@@ -47,6 +55,9 @@ export const Storage = {
     }
     if (!localStorage.getItem('lessons_data')) {
       localStorage.setItem('lessons_data', JSON.stringify(DEFAULT_LESSONS));
+    }
+    if (!localStorage.getItem('students_data')) {
+      localStorage.setItem('students_data', JSON.stringify(DEFAULT_STUDENTS));
     }
   },
 
@@ -58,6 +69,32 @@ export const Storage = {
   getLessons() {
     this.initialize();
     return JSON.parse(localStorage.getItem('lessons_data') || '[]');
+  },
+
+  getStudents() {
+    this.initialize();
+    return JSON.parse(localStorage.getItem('students_data') || '[]');
+  },
+
+  addLesson(lessonData: any) {
+    const lessons = this.getLessons();
+    const newId = lessons.length > 0 ? Math.max(...lessons.map((l: any) => l.id)) + 1 : 1;
+    const newLesson = {
+      ...lessonData,
+      id: newId,
+      order_index: lessons.length + 1,
+      status: "not_started",
+      score: 0
+    };
+    lessons.push(newLesson);
+    localStorage.setItem('lessons_data', JSON.stringify(lessons));
+    return newLesson;
+  },
+
+  updateStudentStatus(studentId: number, status: string) {
+    const students = this.getStudents();
+    const updated = students.map((s: any) => s.id === studentId ? { ...s, status } : s);
+    localStorage.setItem('students_data', JSON.stringify(updated));
   },
 
   updateProgress(lessonId: number, status: string, score: number) {

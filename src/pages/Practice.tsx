@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Storage } from "@/lib/storage";
