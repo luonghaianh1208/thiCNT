@@ -97,6 +97,13 @@ export const Storage = {
     return newLesson;
   },
 
+  updateLesson(updatedLesson: any) {
+    const lessons = this.getLessons();
+    const updatedLessons = lessons.map((l: any) => l.id === updatedLesson.id ? { ...l, ...updatedLesson } : l);
+    localStorage.setItem('lessons_data', JSON.stringify(updatedLessons));
+    return updatedLesson;
+  },
+
   updateStudentStatus(studentId: number, status: string) {
     const students = this.getStudents();
     const updated = students.map((s: any) => s.id === studentId ? { ...s, status } : s);
