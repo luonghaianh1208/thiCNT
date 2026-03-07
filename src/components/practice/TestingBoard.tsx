@@ -13,16 +13,17 @@ import { Storage } from "@/lib/storage";
 
 function MathMarkdown({ content }: { content: string }) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      rehypePlugins={[rehypeKatex]}
-      className="prose prose-slate max-w-none text-base"
-      components={{
-        p: ({ node, ...props }) => <span {...props} />,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="prose prose-slate max-w-none text-base">
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+        components={{
+          p: ({ node, ...props }) => <span {...props} />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }
 
@@ -41,6 +42,7 @@ interface TestingBoardProps {
   onSubmit: () => void;
   onNext: () => void;
   onBack: () => void;
+  questionWeight: number;
 }
 
 export function TestingBoard({
@@ -58,6 +60,7 @@ export function TestingBoard({
   onSubmit,
   onNext,
   onBack,
+  questionWeight,
 }: TestingBoardProps) {
   const [isReportBugOpen, setIsReportBugOpen] = useState(false);
   const [bugReason, setBugReason] = useState("");
@@ -241,6 +244,9 @@ export function TestingBoard({
           </h1>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Badge variant="secondary" className="bg-slate-100 text-slate-700 shadow-sm border-slate-200 px-3 font-semibold">
+            {questionWeight} Point{questionWeight > 1 ? "s" : ""}
+          </Badge>
           <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50 shadow-sm">
             {getQuestionTypeBadge()}
           </Badge>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Target, Trophy, Clock, BookOpen, AlertCircle, AlertTriangle, CalendarClock, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 export function Dashboard() {
@@ -14,10 +15,11 @@ export function Dashboard() {
   const [aiAnalysis, setAiAnalysis] = useState<string>("Đang phân tích dữ liệu học tập của bạn...");
 
   useEffect(() => {
-    setTimeout(() => {
-      const dbLessons = Storage.getLessons();
+    const load = async () => {
+      const dbLessons = await Storage.getLessons();
+      const user = await Storage.getUser();
       setData({
-        user: Storage.getUser(),
+        user,
         lessonsProgress: dbLessons
       });
       
@@ -48,7 +50,23 @@ export function Dashboard() {
       } else {
         setAiAnalysis("Bạn chưa hoàn thành bài học nào. Hãy học bài đầu tiên để AI đánh giá nhé!");
       }
-    }, 300);
+    };
+    
+    // Slight delay to allow smooth transition showing loading state
+    setTimeout(() => load(), 300);
+
+    const channel = supabase.channel('student_dashboard_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'progress' }, () => {
+        load();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
+        load();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   if (!data) return <div className="p-8 text-center text-slate-500">Đang tải dữ liệu...</div>;

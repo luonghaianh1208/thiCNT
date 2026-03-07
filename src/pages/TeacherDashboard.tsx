@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Storage } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { CHEMISTRY_CURRICULUM } from "@/lib/curriculum";
@@ -55,12 +56,23 @@ export function TeacherDashboard() {
   const activeTab  = queryParams.get("tab") || "dashboard";
 
   useEffect(() => {
-    setStudents(Storage.getStudents());
-    setLessons(Storage.getLessons());
+    const checkData = async () => {
+      setStudents(await Storage.getStudents());
+      setLessons(await Storage.getLessons());
+    };
+    checkData();
+
+    const channel = supabase.channel('teacher_dashboard_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => { checkData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => { checkData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'progress' }, () => { checkData(); })
+      .subscribe();
+
+    return () => { channel.unsubscribe(); };
   }, []);
 
   // ---- Lesson CRUD ----
-  const handleCreateLesson = (e: React.FormEvent) => {
+  const handleCreateLesson = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLessonTitle || !newLessonChapter) {
       toast.error("Vui lòng chọn đầy đủ Chương và Bài học");
@@ -71,7 +83,7 @@ export function TeacherDashboard() {
       toast.error(`Bài giảng "${newLessonTitle}" đã tồn tại trong ${newLessonChapter}! Hành động bị từ chối.`);
       return;
     }
-    const added = Storage.addLesson({
+    const added = await Storage.addLesson({
       title: newLessonTitle,
       description: "Bài giảng với nội dung lý thuyết từ AI hoặc Giáo viên cung cấp.",
       chapter: newLessonChapter,
@@ -111,7 +123,7 @@ export function TeacherDashboard() {
     });
   };
 
-  const handleUpdateLesson = (e: React.FormEvent) => {
+  const handleUpdateLesson = async (e: React.FormEvent) => {
     e.preventDefault();
     const isDuplicate = lessons.some(l =>
       l.id !== editingLesson.id && l.chapter === editingLesson.chapter && l.title === editingLesson.title
@@ -121,7 +133,7 @@ export function TeacherDashboard() {
       return;
     }
     const { grade, ...pureLesson } = editingLesson;
-    const updated = Storage.updateLesson({
+    const updated = await Storage.updateLesson({
       ...pureLesson,
       youtubeUrl: getEmbedUrl(pureLesson.youtubeUrl),
       theoryContent: pureLesson.theoryContent,
@@ -132,17 +144,17 @@ export function TeacherDashboard() {
     toast.success("Cập nhật bài giảng thành công!");
   };
 
-  const handleDeleteLesson = (id: number) => {
+  const handleDeleteLesson = async (id: number) => {
     if (confirm("Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa bài giảng này không?")) {
-      Storage.deleteLesson(id);
-      setLessons(Storage.getLessons());
+      await Storage.deleteLesson(id);
+      setLessons(await Storage.getLessons());
       toast.success("Đã xóa bài giảng thành công!");
     }
   };
 
-  const handleReorderLesson = (id: number, direction: 'up' | 'down') => {
-    Storage.reorderLesson(id, direction);
-    setLessons(Storage.getLessons());
+  const handleReorderLesson = async (id: number, direction: 'up' | 'down') => {
+    await Storage.reorderLesson(id, direction);
+    setLessons(await Storage.getLessons());
   };
 
   // ---- OCR ----
@@ -193,19 +205,19 @@ export function TeacherDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const wb   = XLSX.read(evt.target?.result, { type: "binary" });
         const ws   = wb.Sheets[wb.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(ws) as any[];
         let count  = 0;
-        data.forEach((row) => {
+        for (const row of data) {
           if (row["Họ và tên"] && row["Email"]) {
-            Storage.addStudent({ name: row["Họ và tên"], email: row["Email"], grade: row["Lớp"] || "Chưa xếp lớp" });
+            await Storage.addStudent({ name: row["Họ và tên"], email: row["Email"], grade: row["Lớp"] || "Chưa xếp lớp" });
             count++;
           }
-        });
-        setStudents(Storage.getStudents());
+        }
+        setStudents(await Storage.getStudents());
         toast.success(`Đã nhập thành công ${count} học sinh từ Excel!`);
       } catch {
         toast.error("Lỗi đọc file Excel. Vui lòng thử lại với file mẫu.");
@@ -220,28 +232,35 @@ export function TeacherDashboard() {
     setEditingStudentData({ name: student.name, grade: student.grade });
   };
 
-  const saveEditStudent = (id: number) => {
-    Storage.updateStudent(id, { name: editingStudentData.name, grade: editingStudentData.grade });
-    setStudents(Storage.getStudents());
+  const saveEditStudent = async (id: number) => {
+    await Storage.updateStudent(id.toString(), { name: editingStudentData.name, grade: editingStudentData.grade });
+    setStudents(await Storage.getStudents());
     setEditingStudentId(null);
     toast.success("Đã cập nhật thông tin học sinh!");
   };
 
-  const toggleUserStatus = (id: number, currentStatus: string) => {
+  const toggleUserStatus = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
-    Storage.updateStudentStatus(id, newStatus);
-    setStudents(Storage.getStudents());
-    newStatus === "inactive" ? toast.warning("Đã khóa người dùng") : toast.success("Đã mở khóa người dùng");
+    await Storage.updateStudentStatus(id.toString(), newStatus);
+    setStudents(await Storage.getStudents());
+    
+    if (currentStatus === "pending") {
+      toast.success("Đã phê duyệt tài khoản học sinh!");
+    } else if (newStatus === "inactive") {
+      toast.warning("Đã khóa người dùng");
+    } else {
+      toast.success("Đã mở khóa người dùng");
+    }
   };
 
-  const deleteStudent = (id: number) => {
-    Storage.deleteStudent(id);
-    setStudents(Storage.getStudents());
+  const deleteStudent = async (id: number) => {
+    await Storage.deleteStudent(id.toString());
+    setStudents(await Storage.getStudents());
     toast.success("Đã xóa học sinh thành công!");
   };
 
-  const resetStudentPassword = (id: number) => {
-    Storage.resetStudentPassword(id);
+  const resetStudentPassword = async (id: number) => {
+    await Storage.resetStudentPassword(id.toString());
     toast.success("Đã đặt lại mật khẩu về mặc định (LMS123456)!");
   };
 

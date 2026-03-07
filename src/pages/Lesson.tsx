@@ -21,27 +21,30 @@ export function Lesson() {
   const [allLessons, setAllLessons] = useState<any[]>([]);
 
   useEffect(() => {
-    const lessons = Storage.getLessons() || [];
-    let previousPassed = true;
-    const processedLessons = lessons.map((lesson: any) => {
-      const hasPassed = lesson.status === 'completed' && (lesson.score || 0) >= (lesson.passingPercentage || 80);
-      const isLocked = !previousPassed;
-      previousPassed = hasPassed;
-      return { ...lesson, _computedLocked: isLocked };
-    });
+    const loadData = async () => {
+      const lessons = (await Storage.getLessons()) || [];
+      let previousPassed = true;
+      const processedLessons = lessons.map((lesson: any) => {
+        const hasPassed = lesson.status === 'completed' && (lesson.score || 0) >= (lesson.passingPercentage || 80);
+        const isLocked = !previousPassed;
+        previousPassed = hasPassed;
+        return { ...lesson, _computedLocked: isLocked };
+      });
 
-    setAllLessons(processedLessons);
-    if (lessonId) {
-      const found = processedLessons.find((l: any) => l.id === lessonId);
-      setLesson(found);
-    } else if (processedLessons.length > 0) {
-      setLesson(processedLessons[0]);
-    }
+      setAllLessons(processedLessons);
+      if (lessonId) {
+        const found = processedLessons.find((l: any) => l.id === lessonId);
+        setLesson(found);
+      } else if (processedLessons.length > 0) {
+        setLesson(processedLessons[0]);
+      }
+    };
+    loadData();
   }, [lessonId]);
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!lesson) return;
-    Storage.updateProgress(lesson.id, 'completed', 100);
+    await Storage.updateProgress(lesson.id, 'completed', 100);
     toast.success("Chúc mừng! Bạn đã hoàn thành bài học 🚀");
     setTimeout(() => {
       navigate('/learning-path');

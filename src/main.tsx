@@ -4,8 +4,12 @@ import App from './App.tsx';
 import './index.css';
 import 'katex/dist/katex.min.css';
 
+import { AuthProvider } from './lib/AuthContext.tsx';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 );

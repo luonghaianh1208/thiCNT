@@ -105,10 +105,10 @@ export function StudentManager({
                 <div className="text-right">
                   <p className="text-sm font-bold text-indigo-600">{student.score}đ</p>
                   <Badge
-                    variant={student.status === "active" ? "default" : "secondary"}
-                    className="text-[10px]"
+                    variant={student.status === "active" ? "default" : student.status === "pending" ? "outline" : "secondary"}
+                    className={student.status === "pending" ? "text-[10px] text-amber-600 border-amber-200 bg-amber-50" : "text-[10px]"}
                   >
-                    {student.status === "active" ? "Đang học" : "Vắng mặt"}
+                    {student.status === "active" ? "Đang học" : student.status === "pending" ? "Chờ duyệt" : "Bị Khóa"}
                   </Badge>
                 </div>
                 {student.id !== 999 && editingStudentId !== student.id && activeTab === "students" && (
@@ -122,7 +122,7 @@ export function StudentManager({
                     <Button
                       variant="ghost" size="icon" className="h-8 w-8"
                       onClick={() => toggleUserStatus(student.id, student.status)}
-                      title={student.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+                      title={student.status === "active" ? "Khóa tài khoản" : student.status === "pending" ? "Phê duyệt" : "Mở khóa"}
                     >
                       {student.status === "active" ? (
                         <Ban className="h-4 w-4 text-slate-400 hover:text-orange-500" />

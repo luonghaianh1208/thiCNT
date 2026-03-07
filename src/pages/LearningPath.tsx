@@ -13,8 +13,8 @@ export function LearningPath() {
    const [loading, setLoading] = useState(true);
    const navigate = useNavigate();
 
-   const buildChapters = () => {
-         const lessonsData = Storage.getLessons().sort((a: any, b: any) => a.order_index - b.order_index);
+   const buildChapters = async () => {
+         const lessonsData = (await Storage.getLessons()).sort((a: any, b: any) => a.order_index - b.order_index);
          
          let previousPassed = true; // First lesson is always unlocked
          let previousReq = 0;

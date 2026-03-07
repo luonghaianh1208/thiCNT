@@ -13,7 +13,7 @@ import {
   GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RoleStorage } from "@/lib/roleStorage";
+import { useAuth } from "@/lib/AuthContext";
 
 const studentNav = [
   { name: "Tổng quan", href: "/", icon: LayoutDashboard },
@@ -38,7 +38,9 @@ const adminNav = [
 
 export function Sidebar() {
   const location = useLocation();
-  const role = RoleStorage.getRole();
+  const { profile, signOut } = useAuth();
+  
+  const role = profile?.role || 'student';
   const navItems = role === 'admin' ? adminNav : role === 'teacher' ? teacherNav : studentNav;
 
   return (
@@ -84,7 +86,10 @@ export function Sidebar() {
           <Settings className="h-5 w-5" />
           Cài đặt
         </div>
-        <div className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 cursor-pointer mt-1">
+        <div 
+          onClick={signOut}
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 cursor-pointer mt-1"
+        >
           <LogOut className="h-5 w-5" />
           Đăng xuất
         </div>

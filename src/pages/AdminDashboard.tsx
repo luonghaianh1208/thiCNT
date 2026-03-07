@@ -10,13 +10,16 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    setUsers(Storage.getStudents());
+    const loadData = async () => {
+      setUsers(await Storage.getStudents());
+    };
+    loadData();
   }, []);
 
-  const toggleUserStatus = (id: number, currentStatus: string) => {
+  const toggleUserStatus = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    Storage.updateStudentStatus(id, newStatus);
-    setUsers(Storage.getStudents());
+    await Storage.updateStudentStatus(id.toString(), newStatus);
+    setUsers(await Storage.getStudents());
     if (newStatus === 'inactive') {
       toast.warning("Đã khóa người dùng");
     } else {

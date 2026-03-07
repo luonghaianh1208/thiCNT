@@ -11,12 +11,13 @@ export function Analytics() {
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    setTimeout(() => {
+    const load = async () => {
       setData({
-        user: Storage.getUser(),
-        lessonsProgress: Storage.getLessons()
+        user: await Storage.getUser(),
+        lessonsProgress: await Storage.getLessons()
       });
-    }, 300);
+    };
+    setTimeout(() => load(), 300);
   }, []);
 
   if (!data) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ phân tích...</div>;

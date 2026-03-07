@@ -28,8 +28,11 @@ export function Practice() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const lessons = Storage.getLessons().filter((l) => l.type === "theory");
-    setAvailableLessons(lessons);
+    const fetchLessons = async () => {
+      const lessons = (await Storage.getLessons()).filter((l) => l.type === "theory");
+      setAvailableLessons(lessons);
+    };
+    fetchLessons();
   }, []);
 
   // ---- Timer countdown ----
@@ -111,7 +114,7 @@ export function Practice() {
     setIsSubmitted(false);
     setIsDraggingOver(false);
 
-    const user = Storage.getUser();
+    const user = await Storage.getUser();
     try {
       const avgScore = user.overall_progress || 50;
       toast.info(`AI đang thiết kế bài tập cho: ${lesson.title}...`);
@@ -208,7 +211,7 @@ export function Practice() {
     }
   };
 
-  const handleNext = (forceSubmit = false) => {
+  const handleNext = async (forceSubmit = false) => {
     if (currentIndex < questions.length - 1 && !forceSubmit) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedAnswer(null);
@@ -218,14 +221,21 @@ export function Practice() {
     } else {
       const maxScore = questions.reduce((sum, q) => sum + getQuestionWeight(q.type), 0);
       const scorePercentage = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 0;
+      const passingPercentage = selectedLesson.passingPercentage || 80;
+      const isPassed = scorePercentage >= passingPercentage;
       
-      Storage.updateProgress(selectedLesson.id, "completed", scorePercentage);
+      await Storage.updateProgress(selectedLesson.id, "completed", scorePercentage);
       window.dispatchEvent(new CustomEvent("practice-state", { detail: { isPractice: false } }));
+      
+      // Clear cache so that the next time they select this lesson, new questions are generated
+      localStorage.removeItem(`chemai_practice_cache_${selectedLesson.id}`);
       
       if (forceSubmit) {
         toast.warning(`Hết giờ! Tự động nộp bài. Bạn đạt ${scorePercentage}/100 điểm.`);
+      } else if (isPassed) {
+        toast.success(`Chúc mừng! Bạn VƯỢT QUA với ${scorePercentage}/100 điểm. 🏆`);
       } else {
-        toast.success(`Hoàn thành xuất sắc ${selectedLesson?.title}! Bạn đạt ${scorePercentage}/100 điểm.`);
+        toast.error(`Bạn chưa ĐẠT (Yêu cầu ${passingPercentage} điểm). Vui lòng ôn tập và thử lại! 📚`);
       }
       navigate("/analytics");
     }
@@ -284,6 +294,7 @@ export function Practice() {
       onSubmit={handleSubmit}
       onNext={handleNext}
       onBack={handleBackToSelection}
+      questionWeight={questions[currentIndex] ? getQuestionWeight(questions[currentIndex].type) : 0}
     />
   );
 }

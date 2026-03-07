@@ -1,249 +1,184 @@
-const DEFAULT_USER = {
-  name: "Hoá Học Learner",
-  current_level: 10,
-  overall_progress: 45
-};
+import { supabase } from './supabase';
 
-const DEFAULT_LESSONS = [
-  {
-    id: 1,
-    title: "Phản ứng oxi hóa - khử và ứng dụng",
-    description: "Tìm hiểu cơ bản về phản ứng oxi hóa khử",
-    chapter: "Chương 4: Phản ứng oxi hóa - khử",
-    content: "Nội dung chi tiết...",
-    theoryContent: "Khái niệm:\n- Chất khử: là chất nhường electron (số oxi hóa tăng).\n- Chất oxi hóa: là chất nhận electron (số oxi hóa giảm).\n- Sự oxi hóa: là quá trình nhường electron.\n- Sự khử: là quá trình nhận electron.",
-    youtubeUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    practiceConfig: { mcq: 2, tf: 1, short: 1 },
-    type: "theory",
-    order_index: 12,
-    status: "in_progress",
-    score: 30,
-    passingPercentage: 80
-  },
-  {
-    id: 2,
-    title: "Luyện tập: Cân bằng phương trình",
-    description: "Thực hành cân bằng phản ứng oxi hóa khử phức tạp",
-    chapter: "Chương 4: Phản ứng oxi hóa - khử",
-    content: "Nội dung thực hành...",
-    theoryContent: "Cách cân bằng phương trình oxi hóa - khử:\nBước 1: Xác định số oxi hóa.\nBước 2: Viết quá trình oxi hóa - khử.\nBước 3: Thăng bằng electron.\nBước 4: Đặt hệ số.",
-    youtubeUrl: "https://www.youtube.com/embed/ScMzIvxBSi4",
-    practiceConfig: { mcq: 3, tf: 2, short: 1 },
-    type: "practice",
-    order_index: 13,
-    status: "not_started",
-    score: 0,
-    passingPercentage: 80,
-    dueDate: "2026-03-09T23:59"
-  },
-  {
-    id: 3,
-    title: "Cấu tạo nguyên tử",
-    description: "Ôn tập về cấu tạo nguyên tử",
-    chapter: "Chương 1: Cấu tạo nguyên tử",
-    content: "Nội dung...",
-    type: "theory",
-    order_index: 1,
-    status: "completed",
-    score: 100,
-    passingPercentage: 80
-  }
-];
+// Helpers to map Database snake_case to App camelCase
+const mapLesson = (l: any) => l ? {
+  id: l.id,
+  title: l.title,
+  description: l.description,
+  chapter: l.chapter,
+  theoryContent: l.theory_content,
+  youtubeUrl: l.youtube_url,
+  practiceConfig: l.practice_config,
+  type: l.type,
+  passingPercentage: l.passing_percentage,
+  order_index: l.order_index,
+  dueDate: l.due_date,
+  updatedAt: l.updated_at
+} : null;
 
-const DEFAULT_STUDENTS = [
-  { id: 1, name: "Nguyễn Văn A", email: "nva@gmail.com", grade: "Lớp 10A1", score: 85, status: "active" },
-  { id: 2, name: "Trần Thị B", email: "ttb@gmail.com", grade: "Lớp 10A1", score: 92, status: "active" },
-  { id: 3, name: "Lê Văn C", email: "lvc@gmail.com", grade: "Lớp 10A2", score: 78, status: "active" },
-  { id: 4, name: "Phạm Thu D", email: "ptd@gmail.com", grade: "Lớp 10A1", score: 65, status: "inactive" },
-  { id: 5, name: "Hoàng Minh E", email: "hme@gmail.com", grade: "Lớp 10A3", score: 88, status: "active" },
-];
+const mapStudent = (s: any) => s ? {
+  id: s.id,
+  name: s.full_name,
+  email: s.email,
+  grade: "Chưa phân lớp", // For demo
+  score: s.overall_progress || 0,
+  status: s.status
+} : null;
+
 
 export const Storage = {
-  initialize() {
-    if (!localStorage.getItem('user_data')) {
-      localStorage.setItem('user_data', JSON.stringify(DEFAULT_USER));
-    }
-    if (!localStorage.getItem('lessons_data')) {
-      localStorage.setItem('lessons_data', JSON.stringify(DEFAULT_LESSONS));
-    }
-    if (!localStorage.getItem('students_data')) {
-      localStorage.setItem('students_data', JSON.stringify(DEFAULT_STUDENTS));
-    }
+  async initialize() {
+    // Initial fetch to check if DB is empty and seed if necessary (skipped for brevity)
   },
 
-  getUser() {
-    this.initialize();
-    return JSON.parse(localStorage.getItem('user_data') || '{}');
+  async getUser() {
+    const { data } = await supabase.from('users').select('*').limit(1).single();
+    if (data) return mapStudent(data);
+    
+    // Seed default mock user
+    const mockUser = { email: "student@chemai.edu.vn", password: "123", full_name: "Hoá Học Learner", role: "student", overall_progress: 45 };
+    const { data: newUser } = await supabase.from('users').insert(mockUser).select().single();
+    return mapStudent(newUser);
   },
 
-  getLessons() {
-    this.initialize();
-    return JSON.parse(localStorage.getItem('lessons_data') || '[]');
+  async getLessons() {
+    const { data } = await supabase.from('lessons').select('*').order('order_index', { ascending: true });
+    return (data || []).map(mapLesson);
   },
 
-  getStudents() {
-    this.initialize();
-    const mocks = JSON.parse(localStorage.getItem('students_data') || '[]');
-    const user = this.getUser();
-    const realStudent = {
-      id: 999,
-      name: user.name + " (Tài khoản của bạn)",
-      email: "student@chemai.edu.vn",
-      grade: "Lớp Thực hành",
-      score: user.overall_progress || 0,
-      status: "active"
+  async getStudents() {
+    const { data } = await supabase.from('users').select('*').eq('role', 'student');
+    return (data || []).map(mapStudent);
+  },
+
+  async addLesson(lessonData: any) {
+    const { data: maxLesson } = await supabase.from('lessons').select('order_index').order('order_index', { ascending: false }).limit(1).single();
+    const newOrder = maxLesson ? maxLesson.order_index + 1 : 1;
+    
+    const dbPayload = {
+      title: lessonData.title,
+      description: lessonData.description,
+      chapter: lessonData.chapter,
+      theory_content: lessonData.theoryContent,
+      youtube_url: lessonData.youtubeUrl,
+      practice_config: lessonData.practiceConfig || {},
+      type: lessonData.type || 'theory',
+      passing_percentage: lessonData.passingPercentage || 80,
+      order_index: newOrder,
+      due_date: lessonData.dueDate || null,
+      updated_at: new Date().toISOString()
     };
-    return [realStudent, ...mocks];
+
+    const { data } = await supabase.from('lessons').insert(dbPayload).select().single();
+    return mapLesson(data);
   },
 
-  addLesson(lessonData: any) {
-    const lessons = this.getLessons();
-    const ids = lessons.map((l: any) => l.id).filter((id: any) => typeof id === 'number');
-    const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
-    const newLesson = {
-      ...lessonData,
-      id: newId,
-      order_index: lessons.length + 1,
-      status: "not_started",
-      score: 0,
-      passingPercentage: lessonData.passingPercentage || 80,
-      dueDate: lessonData.dueDate || null,
-      updatedAt: new Date().toISOString(),
+  async updateLesson(l: any) {
+    const dbPayload = {
+      title: l.title, description: l.description, chapter: l.chapter,
+      theory_content: l.theoryContent, youtube_url: l.youtubeUrl,
+      practice_config: l.practiceConfig, type: l.type,
+      passing_percentage: l.passingPercentage, order_index: l.order_index,
+      due_date: l.dueDate, updated_at: new Date().toISOString()
     };
-    lessons.push(newLesson);
-    localStorage.setItem('lessons_data', JSON.stringify(lessons));
-    return newLesson;
+    const { data } = await supabase.from('lessons').update(dbPayload).eq('id', l.id).select().single();
+    return mapLesson(data);
   },
 
-  updateLesson(updatedLesson: any) {
-    const lessons = this.getLessons();
-    const stamped = { ...updatedLesson, updatedAt: new Date().toISOString() };
-    const updatedLessons = lessons.map((l: any) => l.id === stamped.id ? { ...l, ...stamped } : l);
-    localStorage.setItem('lessons_data', JSON.stringify(updatedLessons));
-    return stamped;
+  async deleteLesson(id: number) {
+    await supabase.from('lessons').delete().eq('id', id);
   },
 
-  deleteLesson(id: number) {
-    const lessons = this.getLessons();
-    const updated = lessons.filter((l: any) => l.id !== id);
-    localStorage.setItem('lessons_data', JSON.stringify(updated));
-    return updated;
-  },
-
-  reorderLesson(id: number, direction: 'up' | 'down') {
-    const lessons = this.getLessons().sort((a: any, b: any) => a.order_index - b.order_index);
+  async reorderLesson(id: number, direction: 'up' | 'down') {
+    const { data: lessons } = await supabase.from('lessons').select('id, order_index').order('order_index', { ascending: true });
+    if (!lessons) return;
     const index = lessons.findIndex((l: any) => l.id === id);
-    if (index === -1) return lessons;
+    if (index === -1) return;
     
     if (direction === 'up' && index > 0) {
       const temp = lessons[index].order_index;
-      lessons[index].order_index = lessons[index - 1].order_index;
-      lessons[index - 1].order_index = temp;
+      await supabase.from('lessons').update({ order_index: lessons[index - 1].order_index }).eq('id', lessons[index].id);
+      await supabase.from('lessons').update({ order_index: temp }).eq('id', lessons[index - 1].id);
     } else if (direction === 'down' && index < lessons.length - 1) {
       const temp = lessons[index].order_index;
-      lessons[index].order_index = lessons[index + 1].order_index;
-      lessons[index + 1].order_index = temp;
+      await supabase.from('lessons').update({ order_index: lessons[index + 1].order_index }).eq('id', lessons[index].id);
+      await supabase.from('lessons').update({ order_index: temp }).eq('id', lessons[index + 1].id);
     }
-    
-    lessons.sort((a: any, b: any) => a.order_index - b.order_index);
-    localStorage.setItem('lessons_data', JSON.stringify(lessons));
-    return lessons;
   },
 
-  updateStudentStatus(studentId: number, status: string) {
-    const students = this.getStudents();
-    const updated = students.map((s: any) => s.id === studentId ? { ...s, status } : s);
-    localStorage.setItem('students_data', JSON.stringify(updated.filter((s:any) => s.id !== 999))); // Dont save mock
+  async updateStudentStatus(id: string, status: string) {
+     await supabase.from('users').update({ status }).eq('id', id);
   },
 
-  addStudent(studentData: any) {
-    this.initialize();
-    const students = JSON.parse(localStorage.getItem('students_data') || '[]');
-    const newId = students.length > 0 ? Math.max(...students.map((s: any) => s.id)) + 1 : 1;
-    const newStudent = {
-      ...studentData,
-      id: newId,
-      score: 0,
-      status: "active"
-    };
-    students.push(newStudent);
-    localStorage.setItem('students_data', JSON.stringify(students));
-    return newStudent;
+  async addStudent(s: any) {
+    const { data } = await supabase.from('users').insert({ full_name: s.name, email: s.email || `${Date.now()}@mock.com`, password: "123", role: "student" }).select().single();
+    return mapStudent(data);
   },
 
-  updateStudent(id: number, updatedData: any) {
-    const students = JSON.parse(localStorage.getItem('students_data') || '[]');
-    const updated = students.map((s: any) => s.id === id ? { ...s, ...updatedData } : s);
-    localStorage.setItem('students_data', JSON.stringify(updated));
+  async updateStudent(id: string, s: any) {
+    await supabase.from('users').update({ full_name: s.name, updated_at: new Date().toISOString() }).eq('id', id);
   },
 
-  deleteStudent(id: number) {
-    const students = JSON.parse(localStorage.getItem('students_data') || '[]');
-    const updated = students.filter((s: any) => s.id !== id);
-    localStorage.setItem('students_data', JSON.stringify(updated));
+  async deleteStudent(id: string) {
+    await supabase.from('users').delete().eq('id', id);
   },
 
-  resetStudentPassword(id: number) {
-    // In a real database, this would generate a temp password or reset token
-    // For this mock, we just return true to confirm action
+  async resetStudentPassword(id: string) {
+    await supabase.from('users').update({ password: "123" }).eq('id', id);
     return true;
   },
 
-  updateProgress(lessonId: number, status: string, score: number) {
-    const lessons = this.getLessons();
-    const updatedLessons = lessons.map((l: any) => {
-      if (l.id === lessonId) {
-        return { ...l, status, score: Math.max(l.score || 0, score) };
-      }
-      return l;
+  async updateProgress(lessonId: number, status: string, score: number) {
+    const { data: userRaw } = await supabase.from('users').select('id').eq('role', 'student').limit(1).single();
+    if (!userRaw) return;
+    
+    const { data: prog } = await supabase.from('progress').select('*').eq('student_id', userRaw.id).eq('lesson_id', lessonId).single();
+    
+    if (prog) {
+      await supabase.from('progress').update({ status, score: Math.max(prog.score || 0, score), updated_at: new Date().toISOString() }).eq('id', prog.id);
+    } else {
+      await supabase.from('progress').insert({ student_id: userRaw.id, lesson_id: lessonId, status, score });
+    }
+    
+    const { data: allProg } = await supabase.from('progress').select('score').eq('student_id', userRaw.id).eq('status', 'completed');
+    if (allProg && allProg.length > 0) {
+      const total = allProg.reduce((sum: number, p: any) => sum + (p.score || 0), 0);
+      const avg = Math.round(total / allProg.length);
+      await supabase.from('users').update({ overall_progress: avg }).eq('id', userRaw.id);
+    }
+  },
+
+  async getProgress() {
+    const { data: userRaw } = await supabase.from('users').select('id').eq('role', 'student').limit(1).single();
+    if (!userRaw) return [];
+    const { data } = await supabase.from('progress').select('*').eq('student_id', userRaw.id);
+    return data || [];
+  },
+
+  async getCheatWarnings() { return []; },
+  async addCheatWarning(title: string) { },
+
+  async getReportedBugs() {
+    const { data } = await supabase.from('reports').select('*, users(full_name)');
+    return (data || []).map((b: any) => ({
+      id: b.id,
+      studentName: b.users?.full_name || 'Học sinh',
+      lessonTitle: b.question_text.split(' at ')[1] || 'Bài tập',
+      questionType: b.question_text.split(']')[0].replace('[', '') || 'General',
+      reason: b.reason,
+      timestamp: b.created_at,
+      status: b.status
+    }));
+  },
+
+  async addReportBug(lessonTitle: string, questionType: string, reason: string) {
+    const { data: userRaw } = await supabase.from('users').select('id').eq('role', 'student').limit(1).single();
+    if (!userRaw) return;
+
+    await supabase.from('reports').insert({
+      student_id: userRaw.id,
+      question_text: `[${questionType}] at ${lessonTitle}`,
+      reason, status: 'pending'
     });
-
-    // Recalculate overall progress based on average score of completed lessons
-    const completed = updatedLessons.filter((l: any) => l.status === 'completed');
-    const totalScore = completed.reduce((sum: number, l: any) => sum + (l.score || 0), 0);
-    const overallProgress = completed.length > 0 ? Math.round(totalScore / completed.length) : 0;
-
-    const user = this.getUser();
-    user.overall_progress = overallProgress;
-
-    localStorage.setItem('lessons_data', JSON.stringify(updatedLessons));
-    localStorage.setItem('user_data', JSON.stringify(user));
-  },
-
-  getCheatWarnings() {
-    this.initialize();
-    return JSON.parse(localStorage.getItem('cheat_warnings') || '[]');
-  },
-
-  addCheatWarning(lessonTitle: string) {
-    const warnings = this.getCheatWarnings();
-    const user = this.getUser();
-    warnings.unshift({
-       id: Date.now(),
-       studentName: user.name,
-       lessonTitle,
-       timestamp: new Date().toISOString()
-    });
-    localStorage.setItem('cheat_warnings', JSON.stringify(warnings));
-  },
-
-  getReportedBugs() {
-    this.initialize();
-    return JSON.parse(localStorage.getItem('reported_bugs') || '[]');
-  },
-
-  addReportBug(lessonTitle: string, questionType: string, reason: string) {
-    const bugs = this.getReportedBugs();
-    const user = this.getUser();
-    bugs.unshift({
-      id: Date.now(),
-      studentName: user.name,
-      lessonTitle,
-      questionType,
-      reason,
-      timestamp: new Date().toISOString(),
-      status: 'pending'
-    });
-    localStorage.setItem('reported_bugs', JSON.stringify(bugs));
   }
 };

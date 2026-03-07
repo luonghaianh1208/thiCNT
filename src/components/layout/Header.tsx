@@ -2,26 +2,29 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Search, User, Clock, CheckCircle2, AlertTriangle, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RoleStorage, Role } from "@/lib/roleStorage";
+import { useAuth } from "@/lib/AuthContext";
 import { Storage } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export function Header() {
-  const role = RoleStorage.getRole();
-  const currentUser = Storage.getUser();
+  const { profile } = useAuth();
+  const role = profile?.role || 'student';
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
 
+
+
   useEffect(() => {
     // Generate notifications dynamically based on Storage data
-    const generateNotifications = () => {
-      const allLessons = Storage.getLessons() || [];
+    const generateNotifications = async () => {
+      const allLessons = (await Storage.getLessons()) || [];
       const notifs: any[] = [];
       const now = new Date().getTime();
 
       if (role === 'teacher') {
-         const cheatWarnings = Storage.getCheatWarnings() || [];
+         const cheatWarnings = (await Storage.getCheatWarnings()) || [];
          cheatWarnings.forEach((warning: any) => {
             notifs.push({
                type: 'critical', 
@@ -72,8 +75,22 @@ export function Header() {
       setNotifications(notifs.slice(0, 5)); // show top 5
     };
     generateNotifications();
-    // Auto-refresh notifications every 30s so changes appear without F5
-    const refreshInterval = setInterval(generateNotifications, 30000);
+    generateNotifications();
+    
+    // Subscribe to realtime changes instead of using setInterval
+    const progressChannel = supabase.channel('header_progress_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'progress' }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          generateNotifications();
+        }
+      })
+      .subscribe();
+
+    const reportsChannel = supabase.channel('header_reports_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => {
+         // Optionally regenerate or handle bug reports
+      })
+      .subscribe();
 
     // Close on outside click
     const handleClickOutside = (e: MouseEvent) => {
@@ -83,18 +100,11 @@ export function Header() {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      clearInterval(refreshInterval);
+      progressChannel.unsubscribe();
+      reportsChannel.unsubscribe();
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    RoleStorage.setRole(e.target.value as Role);
-    toast.success(`Đã chuyển sang quyền: ${e.target.value}`, { duration: 1500 });
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  };
+  }, [role]);
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
@@ -152,17 +162,10 @@ export function Header() {
         <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
           <div className="flex flex-col items-end">
             <span className="text-sm font-medium text-slate-900">
-              {role === 'teacher' ? 'Giáo viên' : (currentUser?.name || 'Học sinh')}
+              {role === 'teacher' ? 'Giáo viên' : (profile?.full_name || 'Học sinh')}
             </span>
             <span className="text-xs text-slate-500 uppercase font-semibold">
-              <select 
-                value={role} 
-                onChange={handleRoleChange}
-                className="bg-transparent border-none text-xs outline-none cursor-pointer hover:text-indigo-600 transition-colors"
-              >
-                <option value="student">HỌC SINH</option>
-                <option value="teacher">GIÁO VIÊN</option>
-              </select>
+              {role === 'teacher' ? 'QUẢN LÝ' : 'HỌC VIÊN'}
             </span>
           </div>
           <div className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-white shadow-sm transition-transform hover:scale-105 ${
