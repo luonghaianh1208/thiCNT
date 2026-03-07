@@ -27,8 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Safety net: never spin forever — force resolve after 6 seconds
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 6000);
+
     // Initial fetch
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(safetyTimeout);
       setSession(session);
       setUser(session?.user || null);
       if (session?.user) {
@@ -37,6 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null);
         setIsLoading(false);
       }
+    }).catch(() => {
+      clearTimeout(safetyTimeout);
+      setIsLoading(false);
     });
 
     // Listen to auth changes
@@ -54,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);
