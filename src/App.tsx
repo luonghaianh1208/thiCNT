@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { TeacherDashboard } from "./pages/TeacherDashboard";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { LearningPath } from "./pages/LearningPath";
 import { Lesson } from "./pages/Lesson";
 import { Practice } from "./pages/Practice";
@@ -18,7 +17,6 @@ export default function App() {
   const role = RoleStorage.getRole();
 
   const getDashboard = () => {
-    if (role === 'admin') return <AdminDashboard />;
     if (role === 'teacher') return <TeacherDashboard />;
     return <Dashboard />; // Student dashboard
   };

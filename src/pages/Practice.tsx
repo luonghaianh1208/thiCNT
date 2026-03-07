@@ -167,33 +167,47 @@ export function Practice() {
             Khóa học hiện tại chưa có bài giảng nào. Vui lòng liên hệ Giáo viên.
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {availableLessons.map((lesson) => (
-              <Card key={lesson.id} className="hover:border-indigo-300 transition-colors cursor-pointer" onClick={() => startPractice(lesson)}>
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">{lesson.chapter}</Badge>
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                  </div>
-                  <CardTitle className="text-lg mt-2">{lesson.title}</CardTitle>
-                  {lesson.dueDate && (
-                     <div className={`flex items-center gap-1.5 mt-2 text-xs font-semibold ${new Date(lesson.dueDate) < new Date() ? 'text-red-600' : 'text-orange-600'}`}>
-                        {new Date(lesson.dueDate) < new Date() ? <AlertTriangle className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
-                        {new Date(lesson.dueDate) < new Date() ? 'Đã quá hạn: ' : 'Hạn hoàn thành: '}
-                        {new Date(lesson.dueDate).toLocaleString('vi-VN')}
-                     </div>
-                  )}
-                </CardHeader>
-                <CardContent className="pb-4">
-                  <p className="text-sm text-slate-600 line-clamp-2">
-                    Cấu hình sinh AI: {lesson.practiceConfig?.mcq || 0} Trắc nghiệm, {lesson.practiceConfig?.tf || 0} Đúng/Sai, {lesson.practiceConfig?.short || 0} Trả lời ngắn.
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-0 border-t mt-4 flex justify-between items-center py-3 bg-slate-50 rounded-b-xl">
-                  <span className="text-sm font-medium text-slate-600">Bắt đầu Thực hành</span>
-                  <ChevronRight className="h-4 w-4 text-indigo-600" />
-                </CardFooter>
-              </Card>
+          <div className="space-y-8">
+            {Object.entries(availableLessons.reduce((acc, curr) => {
+              if (!acc[curr.chapter]) acc[curr.chapter] = [];
+              acc[curr.chapter].push(curr);
+              return acc;
+            }, {} as Record<string, any[]>)).map(([chapter, lessonsInChapter]) => (
+              <div key={chapter} className="space-y-4">
+                <h2 className="text-xl font-bold border-b pb-2 text-indigo-900 border-indigo-100 flex items-center gap-2">
+                   <BookOpen className="h-5 w-5 text-indigo-500" />
+                   {chapter}
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {lessonsInChapter.map((lesson: any) => (
+                    <Card key={lesson.id} className="hover:border-indigo-300 transition-colors cursor-pointer" onClick={() => startPractice(lesson)}>
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">{lesson.chapter}</Badge>
+                          <Sparkles className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <CardTitle className="text-lg mt-2">{lesson.title}</CardTitle>
+                        {lesson.dueDate && (
+                           <div className={`flex items-center gap-1.5 mt-2 text-xs font-semibold ${new Date(lesson.dueDate) < new Date() ? 'text-red-600' : 'text-orange-600'}`}>
+                              {new Date(lesson.dueDate) < new Date() ? <AlertTriangle className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+                              {new Date(lesson.dueDate) < new Date() ? 'Đã quá hạn: ' : 'Hạn hoàn thành: '}
+                              {new Date(lesson.dueDate).toLocaleString('vi-VN')}
+                           </div>
+                        )}
+                      </CardHeader>
+                      <CardContent className="pb-4">
+                        <p className="text-sm text-slate-600 line-clamp-2">
+                          Cấu hình sinh AI: {lesson.practiceConfig?.mcq || 0} Trắc nghiệm, {lesson.practiceConfig?.tf || 0} Đúng/Sai, {lesson.practiceConfig?.short || 0} Trả lời ngắn.
+                        </p>
+                      </CardContent>
+                      <CardFooter className="pt-0 border-t mt-4 flex justify-between items-center py-3 bg-slate-50 rounded-b-xl">
+                        <span className="text-sm font-medium text-slate-600">Bắt đầu Thực hành</span>
+                        <ChevronRight className="h-4 w-4 text-indigo-600" />
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

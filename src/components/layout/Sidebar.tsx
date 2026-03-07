@@ -43,10 +43,15 @@ export function Sidebar() {
 
   return (
     <div className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 items-center px-6 border-b border-slate-200">
-        <div className="flex items-center gap-2 font-bold text-xl text-indigo-600">
-          <BookOpen className="h-6 w-6" />
-          <span>ChemAI LMS</span>
+      <div className="flex h-20 items-center px-6 border-b border-slate-200">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2 font-bold text-xl text-indigo-600">
+             <BookOpen className="h-6 w-6" />
+             <span>ChemAI LMS</span>
+          </div>
+          <span className="text-[10px] text-slate-500 mt-1 leading-tight">
+            Đồng tác giả: Thầy giáo Bùi Hữu Hải và thầy giáo Lương Hải Anh - Trường THPT Chuyên Nguyễn Trãi
+          </span>
         </div>
       </div>
       

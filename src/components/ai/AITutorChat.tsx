@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { MessageSquare, X, Send, Bot, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -9,16 +12,34 @@ import { toast } from "sonner";
 export function AITutorChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", content: "Chào bạn! Mình là AI Tutor. Bạn cần hỗ trợ gì về môn Hóa học hôm nay?" }
+    { role: "ai", content: "Chào bạn! Mình là Trợ giảng Hoá học thông minh. Bạn cần hỗ trợ gì bài tập hoặc kiến thức ngày hôm nay?" }
   ]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    
-    const userMessage = input;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  useEffect(() => {
+    const handleOpenChat = (e: any) => {
+      setIsOpen(true);
+      if (e.detail?.message) {
+        handleSendExternal(e.detail.message);
+      }
+    };
+    window.addEventListener('open-ai-tutor', handleOpenChat as EventListener);
+    return () => window.removeEventListener('open-ai-tutor', handleOpenChat as EventListener);
+  }, []);
+
+  const handleSendExternal = async (userMessage: string) => {
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    setInput("");
+    setIsTyping(true);
     
     try {
       const res = await fetch('/.netlify/functions/chat', {
@@ -33,16 +54,25 @@ export function AITutorChat() {
         content: data.reply 
       }]);
     } catch (err) {
-      toast.error("Không thể kết nối đến máy chủ AI (Lỗi mạng hoặc API Key không hợp lệ).");
+      toast.error("Không thể kết nối đến máy chủ AI.");
       setMessages(prev => [...prev, { 
         role: "ai", 
         content: "Xin lỗi, hiện tại mình không thể kết nối tới máy chủ AI." 
       }]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
+  const handleSend = async () => {
+    if (!input.trim() || isTyping) return;
+    const msg = input;
+    setInput("");
+    await handleSendExternal(msg);
+  };
+
   const clearChat = () => {
-    setMessages([{ role: "ai", content: "Chào bạn! Mình là AI Tutor. Mình đã dọn dẹp lịch sử, bạn cần hỗ trợ gì tiếp theo?" }]);
+    setMessages([{ role: "ai", content: "Chào bạn! Mình là Trợ giảng Hoá học. Mình đã dọn dẹp lịch sử, bạn cần hỗ trợ gì tiếp theo?" }]);
     toast.info("Đã làm mới cuộc hội thoại");
   };
 
@@ -63,7 +93,7 @@ export function AITutorChat() {
           <CardHeader className="p-4 border-b flex flex-row items-center justify-between bg-indigo-600 text-white rounded-t-xl">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              <CardTitle className="text-base font-medium text-white">AI Tutor</CardTitle>
+              <CardTitle className="text-base font-medium text-white">AI Trợ Giảng</CardTitle>
             </div>
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:bg-white/20 hover:text-white" onClick={clearChat} title="Làm mới">
@@ -75,19 +105,36 @@ export function AITutorChat() {
             </div>
           </CardHeader>
           
-          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                 <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0", 
                   msg.role === "user" ? "bg-slate-200" : "bg-indigo-100 text-indigo-600")}>
                   {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
-                <div className={cn("rounded-lg p-3 text-sm max-w-[80%]", 
-                  msg.role === "user" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-900")}>
-                  {msg.content}
+                <div className={cn("rounded-lg p-3 text-sm max-w-[85%] overflow-hidden", 
+                  msg.role === "user" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-800 prose prose-sm prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-white max-w-none")}>
+                  {msg.role === "user" ? (
+                    msg.content
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  )}
                 </div>
               </div>
             ))}
+            {isTyping && (
+              <div className="flex gap-2 flex-row items-center text-slate-400">
+                <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-400 flex items-center justify-center shrink-0">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="bg-slate-50 text-slate-500 rounded-lg py-2 px-3 text-sm flex gap-1 items-center italic">
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" /> AI đang suy nghĩ...
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </CardContent>
           
           <CardFooter className="p-3 border-t">
@@ -98,10 +145,11 @@ export function AITutorChat() {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Hỏi AI Tutor..." 
+                placeholder="Hỏi AI Trợ giảng..." 
                 className="flex-1"
+                disabled={isTyping}
               />
-              <Button type="submit" size="icon" disabled={!input.trim()}>
+              <Button type="submit" size="icon" disabled={!input.trim() || isTyping}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>

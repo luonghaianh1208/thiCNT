@@ -227,14 +227,23 @@ export function Lesson() {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              AI Tutor Gợi ý
+              AI Trợ Giảng Gợi ý
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-indigo-50 leading-relaxed mb-4">
-              Phần cân bằng phương trình oxi hóa - khử thường gây khó khăn. Bạn có muốn xem một ví dụ từng bước do AI hướng dẫn không?
+              Bạn có muốn được AI Trợ Giảng phân tích nội dung cốt lõi và hướng dẫn cách học bài "{lesson.title}" không?
             </p>
-            <Button variant="secondary" className="w-full bg-white text-indigo-600 hover:bg-indigo-50">
+            <Button 
+              variant="secondary" 
+              className="w-full bg-white text-indigo-600 hover:bg-indigo-50"
+              onClick={() => {
+                const evt = new CustomEvent('open-ai-tutor', {
+                  detail: { message: `Bạn có thể tóm tắt ngắn gọn trọng tâm và cho mình 1 ví dụ minh họa về nội dung bài học "${lesson.title}" được không?` }
+                });
+                window.dispatchEvent(evt);
+              }}
+            >
               Xem hướng dẫn chi tiết
             </Button>
           </CardContent>

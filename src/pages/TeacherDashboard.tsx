@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, BookOpen, BarChart3, Plus, UserCircle, CheckCircle, Pencil, X, Trash2, LayoutDashboard, UploadCloud, Download, FileText, Loader2 } from "lucide-react";
+import { Users, BookOpen, BarChart3, Plus, UserCircle, CheckCircle, Pencil, X, Trash2, LayoutDashboard, UploadCloud, Download, FileText, Loader2, Ban } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Storage } from "@/lib/storage";
@@ -178,6 +178,17 @@ export function TeacherDashboard() {
     setStudents(Storage.getStudents());
     setEditingStudentId(null);
     toast.success("Đã cập nhật thông tin học sinh!");
+  };
+
+  const toggleUserStatus = (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    Storage.updateStudentStatus(id, newStatus);
+    setStudents(Storage.getStudents());
+    if (newStatus === 'inactive') {
+      toast.warning("Đã khóa người dùng");
+    } else {
+      toast.success("Đã mở khóa người dùng");
+    }
   };
 
   const handleExtractTheory = async (e: React.ChangeEvent<HTMLInputElement>, isEditMode: boolean = false) => {
@@ -479,14 +490,30 @@ export function TeacherDashboard() {
                       </Badge>
                     </div>
                     {student.id !== 999 && editingStudentId !== student.id && activeTab === 'students' && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 ml-2" 
-                        onClick={() => startEditStudent(student)}
-                      >
-                        <Pencil className="h-4 w-4 text-slate-400 hover:text-indigo-600" />
-                      </Button>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center ml-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8" 
+                          onClick={() => startEditStudent(student)}
+                          title="Sửa thông tin"
+                        >
+                          <Pencil className="h-4 w-4 text-slate-400 hover:text-indigo-600" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8" 
+                          onClick={() => toggleUserStatus(student.id, student.status)}
+                          title={student.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}
+                        >
+                          {student.status === 'active' ? (
+                            <Ban className="h-4 w-4 text-slate-400 hover:text-red-600" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
