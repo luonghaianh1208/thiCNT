@@ -151,7 +151,7 @@ export function Practice() {
       setIsSubmitted(false);
     } else {
       const score = Math.round((correctCount / questions.length) * 100) || 0;
-      Storage.updateProgress(2, 'completed', score);
+      Storage.updateProgress(selectedLesson.id, 'completed', score);
       toast.success(`Hoàn thành xuất sắc ${selectedLesson?.title}! Bạn đạt ${score}/100 điểm.`);
       navigate('/analytics');
     }

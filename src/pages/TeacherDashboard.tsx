@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, BookOpen, BarChart3, Plus, UserCircle, CheckCircle, Pencil, X } from "lucide-react";
+import { Users, BookOpen, BarChart3, Plus, UserCircle, CheckCircle, Pencil, X, Trash2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Storage } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,14 @@ export function TeacherDashboard() {
     setLessons(Storage.getLessons());
     setEditingLesson(null);
     toast.success("Cập nhật bài giảng thành công!");
+  };
+
+  const handleDeleteLesson = (id: number) => {
+    if (confirm("Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa bài giảng này khỏi hệ thống không?")) {
+      Storage.deleteLesson(id);
+      setLessons(Storage.getLessons());
+      toast.success("Đã xóa bài giảng thành công!");
+    }
   };
 
   return (
@@ -243,9 +251,14 @@ export function TeacherDashboard() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleEditClick(lesson)} className="shrink-0 flex items-center gap-1">
-                     <Pencil className="h-3 w-3" /> Chỉnh sửa
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => handleEditClick(lesson)} className="flex items-center gap-1">
+                       <Pencil className="h-3 w-3" /> Sửa
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteLesson(lesson.id)} className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                       <Trash2 className="h-3 w-3" /> Xóa
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -80,7 +80,17 @@ export const Storage = {
 
   getStudents() {
     this.initialize();
-    return JSON.parse(localStorage.getItem('students_data') || '[]');
+    const mocks = JSON.parse(localStorage.getItem('students_data') || '[]');
+    const user = this.getUser();
+    const realStudent = {
+      id: 999,
+      name: user.name + " (Tài khoản của bạn)",
+      email: "student@chemai.edu.vn",
+      grade: "Lớp Thực hành",
+      score: user.overall_progress || 0,
+      status: "active"
+    };
+    return [realStudent, ...mocks];
   },
 
   addLesson(lessonData: any) {
@@ -106,6 +116,13 @@ export const Storage = {
     return updatedLesson;
   },
 
+  deleteLesson(id: number) {
+    const lessons = this.getLessons();
+    const updated = lessons.filter((l: any) => l.id !== id);
+    localStorage.setItem('lessons_data', JSON.stringify(updated));
+    return updated;
+  },
+
   updateStudentStatus(studentId: number, status: string) {
     const students = this.getStudents();
     const updated = students.map((s: any) => s.id === studentId ? { ...s, status } : s);
@@ -121,9 +138,10 @@ export const Storage = {
       return l;
     });
 
-    // Simple recalculation of overall progress
-    const completed = updatedLessons.filter((l: any) => l.status === 'completed').length;
-    const overallProgress = Math.round((completed / updatedLessons.length) * 100) || 0;
+    // Recalculate overall progress based on average score of completed lessons
+    const completed = updatedLessons.filter((l: any) => l.status === 'completed');
+    const totalScore = completed.reduce((sum: number, l: any) => sum + (l.score || 0), 0);
+    const overallProgress = completed.length > 0 ? Math.round(totalScore / completed.length) : 0;
 
     const user = this.getUser();
     user.overall_progress = overallProgress;
