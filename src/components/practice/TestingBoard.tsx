@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,8 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import { toast } from "sonner";
+import { Storage } from "@/lib/storage";
 
 function MathMarkdown({ content }: { content: string }) {
   return (
@@ -56,8 +59,22 @@ export function TestingBoard({
   onNext,
   onBack,
 }: TestingBoardProps) {
+  const [isReportBugOpen, setIsReportBugOpen] = useState(false);
+  const [bugReason, setBugReason] = useState("");
+
   const question = questions[currentIndex];
   if (!question) return null;
+
+  const handleReportBug = () => {
+    if (!bugReason.trim()) {
+      toast.error("Vui lòng nhập lý do báo lỗi.");
+      return;
+    }
+    Storage.addReportBug(lesson.title, question.type, bugReason);
+    toast.success("Cảm ơn bạn! Báo cáo lỗi đã được gửi cho Giáo viên.");
+    setIsReportBugOpen(false);
+    setBugReason("");
+  };
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -278,13 +295,17 @@ export function TestingBoard({
         </CardContent>
 
         <CardFooter className="bg-slate-50/50 border-t p-5 flex justify-between gap-4">
-          <Button variant="ghost" className="text-slate-500 hover:text-slate-700 bg-white border shadow-sm">
+          <Button 
+            variant="ghost" 
+            className="text-slate-500 hover:text-red-600 bg-white border shadow-sm"
+            onClick={() => setIsReportBugOpen(true)}
+          >
             Báo lỗi câu hỏi
           </Button>
           {!isSubmitted ? (
             <Button
               onClick={onSubmit}
-              disabled={selectedAnswer === null}
+              disabled={(question.type === "short" && !shortAnswerText.trim()) || (question.type !== "short" && selectedAnswer === null)}
               className="min-w-[140px] text-base h-11 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
             >
               Kiểm tra
@@ -299,6 +320,34 @@ export function TestingBoard({
           )}
         </CardFooter>
       </Card>
+
+      {/* Report Bug Modal */}
+      {isReportBugOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="max-w-md w-full animate-in zoom-in-95 duration-200">
+            <CardHeader className="pb-3 border-b border-slate-100">
+              <CardTitle className="text-lg">Báo cáo Lỗi Câu hỏi</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <p className="text-sm text-slate-500">
+                Nếu bạn thấy câu hỏi sai, thiếu dữ kiện, hoặc đáp án không chính xác. Hãy gửi phản hồi cho giáo viên.
+              </p>
+              <textarea
+                value={bugReason}
+                onChange={(e) => setBugReason(e.target.value)}
+                placeholder="Ví dụ: Câu hỏi A sai đề, không có đáp án đúng..."
+                className="w-full min-h-[100px] text-sm p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </CardContent>
+            <CardFooter className="bg-slate-50/50 border-t p-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsReportBugOpen(false)}>Hủy</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReportBug}>
+                Gửi Báo Lỗi
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

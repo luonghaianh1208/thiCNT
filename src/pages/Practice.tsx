@@ -17,7 +17,7 @@ export function Practice() {
   const [shortAnswerText, setShortAnswerText] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [generatingLesson, setGeneratingLesson] = useState<any>(null);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [earnedScore, setEarnedScore] = useState(0);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const [isPracticeStarted, setIsPracticeStarted] = useState(false);
@@ -173,13 +173,34 @@ export function Practice() {
     window.dispatchEvent(new CustomEvent("practice-state", { detail: { isPractice: false } }));
   };
 
+  const getQuestionWeight = (type: string) => {
+    switch (type) {
+      case "mcq": return 1;
+      case "tf": return 0.5;
+      case "short": return 2;
+      case "cloze": return 2;
+      default: return 1;
+    }
+  };
+
   const handleSubmit = () => {
-    if (selectedAnswer === null) return;
-    setIsSubmitted(true);
     const question = questions[currentIndex];
-    const isCorrect = selectedAnswer === question.correctAnswer;
+    if (question.type === "short" && !shortAnswerText.trim()) return;
+    if (question.type !== "short" && selectedAnswer === null) return;
+    
+    setIsSubmitted(true);
+    let isCorrect = false;
+
+    if (question.type === "short") {
+      const answerNorm = String(question.answer).toLowerCase().trim();
+      const inputNorm  = shortAnswerText.toLowerCase().trim();
+      isCorrect  = inputNorm.includes(answerNorm) || answerNorm.includes(inputNorm);
+    } else {
+      isCorrect = selectedAnswer === question.correctAnswer;
+    }
+
     if (isCorrect) {
-      setCorrectCount((prev) => prev + 1);
+      setEarnedScore((prev) => prev + getQuestionWeight(question.type));
       toast.success("Chính xác! 🚀");
     } else {
       toast.error("Chưa chính xác! Hãy đọc kỹ phần giải thích nhé 👀");
@@ -190,16 +211,20 @@ export function Practice() {
     if (currentIndex < questions.length - 1 && !forceSubmit) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedAnswer(null);
+      setShortAnswerText("");
       setIsSubmitted(false);
       setIsDraggingOver(false);
     } else {
-      const score = Math.round((correctCount / questions.length) * 100) || 0;
-      Storage.updateProgress(selectedLesson.id, "completed", score);
+      const maxScore = questions.reduce((sum, q) => sum + getQuestionWeight(q.type), 0);
+      const scorePercentage = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 0;
+      
+      Storage.updateProgress(selectedLesson.id, "completed", scorePercentage);
       window.dispatchEvent(new CustomEvent("practice-state", { detail: { isPractice: false } }));
+      
       if (forceSubmit) {
-        toast.warning(`Hết giờ! Tự động nộp bài. Bạn đạt ${score}/100 điểm.`);
+        toast.warning(`Hết giờ! Tự động nộp bài. Bạn đạt ${scorePercentage}/100 điểm.`);
       } else {
-        toast.success(`Hoàn thành xuất sắc ${selectedLesson?.title}! Bạn đạt ${score}/100 điểm.`);
+        toast.success(`Hoàn thành xuất sắc ${selectedLesson?.title}! Bạn đạt ${scorePercentage}/100 điểm.`);
       }
       navigate("/analytics");
     }

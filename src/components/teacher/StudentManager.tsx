@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { UserCircle, Pencil, Ban, CheckCircle, UploadCloud, Download } from "lucide-react";
+import { UserCircle, Pencil, Ban, CheckCircle, UploadCloud, Download, Trash2, Key } from "lucide-react";
 
 interface StudentManagerProps {
   students: any[];
@@ -15,6 +15,8 @@ interface StudentManagerProps {
   saveEditStudent: (id: number) => void;
   startEditStudent: (student: any) => void;
   toggleUserStatus: (id: number, status: string) => void;
+  deleteStudent: (id: number) => void;
+  resetStudentPassword: (id: number) => void;
   handleDownloadSample: () => void;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -29,6 +31,8 @@ export function StudentManager({
   saveEditStudent,
   startEditStudent,
   toggleUserStatus,
+  deleteStudent,
+  resetStudentPassword,
   handleDownloadSample,
   handleFileUpload,
 }: StudentManagerProps) {
@@ -121,10 +125,32 @@ export function StudentManager({
                       title={student.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
                     >
                       {student.status === "active" ? (
-                        <Ban className="h-4 w-4 text-slate-400 hover:text-red-600" />
+                        <Ban className="h-4 w-4 text-slate-400 hover:text-orange-500" />
                       ) : (
                         <CheckCircle className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
                       )}
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon" className="h-8 w-8"
+                      onClick={() => {
+                        if (confirm(`Bạn có chắc chắn muốn xóa học sinh ${student.name} không? Hành động này không thể hoàn tác.`)) {
+                          deleteStudent(student.id);
+                        }
+                      }}
+                      title="Xóa học sinh"
+                    >
+                      <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon" className="h-8 w-8"
+                      onClick={() => {
+                        if (confirm(`Đặt lại mật khẩu cho ${student.name} về mặc định (LMS123456)?`)) {
+                          resetStudentPassword(student.id);
+                        }
+                      }}
+                      title="Đặt lại mật khẩu"
+                    >
+                      <Key className="h-4 w-4 text-slate-400 hover:text-blue-500" />
                     </Button>
                   </div>
                 )}

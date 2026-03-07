@@ -7,6 +7,7 @@ import { CHEMISTRY_CURRICULUM } from "@/lib/curriculum";
 import { TeacherStats }    from "@/components/teacher/TeacherStats";
 import { LessonManager }   from "@/components/teacher/LessonManager";
 import { StudentManager }  from "@/components/teacher/StudentManager";
+import { TeacherReports }  from "@/components/teacher/TeacherReports";
 
 // --- Helpers ---
 const getEmbedUrl = (url: string) => {
@@ -132,6 +133,11 @@ export function TeacherDashboard() {
     }
   };
 
+  const handleReorderLesson = (id: number, direction: 'up' | 'down') => {
+    Storage.reorderLesson(id, direction);
+    setLessons(Storage.getLessons());
+  };
+
   // ---- OCR ----
   const handleExtractTheory = async (e: React.ChangeEvent<HTMLInputElement>, isEditMode: boolean = false) => {
     const file = e.target.files?.[0];
@@ -221,6 +227,17 @@ export function TeacherDashboard() {
     newStatus === "inactive" ? toast.warning("Đã khóa người dùng") : toast.success("Đã mở khóa người dùng");
   };
 
+  const deleteStudent = (id: number) => {
+    Storage.deleteStudent(id);
+    setStudents(Storage.getStudents());
+    toast.success("Đã xóa học sinh thành công!");
+  };
+
+  const resetStudentPassword = (id: number) => {
+    Storage.resetStudentPassword(id);
+    toast.success("Đã đặt lại mật khẩu về mặc định (LMS123456)!");
+  };
+
   // — Page header labels —
   const headingMap: Record<string, string> = {
     dashboard: "Tính năng Giáo viên",
@@ -263,19 +280,25 @@ export function TeacherDashboard() {
             // handlers
             handleCreateLesson={handleCreateLesson} handleUpdateLesson={handleUpdateLesson}
             handleDeleteLesson={handleDeleteLesson} handleEditClick={handleEditClick}
+            handleReorderLesson={handleReorderLesson}
             handleExtractTheory={handleExtractTheory}
           />
         )}
 
-        {(activeTab === "students" || activeTab === "reports") && (
+        {activeTab === "students" && (
           <StudentManager
             students={students} activeTab={activeTab}
             editingStudentId={editingStudentId} editingStudentData={editingStudentData}
             setEditingStudentId={setEditingStudentId} setEditingStudentData={setEditingStudentData}
             saveEditStudent={saveEditStudent} startEditStudent={startEditStudent}
             toggleUserStatus={toggleUserStatus}
+            deleteStudent={deleteStudent} resetStudentPassword={resetStudentPassword}
             handleDownloadSample={handleDownloadSample} handleFileUpload={handleFileUpload}
           />
+        )}
+
+        {activeTab === "reports" && (
+          <TeacherReports students={students} lessons={lessons} />
         )}
       </div>
     </>

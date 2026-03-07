@@ -1,9 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Plus, Pencil, Trash2, Loader2, FileText, X } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, Loader2, FileText, X, ArrowUp, ArrowDown, Search, Filter } from "lucide-react";
 import { CHEMISTRY_CURRICULUM } from "@/lib/curriculum";
 
 // --- Types ---
@@ -57,6 +57,7 @@ interface LessonManagerProps {
   handleUpdateLesson: (e: React.FormEvent) => void;
   handleDeleteLesson: (id: number) => void;
   handleEditClick: (lesson: any) => void;
+  handleReorderLesson: (id: number, direction: 'up' | 'down') => void;
   handleExtractTheory: (e: React.ChangeEvent<HTMLInputElement>, isEditMode: boolean) => void;
 }
 
@@ -72,11 +73,22 @@ export function LessonManager({
   setYoutubeUrl, setTheoryContent,
   setMcqCount, setTfCount, setShortCount, setPassingPercentage, setTimeLimit, setDueDate,
   editingLesson, setEditingLesson, isExtractingEdit,
-  handleCreateLesson, handleUpdateLesson, handleDeleteLesson, handleEditClick,
+  handleCreateLesson, handleUpdateLesson, handleDeleteLesson, handleEditClick, handleReorderLesson,
   handleExtractTheory,
 }: LessonManagerProps) {
   const ocrInputRef    = useRef<HTMLInputElement>(null);
   const ocrEditInputRef = useRef<HTMLInputElement>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterChapter, setFilterChapter] = useState("");
+
+  const filteredLessons = lessons.filter(l => {
+    const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesChapter = filterChapter ? l.chapter === filterChapter : true;
+    return matchesSearch && matchesChapter;
+  });
+
+  const allChapters = Array.from(new Set(lessons.map(l => l.chapter)));
 
   return (
     <div className="space-y-6">
@@ -182,12 +194,44 @@ export function LessonManager({
       {/* Lesson list */}
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Danh sách Bài giảng đã tạo</CardTitle>
-          <CardDescription>Xem và chỉnh sửa lại nội dung các bài học hiện có.</CardDescription>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div>
+              <CardTitle>Danh sách Bài giảng đã tạo</CardTitle>
+              <CardDescription>Xem và chỉnh sửa lại nội dung các bài học hiện có.</CardDescription>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                <Input
+                  placeholder="Tìm kiếm bài giảng..."
+                  className="pl-9 w-full sm:w-[250px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="relative">
+                <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                <select
+                  className={`${selectClass} pl-9 w-full sm:w-[200px] h-10`}
+                  value={filterChapter}
+                  onChange={(e) => setFilterChapter(e.target.value)}
+                >
+                  <option value="">Tất cả các chương</option>
+                  {allChapters.map(chap => (
+                    <option key={chap as string} value={chap as string}>{chap as string}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {lessons.map(lesson => (
+            {filteredLessons.length === 0 ? (
+              <div className="text-center p-8 text-slate-500 border rounded-lg bg-slate-50/50">
+                Không tìm thấy bài giảng nào phù hợp.
+              </div>
+            ) : filteredLessons.map((lesson, index) => (
               <div key={lesson.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg hover:bg-slate-50 gap-4">
                 <div className="flex items-start gap-3">
                   <BookOpen className="h-6 w-6 text-indigo-500 shrink-0 mt-1" />
@@ -201,7 +245,17 @@ export function LessonManager({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex flex-col gap-0.5 mr-2 bg-slate-100 rounded">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-t" 
+                      onClick={() => handleReorderLesson(lesson.id, 'up')} disabled={index === 0}>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-b border-t border-slate-200" 
+                      onClick={() => handleReorderLesson(lesson.id, 'down')} disabled={index === filteredLessons.length - 1}>
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(lesson)} className="flex items-center gap-1">
                     <Pencil className="h-3 w-3" /> Sửa
                   </Button>

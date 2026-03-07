@@ -130,6 +130,26 @@ export const Storage = {
     return updated;
   },
 
+  reorderLesson(id: number, direction: 'up' | 'down') {
+    const lessons = this.getLessons().sort((a: any, b: any) => a.order_index - b.order_index);
+    const index = lessons.findIndex((l: any) => l.id === id);
+    if (index === -1) return lessons;
+    
+    if (direction === 'up' && index > 0) {
+      const temp = lessons[index].order_index;
+      lessons[index].order_index = lessons[index - 1].order_index;
+      lessons[index - 1].order_index = temp;
+    } else if (direction === 'down' && index < lessons.length - 1) {
+      const temp = lessons[index].order_index;
+      lessons[index].order_index = lessons[index + 1].order_index;
+      lessons[index + 1].order_index = temp;
+    }
+    
+    lessons.sort((a: any, b: any) => a.order_index - b.order_index);
+    localStorage.setItem('lessons_data', JSON.stringify(lessons));
+    return lessons;
+  },
+
   updateStudentStatus(studentId: number, status: string) {
     const students = this.getStudents();
     const updated = students.map((s: any) => s.id === studentId ? { ...s, status } : s);
@@ -155,6 +175,18 @@ export const Storage = {
     const students = JSON.parse(localStorage.getItem('students_data') || '[]');
     const updated = students.map((s: any) => s.id === id ? { ...s, ...updatedData } : s);
     localStorage.setItem('students_data', JSON.stringify(updated));
+  },
+
+  deleteStudent(id: number) {
+    const students = JSON.parse(localStorage.getItem('students_data') || '[]');
+    const updated = students.filter((s: any) => s.id !== id);
+    localStorage.setItem('students_data', JSON.stringify(updated));
+  },
+
+  resetStudentPassword(id: number) {
+    // In a real database, this would generate a temp password or reset token
+    // For this mock, we just return true to confirm action
+    return true;
   },
 
   updateProgress(lessonId: number, status: string, score: number) {
@@ -193,5 +225,25 @@ export const Storage = {
        timestamp: new Date().toISOString()
     });
     localStorage.setItem('cheat_warnings', JSON.stringify(warnings));
+  },
+
+  getReportedBugs() {
+    this.initialize();
+    return JSON.parse(localStorage.getItem('reported_bugs') || '[]');
+  },
+
+  addReportBug(lessonTitle: string, questionType: string, reason: string) {
+    const bugs = this.getReportedBugs();
+    const user = this.getUser();
+    bugs.unshift({
+      id: Date.now(),
+      studentName: user.name,
+      lessonTitle,
+      questionType,
+      reason,
+      timestamp: new Date().toISOString(),
+      status: 'pending'
+    });
+    localStorage.setItem('reported_bugs', JSON.stringify(bugs));
   }
 };
