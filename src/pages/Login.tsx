@@ -13,23 +13,30 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (emailVal: string, passwordVal: string) => {
+    if (!emailVal || !passwordVal) {
+      toast.error('Vui lòng nhập email và mật khẩu.');
+      return;
+    }
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailVal,
+        password: passwordVal,
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.toLowerCase().includes('invalid login credentials')) {
+          toast.error('Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.');
+        } else if (error.message.toLowerCase().includes('email not confirmed')) {
+          toast.error('Vui lòng xác nhận email trước khi đăng nhập.');
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
-      // If successful, the AuthProvider will handle the state change
-      // App.tsx router will pick up the profile and redirect
       toast.success('Đăng nhập thành công!');
       navigate('/');
     } catch (err: any) {
@@ -39,10 +46,15 @@ export function Login() {
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleLogin(email, password);
+  };
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
+    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 p-4">
+      <Card className="w-full max-w-sm shadow-lg border-slate-200">
+        <CardHeader className="text-center pb-2">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent">
             Chem AI LMS
           </CardTitle>
@@ -51,54 +63,31 @@ export function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Email</label>
-              <Input 
-                type="email" 
-                placeholder="teacher@chemai.edu.vn" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
+              <Input
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
-              <Input 
-                type="password" 
-                placeholder="••••••••" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required 
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Đăng Nhập'}
-            </Button>
-            
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">Hoặc</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setEmail('gv@gmail.com');
-                setPassword('gv@123');
-                setTimeout(() => {
-                  const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                  document.querySelector('form')?.dispatchEvent(submitEvent);
-                }, 100);
-              }}
-            >
-              Đăng nhập bằng tài khoản Giáo viên
             </Button>
           </form>
         </CardContent>
