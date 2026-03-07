@@ -55,9 +55,11 @@ export function Analytics() {
   let activePerformanceData: any[] = [];
   if (totalCompleted > 0) {
      activePerformanceData = [
-       { name: 'Bắt đầu', score: 5.0 },
-       { name: 'Gần đây', score: Math.max(5.0, (avgScore / 10) - 1.5) },
-       { name: 'Hiện tại', score: Math.round(avgScore) / 10 },
+       { name: 'Khởi điểm', score: 0.0 }, // First base
+       ...completedLessons.map((l: any, i: number) => ({
+          name: `Lần ${i+1}`,
+          score: l.score / 10 // Convert 100 scale to 10 scale for chart
+       }))
      ];
   }
 

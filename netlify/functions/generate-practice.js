@@ -24,7 +24,7 @@ export const handler = async (event) => {
     else if (studentScore < 50) difficulty = "Đơn giản (Nhận biết/Thông hiểu cơ bản)";
 
     const prompt = `
-Bạn là một trợ lý giáo viên môn Hóa học xuất sắc.
+Bạn là một trợ lý giáo viên môn Hóa học xuất sắc, luôn bám sát **Chương trình Giáo dục phổ thông 2018 môn Hóa học của Bộ GD&ĐT Việt Nam**.
 Dựa trên Nội dung Lý thuyết sau:
 """
 ${theory}
@@ -35,6 +35,12 @@ Cấu trúc bài tập yêu cầu theo đúng số lượng sau:
 - Câu trắc nghiệm (MCQ): ${config.mcq || 0} câu
 - Câu Đúng/Sai (True/False): ${config.tf || 0} câu
 - Câu trả lời ngắn (Short Answer): ${config.short || 0} câu
+
+**CẢNH BÁO QUAN TRỌNG VỀ DANH PHÁP (CHUẨN 2018):**
+Tuyệt đối sử dụng **Danh pháp quốc tế (IUPAC)** có phiên âm tiếng Anh theo chuẩn GDPT 2018 thay vì danh pháp tiếng Việt cũ.
+- Ví dụ BẮT BUỘC: phải dùng "Acid" (thay vì axit), "Base" (thay vì bazơ), "Oxide" (thay vì oxit), "Hydro" (thay vì Hidro/Hiđro), "Oxygen" (thay vì oxi)...
+- Tên nguyên tố: "Copper" (thay vì Đồng), "Iron" (thay vì Sắt), "Sodium" (thay vì Natri), "Potassium" (thay vì Kali), "Calcium" (thay vì Canxi)...
+Nếu nội dung Lý thuyết đưa vào có chứa từ cũ, bạn PHẢI TỰ ĐỘNG chuyển đổi sang danh pháp chuẩn 2018 trong mọi Câu hỏi và Lời giải thích.
 
 YÊU CẦU ĐỊNH DẠNG ĐẦU RA BẮT BUỘC (JSON STRICT):
 Trả về duy nhất 1 object JSON với cấu trúc mảng "questions". Trả về cấu trúc dưới đây, không kèm markdown \`\`\`json.
