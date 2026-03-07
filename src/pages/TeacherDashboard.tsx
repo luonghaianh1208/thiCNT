@@ -193,12 +193,15 @@ export function TeacherDashboard() {
   // ---- Student management ----
   const handleDownloadSample = () => {
     const ws = XLSX.utils.json_to_sheet([
-      { "Họ và tên": "Nguyễn Văn A", "Email": "nva@gmail.com", "Lớp": "10A1" },
-      { "Họ và tên": "Trần Thị B",   "Email": "ttb@gmail.com", "Lớp": "10A2" },
+      { "Họ và tên": "Nguyễn Văn A", "Email": "nva@gmail.com", "Mật khẩu": "LMS123456", "Khối": "10", "Lớp": "10A1" },
+      { "Họ và tên": "Trần Thị B",   "Email": "ttb@gmail.com", "Mật khẩu": "LMS123456", "Khối": "11", "Lớp": "11B2" },
+      { "Họ và tên": "Lê Văn C",     "Email": "lvc@gmail.com", "Mật khẩu": "LMS123456", "Khối": "12", "Lớp": "12C3" },
     ]);
+    // Set column widths
+    ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 8 }, { wch: 10 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Danh_sach_lop");
-    XLSX.writeFile(wb, "Sample_Hoc_Sinh.xlsx");
+    XLSX.writeFile(wb, "Mau_Danh_Sach_Hoc_Sinh.xlsx");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,18 +212,40 @@ export function TeacherDashboard() {
       try {
         const wb   = XLSX.read(evt.target?.result, { type: "binary" });
         const ws   = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
-        let count  = 0;
-        for (const row of data) {
-          if (row["Họ và tên"] && row["Email"]) {
-            await Storage.addStudent({ name: row["Họ và tên"], email: row["Email"], grade: row["Lớp"] || "Chưa xếp lớp" });
-            count++;
-          }
+        const rows = XLSX.utils.sheet_to_json(ws) as any[];
+
+        const users = rows
+          .filter(r => r["Họ và tên"] && r["Email"] && r["Mật khẩu"])
+          .map(r => ({
+            full_name: String(r["Họ và tên"]).trim(),
+            email:     String(r["Email"]).trim().toLowerCase(),
+            password:  String(r["Mật khẩu"]).trim(),
+            grade:     `Khối ${r["Khối"] || ''} - ${r["Lớp"] || ''}`.trim(),
+          }));
+
+        if (users.length === 0) {
+          toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra cột: Họ và tên, Email, Mật khẩu');
+          return;
         }
+
+        toast.info(`Đang tạo ${users.length} tài khoản...`);
+
+        const res  = await fetch('/.netlify/functions/bulk-create-users', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ users }),
+        });
+        const result = await res.json();
+
         setStudents(await Storage.getStudents());
-        toast.success(`Đã nhập thành công ${count} học sinh từ Excel!`);
+
+        if (result.failCount > 0) {
+          toast.warning(`Hoàn thành: ${result.successCount} thành công, ${result.failCount} lỗi. Kiểm tra email trùng hoặc thiếu thông tin.`);
+        } else {
+          toast.success(`Đã tạo thành công ${result.successCount} tài khoản học sinh!`);
+        }
       } catch {
-        toast.error("Lỗi đọc file Excel. Vui lòng thử lại với file mẫu.");
+        toast.error('Lỗi đọc file Excel hoặc tạo tài khoản. Vui lòng dùng file mẫu.');
       }
     };
     reader.readAsBinaryString(file);
