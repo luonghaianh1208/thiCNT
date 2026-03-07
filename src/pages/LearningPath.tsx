@@ -14,7 +14,6 @@ export function LearningPath() {
    const navigate = useNavigate();
 
    const buildChapters = () => {
-     setTimeout(() => {
          const lessonsData = Storage.getLessons().sort((a: any, b: any) => a.order_index - b.order_index);
          
          let previousPassed = true; // First lesson is always unlocked
