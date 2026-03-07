@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlayCircle, FileText, CheckCircle2, ChevronRight, HelpCircle, Sparkles, CheckCircle } from "lucide-react";
+import { PlayCircle, FileText, CheckCircle2, ChevronRight, HelpCircle, Sparkles, CheckCircle, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,21 @@ export function Lesson() {
   const [allLessons, setAllLessons] = useState<any[]>([]);
 
   useEffect(() => {
-    const lessons = Storage.getLessons();
-    setAllLessons(lessons);
+    const lessons = Storage.getLessons() || [];
+    let previousPassed = true;
+    const processedLessons = lessons.map((lesson: any) => {
+      const hasPassed = lesson.status === 'completed' && (lesson.score || 0) >= (lesson.passingPercentage || 80);
+      const isLocked = !previousPassed;
+      previousPassed = hasPassed;
+      return { ...lesson, _computedLocked: isLocked };
+    });
+
+    setAllLessons(processedLessons);
     if (lessonId) {
-      const found = lessons.find((l: any) => l.id === lessonId);
+      const found = processedLessons.find((l: any) => l.id === lessonId);
       setLesson(found);
-    } else if (lessons.length > 0) {
-      setLesson(lessons[0]);
+    } else if (processedLessons.length > 0) {
+      setLesson(processedLessons[0]);
     }
   }, [lessonId]);
 
@@ -59,7 +67,24 @@ export function Lesson() {
     <div className="flex items-start gap-6">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
+        {lesson._computedLocked ? (
+          <div className="flex-1 flex items-center justify-center py-20 bg-white rounded-xl border border-slate-200">
+            <div className="max-w-md w-full text-center space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
+                <Lock className="h-8 w-8 text-slate-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Bài học đã bị khóa</h2>
+              <p className="text-slate-500 leading-relaxed">
+                Bạn cần hoàn thành bài học trước đó và đạt yêu cầu điểm số để mở khóa nội dung này.
+              </p>
+              <Button onClick={() => navigate('/learning-path')} className="mt-4 bg-slate-900 hover:bg-slate-800 text-white px-8">
+                Quay lại Lộ trình học tập
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
               <span>{lesson.chapter}</span>
@@ -158,6 +183,8 @@ export function Lesson() {
              )}
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Sidebar - Lesson Navigation */}
@@ -174,13 +201,16 @@ export function Lesson() {
                   {lessonsInChapter.map((l: any, idx: number) => (
                     <div 
                       key={l.id} 
-                      onClick={() => navigate(`/lessons?id=${l.id}`)}
-                      className={`flex items-start gap-3 p-2 rounded-md text-sm cursor-pointer transition-colors
-                        ${l.id === lesson.id ? 'bg-indigo-50 font-medium text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}
+                      onClick={() => !l._computedLocked && navigate(`/lessons?id=${l.id}`)}
+                      className={`flex items-start gap-3 p-2 rounded-md text-sm transition-colors
+                        ${l._computedLocked ? 'opacity-60 cursor-not-allowed text-slate-400 hover:bg-transparent' : 'cursor-pointer text-slate-600 hover:bg-slate-50'}
+                        ${l.id === lesson.id ? 'bg-indigo-50 font-medium text-indigo-700' : ''}
                       `}
                     >
                       {l.status === 'completed' ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className={`h-4 w-4 shrink-0 mt-0.5 ${l.id === lesson.id ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                      ) : l._computedLocked ? (
+                        <Lock className={`h-4 w-4 shrink-0 mt-0.5 text-slate-300`} />
                       ) : (
                         <PlayCircle className={`h-4 w-4 shrink-0 mt-0.5 ${l.id === lesson.id ? 'text-indigo-600' : 'text-slate-400'}`} />
                       )}
