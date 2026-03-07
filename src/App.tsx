@@ -28,13 +28,9 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
     return <Navigate to="/login" replace />;
   }
 
-  // Profile not loaded yet
+  // Session exists but profile couldn't be loaded — don't spin, just redirect to login
   if (!profile) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-      </div>
-    );
+    return <Navigate to="/login" replace />;
   }
 
   // Pending approval for students
