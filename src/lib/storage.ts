@@ -338,6 +338,95 @@ export const Storage = {
       question_text: `[${questionType}] at ${lessonTitle}`,
       reason, status: 'pending'
     });
+  },
+
+  // Get all students with aggregated progress stats for teacher reports
+  async getStudentsWithProgress() {
+    const { data: students } = await supabase
+      .from('users')
+      .select('id, full_name, email, grade, overall_progress, status')
+      .eq('role', 'student')
+      .order('full_name', { ascending: true });
+
+    if (!students || students.length === 0) return [];
+
+    // Fetch progress for all students in one query
+    const studentIds = students.map((s: any) => s.id);
+    const { data: allProgress } = await supabase
+      .from('progress')
+      .select('student_id, status, score, study_time_minutes, lessons(title, chapter, passing_percentage)')
+      .in('student_id', studentIds);
+
+    const progressMap: Record<string, any[]> = {};
+    (allProgress || []).forEach((p: any) => {
+      if (!progressMap[p.student_id]) progressMap[p.student_id] = [];
+      progressMap[p.student_id].push(p);
+    });
+
+    return students.map((s: any) => {
+      const progs = progressMap[s.id] || [];
+      const completed = progs.filter((p: any) => p.status === 'completed');
+      const avgScore = completed.length > 0
+        ? Math.round(completed.reduce((sum: number, p: any) => sum + (p.score || 0), 0) / completed.length)
+        : 0;
+      const totalMinutes = progs.reduce((sum: number, p: any) => sum + (p.study_time_minutes || 0), 0);
+      return {
+        id: s.id,
+        name: s.full_name,
+        email: s.email,
+        grade: s.grade || 'Chưa phân khối',
+        status: s.status,
+        completedCount: completed.length,
+        attemptedCount: progs.length,
+        avgScore,
+        totalMinutes,
+        overallProgress: s.overall_progress || 0,
+        lessons: completed.map((p: any) => ({
+          title: p.lessons?.title || 'Bài học',
+          chapter: p.lessons?.chapter || '',
+          score: p.score || 0,
+          passingPercentage: p.lessons?.passing_percentage || 80,
+          studyMinutes: p.study_time_minutes || 0
+        }))
+      };
+    });
+  },
+
+  // Send feedback comment from teacher to a student
+  async sendTeacherComment(studentId: string, message: string, lessonId?: number, chapter?: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('teacher_comments').insert({
+      teacher_id: user.id,
+      student_id: studentId,
+      lesson_id: lessonId ?? null,
+      chapter: chapter ?? null,
+      message
+    });
+  },
+
+  // Get teacher comments for the current student (for notification panel)
+  async getTeacherCommentsForMe() {
+    const userRow = await getCurrentUserRow();
+    if (!userRow) return [];
+    const { data } = await supabase
+      .from('teacher_comments')
+      .select('*')
+      .eq('student_id', userRow.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    return (data || []).map((c: any) => ({
+      id: c.id,
+      message: c.message,
+      chapter: c.chapter,
+      isRead: c.is_read,
+      createdAt: c.created_at
+    }));
+  },
+
+  // Mark a comment as read
+  async markCommentRead(commentId: number) {
+    await supabase.from('teacher_comments').update({ is_read: true }).eq('id', commentId);
   }
 };
 

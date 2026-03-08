@@ -46,6 +46,19 @@ export function Header() {
           });
         });
       } else {
+        // Teacher comments for student
+        const teacherComments = await Storage.getTeacherCommentsForMe();
+        teacherComments.forEach((c: any) => {
+          notifs.push({
+            type: c.isRead ? 'success' : 'critical',
+            title: `📝 Nhận xét từ Giáo viên${c.chapter ? ` ("${c.chapter}")` : ''}`,
+            message: c.message,
+            time: new Date(c.createdAt),
+            commentId: c.id,
+            isRead: c.isRead
+          });
+        });
+
         allLessons.forEach((lesson: any) => {
           if (lesson.dueDate && lesson.status !== 'completed') {
             const dueTime = new Date(lesson.dueDate).getTime();
@@ -110,6 +123,15 @@ export function Header() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'progress' }, () => generateNotifications())
         .subscribe();
 
+      // Student gets instant toast when teacher sends a comment
+      const commentChannel = supabase.channel('rt_teacher_comments')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'teacher_comments' }, (payload) => {
+          const row = payload.new as any;
+          toast.info(`📝 Giáo viên vừa gửi nhận xét cho bạn!`, { duration: 6000 });
+          generateNotifications();
+        })
+        .subscribe();
+
       const handleClickOutside = (e: MouseEvent) => {
         if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false);
         if (themeRef.current && !themeRef.current.contains(e.target as Node)) setShowTheme(false);
@@ -117,6 +139,7 @@ export function Header() {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         progressChannel.unsubscribe();
+        commentChannel.unsubscribe();
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
