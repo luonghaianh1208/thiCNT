@@ -11,9 +11,10 @@ import rehypeKatex from "rehype-katex";
 import { toast } from "sonner";
 import { Storage } from "@/lib/storage";
 
-function MathMarkdown({ content }: { content: string }) {
+function MathMarkdown({ content, inline = false }: { content: string; inline?: boolean }) {
+  const Wrapper = inline ? 'span' : 'span';
   return (
-    <div className="prose prose-slate max-w-none text-base">
+    <Wrapper className="prose prose-slate max-w-none text-[inherit] leading-[inherit]">
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
@@ -23,7 +24,7 @@ function MathMarkdown({ content }: { content: string }) {
       >
         {content}
       </ReactMarkdown>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -99,9 +100,11 @@ export function TestingBoard({
   const renderQuestionText = () => {
     if (question.type === "cloze") {
       const parts = question.text.split("___");
+      const beforeText = parts[0] || "";
+      const afterText = parts[1] || "";
       return (
-        <span>
-          {parts[0]}
+        <span className="text-xl font-medium text-slate-900 leading-relaxed">
+          <MathMarkdown content={beforeText} inline />
           <span
             onDragOver={(e) => { e.preventDefault(); onSetIsDraggingOver(true); }}
             onDragLeave={() => onSetIsDraggingOver(false)}
@@ -111,16 +114,18 @@ export function TestingBoard({
               if (!isSubmitted) onSelectAnswer(e.dataTransfer.getData("text/plain"));
             }}
             className={cn(
-              "inline-flex items-center min-w-[120px] mx-2 px-3 py-1 border-b-2 border-dashed rounded-lg transition-all text-indigo-700 font-bold bg-indigo-50",
+              "inline-flex items-center min-w-[140px] mx-2 px-4 py-1.5 border-b-2 border-dashed rounded-lg transition-all font-bold bg-indigo-50 text-indigo-700 align-middle",
               isDraggingOver && "border-indigo-500 bg-indigo-100 scale-105",
-              selectedAnswer ? "border-indigo-500" : "border-slate-300"
+              selectedAnswer ? "border-indigo-500 bg-indigo-100" : "border-slate-300"
             )}
           >
-            {selectedAnswer ?? (
-              <span className="text-slate-400 italic text-sm">Thả từ vào đây</span>
+            {selectedAnswer ? (
+              <MathMarkdown content={selectedAnswer} inline />
+            ) : (
+              <span className="text-slate-400 italic text-sm font-normal">Thả từ vào đây</span>
             )}
           </span>
-          {parts[1]}
+          <MathMarkdown content={afterText} inline />
         </span>
       );
     }
@@ -195,35 +200,62 @@ export function TestingBoard({
     }
 
     if (question.type === "cloze") {
+      const isCorrect = selectedAnswer === question.correctAnswer;
       return (
         <div className="space-y-4 mt-6">
           <p className="text-sm font-semibold text-slate-500 mb-3 uppercase tracking-wider">
             Kéo thả thẻ từ sau vào ô trống (hoặc click để điền):
           </p>
           <div className="flex flex-wrap gap-3">
-            {question.options.map((option: string, index: number) => {
-              const isUsed = selectedAnswer === option;
+            {(question.options || []).map((option: string, index: number) => {
+              const isSelected = selectedAnswer === option;
+              const isCorrectOption = option === question.correctAnswer;
+
+              let cardClass = "px-4 py-2 border-2 rounded-xl transition-all cursor-grab active:cursor-grabbing hover:shadow-md bg-white select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium border-indigo-200 hover:border-indigo-400 text-indigo-900 shadow-sm";
+
+              if (isSubmitted) {
+                if (isCorrectOption) {
+                  cardClass = "px-4 py-2 border-2 rounded-xl transition-all bg-emerald-50 border-emerald-500 text-emerald-900 select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium";
+                } else if (isSelected && !isCorrectOption) {
+                  cardClass = "px-4 py-2 border-2 rounded-xl transition-all bg-red-50 border-red-400 text-red-900 select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium opacity-80";
+                } else {
+                  cardClass = "px-4 py-2 border-2 rounded-xl transition-all bg-white border-slate-200 text-slate-400 select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium opacity-40";
+                }
+              } else if (isSelected) {
+                cardClass = "px-4 py-2 border-2 rounded-xl transition-all cursor-pointer bg-indigo-100 border-indigo-500 text-indigo-900 shadow-inner select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium";
+              }
+
               return (
                 <div
                   key={index}
                   draggable={!isSubmitted}
                   onDragStart={(e) => { if (!isSubmitted) e.dataTransfer.setData("text/plain", option); }}
-                  onClick={() => !isSubmitted && onSelectAnswer(option)}
-                  className={cn(
-                    "px-4 py-2 border-2 rounded-xl transition-all cursor-grab active:cursor-grabbing hover:shadow-md bg-white select-none whitespace-normal min-h-[46px] flex items-center justify-center font-medium",
-                    isUsed
-                      ? "opacity-40 border-slate-200 cursor-default shadow-inner"
-                      : "border-indigo-200 hover:border-indigo-400 text-indigo-900 shadow-sm"
-                  )}
+                  onClick={() => {
+                    if (!isSubmitted) {
+                      // Toggle: click again to deselect
+                      onSelectAnswer(isSelected ? null : option);
+                    }
+                  }}
+                  className={cardClass + (!isSubmitted ? " cursor-pointer" : " cursor-default")}
                 >
-                  <MathMarkdown content={option} />
+                  <MathMarkdown content={option} inline />
                 </div>
               );
             })}
           </div>
+          {isSubmitted && !isCorrect && (
+            <div className="p-4 bg-indigo-50 text-indigo-900 rounded-xl border border-indigo-200 mt-2">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <strong className="text-sm">Đáp án đúng:</strong>
+              </div>
+              <MathMarkdown content={question.correctAnswer} inline />
+            </div>
+          )}
         </div>
       );
     }
+
 
     return null;
   };
