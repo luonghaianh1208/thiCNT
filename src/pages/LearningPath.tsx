@@ -13,7 +13,7 @@ export function LearningPath() {
    const [chapters, setChapters] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
    const navigate = useNavigate();
-   const { profile } = useAuth();
+   const { profile, profileReady } = useAuth();
 
    const buildChapters = async () => {
          const grade = profile?.grade || '';
@@ -78,8 +78,9 @@ export function LearningPath() {
    };
 
    useEffect(() => {
-     setTimeout(() => buildChapters(), 300);
-   }, []);
+     if (!profileReady) return; // wait for DB grade
+     setTimeout(() => buildChapters(), 100);
+   }, [profileReady]);
 
    const handleRefresh = () => {
      setLoading(true);

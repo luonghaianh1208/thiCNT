@@ -88,15 +88,35 @@ export function LessonManager({
   const ocrEditInputRef = useRef<HTMLInputElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterGrade, setFilterGrade] = useState("");
   const [filterChapter, setFilterChapter] = useState("");
 
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGrade = filterGrade ? l.grade === filterGrade : true;
     const matchesChapter = filterChapter ? l.chapter === filterChapter : true;
-    return matchesSearch && matchesChapter;
+    return matchesSearch && matchesGrade && matchesChapter;
   });
 
-  const allChapters = Array.from(new Set(lessons.map(l => l.chapter)));
+  // Group filtered lessons by grade
+  const gradeGroups: Record<string, any[]> = {};
+  filteredLessons.forEach(l => {
+    const g = l.grade || 'Chung';
+    if (!gradeGroups[g]) gradeGroups[g] = [];
+    gradeGroups[g].push(l);
+  });
+  const gradeOrder = ['10', '11', '12', 'Chung'];
+  const sortedGrades = gradeOrder.filter(g => gradeGroups[g]);
+  const gradeColors: Record<string, string> = {
+    '10': 'bg-blue-50 border-blue-200 text-blue-800',
+    '11': 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    '12': 'bg-purple-50 border-purple-200 text-purple-800',
+    'Chung': 'bg-slate-50 border-slate-200 text-slate-700'
+  };
+
+  const allChapters = Array.from(new Set(
+    (filterGrade ? lessons.filter(l => l.grade === filterGrade) : lessons).map(l => l.chapter)
+  ));
 
   return (
     <div className="space-y-6">
@@ -115,9 +135,9 @@ export function LessonManager({
                   <label className="text-sm font-medium">Khối Lớp</label>
                   <select className={selectClass} value={newLessonGrade}
                     onChange={(e) => { setNewLessonGrade(e.target.value); setNewLessonChapter(""); setNewLessonTitle(""); }}>
-                    <option value="Lớp 10">Lớp 10</option>
-                    <option value="Lớp 11">Lớp 11</option>
-                    <option value="Lớp 12">Lớp 12</option>
+                    <option value="10">Khối 10</option>
+                    <option value="11">Khối 11</option>
+                    <option value="12">Khối 12</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -125,7 +145,7 @@ export function LessonManager({
                   <select className={selectClass} value={newLessonChapter}
                     onChange={(e) => { setNewLessonChapter(e.target.value); setNewLessonTitle(""); }}>
                     <option value="">-- Chọn Chương --</option>
-                    {Object.keys(CHEMISTRY_CURRICULUM[newLessonGrade] || {}).map(chap => (
+                    {Object.keys(CHEMISTRY_CURRICULUM[`Lớp ${newLessonGrade}`] || CHEMISTRY_CURRICULUM[newLessonGrade] || {}).map(chap => (
                       <option key={chap} value={chap}>{chap}</option>
                     ))}
                   </select>
@@ -135,7 +155,7 @@ export function LessonManager({
                   <select className={selectClass} value={newLessonTitle}
                     onChange={(e) => setNewLessonTitle(e.target.value)} disabled={!newLessonChapter}>
                     <option value="">-- Chọn Bài học --</option>
-                    {(CHEMISTRY_CURRICULUM[newLessonGrade]?.[newLessonChapter] || []).map(lesson => (
+                    {(CHEMISTRY_CURRICULUM[`Lớp ${newLessonGrade}`]?.[newLessonChapter] || CHEMISTRY_CURRICULUM[newLessonGrade]?.[newLessonChapter] || []).map(lesson => (
                       <option key={lesson} value={lesson}>{lesson}</option>
                     ))}
                   </select>
@@ -224,19 +244,29 @@ export function LessonManager({
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
                 <Input
                   placeholder="Tìm kiếm bài giảng..."
-                  className="pl-9 w-full sm:w-[250px]"
+                  className="pl-9 w-full sm:w-[200px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              <select
+                className={`${selectClass} w-full sm:w-[130px] h-10`}
+                value={filterGrade}
+                onChange={(e) => { setFilterGrade(e.target.value); setFilterChapter(""); }}
+              >
+                <option value="">Tất cả khối</option>
+                <option value="10">Khối 10</option>
+                <option value="11">Khối 11</option>
+                <option value="12">Khối 12</option>
+              </select>
               <div className="relative">
                 <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
                 <select
-                  className={`${selectClass} pl-9 w-full sm:w-[200px] h-10`}
+                  className={`${selectClass} pl-9 w-full sm:w-[180px] h-10`}
                   value={filterChapter}
                   onChange={(e) => setFilterChapter(e.target.value)}
                 >
-                  <option value="">Tất cả các chương</option>
+                  <option value="">Tất cả chương</option>
                   {allChapters.map(chap => (
                     <option key={chap as string} value={chap as string}>{chap as string}</option>
                   ))}
@@ -246,43 +276,58 @@ export function LessonManager({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredLessons.length === 0 ? (
               <div className="text-center p-8 text-slate-500 border rounded-lg bg-slate-50/50">
                 Không tìm thấy bài giảng nào phù hợp.
               </div>
-            ) : filteredLessons.map((lesson, index) => (
-              <div key={lesson.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg hover:bg-slate-50 gap-4">
-                <div className="flex items-start gap-3">
-                  <BookOpen className="h-6 w-6 text-indigo-500 shrink-0 mt-1" />
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{lesson.title}</p>
-                    <p className="text-xs text-slate-500 font-medium">{lesson.chapter}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      {lesson.youtubeUrl && <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-700 border-0">YouTube</Badge>}
-                      {lesson.practiceConfig && <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 border-0">AI Practice</Badge>}
-                      {lesson.dueDate && <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 border-0">Hạn: {new Date(lesson.dueDate).toLocaleString("vi-VN")}</Badge>}
-                    </div>
-                  </div>
+            ) : sortedGrades.map(grade => (
+              <div key={grade}>
+                {/* Grade header */}
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border mb-3 ${gradeColors[grade] || gradeColors['Chung']}`}>
+                  <BookOpen className="h-4 w-4" />
+                  <span className="font-bold text-sm">
+                    {grade === 'Chung' ? 'Bài học chung (tất cả khối)' : `Khối ${grade}`}
+                  </span>
+                  <span className="ml-auto text-xs font-medium opacity-70">{gradeGroups[grade].length} bài</span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <div className="flex flex-col gap-0.5 mr-2 bg-slate-100 rounded">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-t" 
-                      onClick={() => handleReorderLesson(lesson.id, 'up')} disabled={index === 0}>
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-b border-t border-slate-200" 
-                      onClick={() => handleReorderLesson(lesson.id, 'down')} disabled={index === filteredLessons.length - 1}>
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => handleEditClick(lesson)} className="flex items-center gap-1">
-                    <Pencil className="h-3 w-3" /> Sửa
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteLesson(lesson.id)}
-                    className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
-                    <Trash2 className="h-3 w-3" /> Xóa
-                  </Button>
+                {/* Lessons in this grade */}
+                <div className="space-y-3 pl-2">
+                  {gradeGroups[grade].map((lesson, index) => (
+                    <div key={lesson.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg hover:bg-slate-50 gap-4">
+                      <div className="flex items-start gap-3">
+                        <BookOpen className="h-5 w-5 text-indigo-500 shrink-0 mt-1" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{lesson.title}</p>
+                          <p className="text-xs text-slate-500 font-medium">{lesson.chapter}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            {lesson.youtubeUrl && <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-700 border-0">YouTube</Badge>}
+                            {lesson.practiceConfig && <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 border-0">AI Practice</Badge>}
+                            {lesson.dueDate && <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 border-0">Hạn: {new Date(lesson.dueDate).toLocaleString("vi-VN")}</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex flex-col gap-0.5 mr-2 bg-slate-100 rounded">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-t"
+                            onClick={() => handleReorderLesson(lesson.id, 'up')} disabled={index === 0}>
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-indigo-600 rounded-none rounded-b border-t border-slate-200"
+                            onClick={() => handleReorderLesson(lesson.id, 'down')} disabled={index === gradeGroups[grade].length - 1}>
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(lesson)} className="flex items-center gap-1">
+                          <Pencil className="h-3 w-3" /> Sửa
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteLesson(lesson.id)}
+                          className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                          <Trash2 className="h-3 w-3" /> Xóa
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

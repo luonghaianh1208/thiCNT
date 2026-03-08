@@ -17,13 +17,14 @@ export function Lesson() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const lessonId = parseInt(searchParams.get('id') || '0');
-  const { profile } = useAuth();
+  const { profile, profileReady } = useAuth();
 
   const [lesson, setLesson] = useState<any>(null);
   const [allLessons, setAllLessons] = useState<any[]>([]);
   const [lessonStartTime] = useState<number>(Date.now());
 
   useEffect(() => {
+    if (!profileReady) return;
     const loadData = async () => {
       const grade = profile?.grade || '';
       const lessons = (await Storage.getLessons(grade || undefined)) || [];

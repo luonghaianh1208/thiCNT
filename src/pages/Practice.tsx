@@ -29,16 +29,17 @@ export function Practice() {
   const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, profileReady } = useAuth();
 
   useEffect(() => {
+    if (!profileReady) return;
     const fetchLessons = async () => {
       const grade = profile?.grade || '';
       const lessons = (await Storage.getLessons(grade || undefined)).filter((l) => l.type === "theory");
       setAvailableLessons(lessons);
     };
     fetchLessons();
-  }, [profile?.grade]);
+  }, [profileReady]);
 
   // ---- Timer countdown ----
   useEffect(() => {

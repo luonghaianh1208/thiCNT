@@ -25,7 +25,7 @@ export function TeacherDashboard() {
   const [lessons,  setLessons]  = useState<any[]>([]);
 
   // — Create lesson form state —
-  const [newLessonGrade,   setNewLessonGrade]   = useState("Lớp 10");
+  const [newLessonGrade,   setNewLessonGrade]   = useState("10");
   const [newLessonChapter, setNewLessonChapter] = useState("");
   const [newLessonTitle,   setNewLessonTitle]   = useState("");
   const [youtubeUrl,       setYoutubeUrl]       = useState("");

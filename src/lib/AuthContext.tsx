@@ -6,6 +6,7 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   profile: any | null;
+  profileReady: boolean;  // true once DB profile is confirmed
   signOut: () => Promise<void>;
   isLoading: boolean;
 };
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   profile: null,
+  profileReady: false,
   signOut: async () => {},
   isLoading: false,
 });
@@ -57,23 +59,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const [profileReady, setProfileReady] = useState(false);
   // isLoading only true on initial mount to restore existing session
   const [isLoading, setIsLoading] = useState(true);
 
   const applyUser = (u: User | null) => {
     if (!u) {
       setProfile(null);
+      setProfileReady(false);
       return;
     }
     // Step 1: set profile instantly from JWT metadata — zero wait
     const instant = buildProfileFromUser(u);
     setProfile(instant);
+    setProfileReady(false); // won't be 'ready' until DB confirms
 
     // Step 2: enrich from DB in background
     fetchDBProfile(u.id).then((dbData) => {
       if (dbData) {
         setProfile(dbData);
       }
+      setProfileReady(true); // DB replied — grade is now authoritative
     });
   };
 
@@ -116,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, signOut, isLoading }}>
+    <AuthContext.Provider value={{ session, user, profile, profileReady, signOut, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
