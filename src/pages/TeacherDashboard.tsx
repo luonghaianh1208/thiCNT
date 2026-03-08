@@ -4,11 +4,11 @@ import { Storage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { CHEMISTRY_CURRICULUM } from "@/lib/curriculum";
-import { TeacherStats }    from "@/components/teacher/TeacherStats";
-import { LessonManager }   from "@/components/teacher/LessonManager";
-import { StudentManager }  from "@/components/teacher/StudentManager";
-import { TeacherReports }  from "@/components/teacher/TeacherReports";
+import { TeacherStats }      from "@/components/teacher/TeacherStats";
+import { LessonManager }     from "@/components/teacher/LessonManager";
+import { StudentManager }    from "@/components/teacher/StudentManager";
+import { TeacherReports }    from "@/components/teacher/TeacherReports";
+import { CurriculumManager } from "@/components/teacher/CurriculumManager";
 
 // --- Helpers ---
 const getEmbedUrl = (url: string) => {
@@ -320,12 +320,14 @@ export function TeacherDashboard() {
     dashboard: "Tính năng Giáo viên",
     students:  "Quản lý Lớp học",
     lessons:   "Quản lý Bài giảng",
+    curriculum:"Chương trình học",
     reports:   "Báo cáo Điểm số",
   };
   const subheadingMap: Record<string, string> = {
     dashboard: "Quản lý tổng quan lớp học, bài giảng và theo dõi tiến độ học sinh.",
     students:  "Danh sách học sinh và trạng thái hoạt động.",
     lessons:   "Khởi tạo và chỉnh sửa cấu trúc bài giảng tích hợp AI.",
+    curriculum:"Quản lý chương trình học: thêm, sửa, xóa chương và bài. Đồng bộ ngay lập tức cho học sinh.",
     reports:   "Theo dõi thành tích và điểm số trung bình của học sinh.",
   };
 
@@ -376,6 +378,8 @@ export function TeacherDashboard() {
             handleDownloadSample={handleDownloadSample} handleFileUpload={handleFileUpload}
           />
         )}
+
+        {activeTab === "curriculum" && <CurriculumManager />}
 
         {activeTab === "reports" && (
           <TeacherReports students={students} lessons={lessons} />

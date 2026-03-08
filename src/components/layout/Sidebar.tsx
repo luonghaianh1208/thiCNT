@@ -28,6 +28,7 @@ const teacherNav = [
   { name: "Bảng điều khiển", href: "/", icon: LayoutDashboard },
   { name: "Quản lý Lớp học", href: "/?tab=students", icon: Users },
   { name: "Quản lý Bài giảng", href: "/?tab=lessons", icon: GraduationCap },
+  { name: "Chương trình học", href: "/?tab=curriculum", icon: BookOpen },
   { name: "Báo cáo điểm", href: "/?tab=reports", icon: BarChart3 },
 ];
 

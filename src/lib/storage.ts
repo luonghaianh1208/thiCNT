@@ -427,6 +427,94 @@ export const Storage = {
   // Mark a comment as read
   async markCommentRead(commentId: number) {
     await supabase.from('teacher_comments').update({ is_read: true }).eq('id', commentId);
+  },
+
+  // ========== Curriculum CRUD ==========
+
+  /** Fetch all chapters + nested lessons for a given grade, ordered */
+  async getCurriculumByGrade(grade: string) {
+    const { data: chapters } = await supabase
+      .from('curriculum_chapters')
+      .select('id, name, order_index')
+      .eq('grade', grade)
+      .order('order_index', { ascending: true });
+
+    if (!chapters || chapters.length === 0) return [];
+
+    const { data: lessons } = await supabase
+      .from('curriculum_lessons')
+      .select('id, chapter_id, name, order_index')
+      .in('chapter_id', chapters.map((c: any) => c.id))
+      .order('order_index', { ascending: true });
+
+    return chapters.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      orderIndex: c.order_index,
+      lessons: (lessons || [])
+        .filter((l: any) => l.chapter_id === c.id)
+        .map((l: any) => ({ id: l.id, name: l.name, orderIndex: l.order_index }))
+    }));
+  },
+
+  /** Fetch all chapters for a grade (flat, for dropdowns) */
+  async getChaptersForGrade(grade: string) {
+    const { data } = await supabase
+      .from('curriculum_chapters')
+      .select('id, name, order_index')
+      .eq('grade', grade)
+      .order('order_index', { ascending: true });
+    return (data || []).map((c: any) => ({ id: c.id, name: c.name }));
+  },
+
+  /** Fetch all curriculum lessons for a chapter (for lesson dropdown) */
+  async getLessonsForChapter(chapterId: number) {
+    const { data } = await supabase
+      .from('curriculum_lessons')
+      .select('id, name, order_index')
+      .eq('chapter_id', chapterId)
+      .order('order_index', { ascending: true });
+    return (data || []).map((l: any) => ({ id: l.id, name: l.name }));
+  },
+
+  async addChapter(grade: string, name: string) {
+    const { data: existing } = await supabase
+      .from('curriculum_chapters').select('order_index').eq('grade', grade).order('order_index', { ascending: false }).limit(1);
+    const nextOrder = existing && existing.length > 0 ? existing[0].order_index + 1 : 1;
+    const { data, error } = await supabase
+      .from('curriculum_chapters').insert({ grade, name, order_index: nextOrder }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateChapter(id: number, name: string) {
+    const { error } = await supabase.from('curriculum_chapters').update({ name }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async deleteChapter(id: number) {
+    const { error } = await supabase.from('curriculum_chapters').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async addCurriculumLesson(chapterId: number, name: string) {
+    const { data: existing } = await supabase
+      .from('curriculum_lessons').select('order_index').eq('chapter_id', chapterId).order('order_index', { ascending: false }).limit(1);
+    const nextOrder = existing && existing.length > 0 ? existing[0].order_index + 1 : 1;
+    const { data, error } = await supabase
+      .from('curriculum_lessons').insert({ chapter_id: chapterId, name, order_index: nextOrder }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateCurriculumLesson(id: number, name: string) {
+    const { error } = await supabase.from('curriculum_lessons').update({ name }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async deleteCurriculumLesson(id: number) {
+    const { error } = await supabase.from('curriculum_lessons').delete().eq('id', id);
+    if (error) throw error;
   }
 };
 

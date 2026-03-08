@@ -1,10 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Plus, Pencil, Trash2, Loader2, FileText, X, ArrowUp, ArrowDown, Search, Filter } from "lucide-react";
-import { CHEMISTRY_CURRICULUM } from "@/lib/curriculum";
+import { Storage } from "@/lib/storage";
 
 // --- Types ---
 interface LessonForm {
@@ -71,9 +71,6 @@ interface LessonManagerProps {
 
 const selectClass = "flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600";
 
-// Map from short grade '10' to CHEMISTRY_CURRICULUM key 'Lớp 10'
-const GRADE_KEY: Record<string, string> = { '10': 'Lớp 10', '11': 'Lớp 11', '12': 'Lớp 12' };
-
 export function LessonManager({
   lessons,
   newLessonGrade, newLessonChapter, newLessonTitle,
@@ -93,6 +90,38 @@ export function LessonManager({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGrade, setFilterGrade] = useState("");
   const [filterChapter, setFilterChapter] = useState("");
+
+  // DB-loaded chapters + lesson names
+  const [dbChapters, setDbChapters] = useState<{id: number; name: string}[]>([]);
+  const [dbLessons, setDbLessons]   = useState<{id: number; name: string}[]>([]);
+  const [editDbChapters, setEditDbChapters] = useState<{id: number; name: string}[]>([]);
+  const [editDbLessons,  setEditDbLessons]  = useState<{id: number; name: string}[]>([]);
+
+  // Load chapters when create-form grade changes
+  useEffect(() => {
+    if (!newLessonGrade) return;
+    Storage.getChaptersForGrade(newLessonGrade).then(setDbChapters);
+  }, [newLessonGrade]);
+
+  // Load lessons when create-form chapter changes
+  useEffect(() => {
+    if (!newLessonChapter) { setDbLessons([]); return; }
+    const ch = dbChapters.find(c => c.name === newLessonChapter);
+    if (ch) Storage.getLessonsForChapter(ch.id).then(setDbLessons);
+  }, [newLessonChapter, dbChapters]);
+
+  // Load chapters when edit-form grade changes
+  useEffect(() => {
+    if (!editingLesson?.grade) return;
+    Storage.getChaptersForGrade(editingLesson.grade).then(setEditDbChapters);
+  }, [editingLesson?.grade]);
+
+  // Load lessons when edit-form chapter changes
+  useEffect(() => {
+    if (!editingLesson?.chapter) { setEditDbLessons([]); return; }
+    const ch = editDbChapters.find(c => c.name === editingLesson.chapter);
+    if (ch) Storage.getLessonsForChapter(ch.id).then(setEditDbLessons);
+  }, [editingLesson?.chapter, editDbChapters]);
 
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -148,8 +177,8 @@ export function LessonManager({
                   <select className={selectClass} value={newLessonChapter}
                     onChange={(e) => { setNewLessonChapter(e.target.value); setNewLessonTitle(""); }}>
                     <option value="">-- Chọn Chương --</option>
-                    {Object.keys(CHEMISTRY_CURRICULUM[GRADE_KEY[newLessonGrade]] || {}).map(chap => (
-                      <option key={chap} value={chap}>{chap}</option>
+                    {dbChapters.map(ch => (
+                      <option key={ch.id} value={ch.name}>{ch.name}</option>
                     ))}
                   </select>
                 </div>
@@ -158,8 +187,8 @@ export function LessonManager({
                   <select className={selectClass} value={newLessonTitle}
                     onChange={(e) => setNewLessonTitle(e.target.value)} disabled={!newLessonChapter}>
                     <option value="">-- Chọn Bài học --</option>
-                    {(CHEMISTRY_CURRICULUM[GRADE_KEY[newLessonGrade]]?.[newLessonChapter] || []).map(lesson => (
-                      <option key={lesson} value={lesson}>{lesson}</option>
+                    {dbLessons.map(l => (
+                      <option key={l.id} value={l.name}>{l.name}</option>
                     ))}
                   </select>
                 </div>
@@ -369,8 +398,8 @@ export function LessonManager({
                       <select className={selectClass} value={editingLesson.chapter}
                         onChange={(e) => setEditingLesson({ ...editingLesson, chapter: e.target.value, title: "" })}>
                         <option value="">-- Chọn Chương --</option>
-                        {Object.keys(CHEMISTRY_CURRICULUM[GRADE_KEY[editingLesson.grade]] || {}).map(chap => (
-                          <option key={chap} value={chap}>{chap}</option>
+                        {editDbChapters.map(ch => (
+                          <option key={ch.id} value={ch.name}>{ch.name}</option>
                         ))}
                       </select>
                     </div>
@@ -380,8 +409,8 @@ export function LessonManager({
                         onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
                         disabled={!editingLesson.chapter}>
                         <option value="">-- Chọn Bài học --</option>
-                        {(CHEMISTRY_CURRICULUM[GRADE_KEY[editingLesson.grade]]?.[editingLesson.chapter] || []).map(lesson => (
-                          <option key={lesson} value={lesson}>{lesson}</option>
+                        {editDbLessons.map(l => (
+                          <option key={l.id} value={l.name}>{l.name}</option>
                         ))}
                       </select>
                     </div>
