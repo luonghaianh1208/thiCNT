@@ -7,10 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Storage } from "@/lib/storage";
 import { toast } from "sonner";
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+// ReactMarkdown now handled by shared MarkdownContent component
 import { useAuth } from "@/lib/AuthContext";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 
 export function Lesson() {
   const [activeTab, setActiveTab] = useState("theory");
@@ -155,12 +154,10 @@ export function Lesson() {
               {activeTab === 'theory' && (
                 <article className="prose prose-indigo prose-lg max-w-none text-justify leading-loose prose-headings:text-indigo-900 prose-a:text-indigo-600 prose-li:marker:text-indigo-500">
                   <h3 className="text-xl font-bold mb-6 text-slate-900 border-b pb-2">Nội dung bài học & Lý thuyết trọng tâm</h3>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                  >
-                    {lesson.theoryContent || lesson.content || lesson.description}
-                  </ReactMarkdown>
+                  <MarkdownContent
+                    content={lesson.theoryContent || lesson.content || lesson.description || ""}
+                    className="prose prose-indigo prose-lg max-w-none text-justify leading-loose prose-headings:text-indigo-900 prose-a:text-indigo-600 prose-li:marker:text-indigo-500"
+                  />
 
                   <div className="mt-8 p-4 bg-blue-50/80 rounded-lg border border-blue-100 flex items-start gap-3 not-prose">
                     <span className="text-blue-500 mt-0.5">💡</span>

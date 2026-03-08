@@ -13,3 +13,90 @@
     color: #f1f5f9;
   }
 }
+
+/* ─── Markdown Table Styling ───────────────────────────────────────────── */
+.md-content table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+
+.md-content table thead {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+.md-content table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: #3730a3;
+  border-bottom: 2px solid #c7d2fe;
+  white-space: nowrap;
+}
+
+.md-content table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
+  vertical-align: top;
+}
+
+.md-content table tbody tr:hover td {
+  background-color: #f8faff;
+}
+
+.md-content table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dark mode table */
+html.dark .md-content table {
+  border-color: #334155;
+}
+html.dark .md-content table thead {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+}
+html.dark .md-content table th {
+  color: #a5b4fc;
+  border-bottom-color: #4338ca;
+}
+html.dark .md-content table td {
+  color: #cbd5e1;
+  border-bottom-color: #334155;
+}
+html.dark .md-content table tbody tr:hover td {
+  background-color: #1e293b;
+}
+
+/* ─── KaTeX Vietnamese Font Fix ─────────────────────────────────────────── */
+/* KaTeX uses its own fonts – force Vietnamese text nodes to system font */
+.katex .mord.text,
+.katex .text,
+.katex-html .mord.text {
+  font-family: 'Be Vietnam Pro', 'Inter', 'Segoe UI', 'Arial Unicode MS', sans-serif !important;
+}
+
+/* Ensure KaTeX display-mode blocks are centered */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+/* Fix reaction arrow (→) display scaling */
+.katex .mrel {
+  letter-spacing: 0.04em;
+}
+
+/* ─── Prose table override (Tailwind typography) ──────────────────────── */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.prose th, .prose td {
+  padding: 8px 12px;
+}

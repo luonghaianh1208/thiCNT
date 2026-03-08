@@ -3,6 +3,7 @@ import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -144,7 +145,7 @@ export function AITutorChat() {
                   {msg.role === "user" ? (
                     msg.content
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>
                       {msg.content}
                     </ReactMarkdown>
                   )}

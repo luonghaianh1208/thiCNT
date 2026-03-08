@@ -5,20 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Clock, BookOpen, ChevronRight, X, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { Storage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 
 function MathText({ content }: { content: string }) {
   return (
     <span className="prose prose-slate max-w-none text-[inherit]">
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-        components={{ p: ({ node, ...props }) => <span {...props} /> }}
-      >
-        {String(content ?? "")}
-      </ReactMarkdown>
+      <MarkdownContent content={String(content ?? "")} inline className="inline" />
     </span>
   );
 }

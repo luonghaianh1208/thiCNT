@@ -5,26 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sparkles, CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { toast } from "sonner";
 import { Storage } from "@/lib/storage";
 
-function MathMarkdown({ content, inline = false }: { content: string; inline?: boolean }) {
-  const Wrapper = inline ? 'span' : 'span';
+function MathMarkdown({ content }: { content: string; inline?: boolean }) {
   return (
-    <Wrapper className="prose prose-slate max-w-none text-[inherit] leading-[inherit]">
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-        components={{
-          p: ({ node, ...props }) => <span {...props} />,
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </Wrapper>
+    <span className="prose prose-slate max-w-none text-[inherit] leading-[inherit]">
+      <MarkdownContent content={content} inline className="inline" />
+    </span>
   );
 }
 
