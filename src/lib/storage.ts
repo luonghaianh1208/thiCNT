@@ -27,6 +27,13 @@ const mapStudent = (s: any) => s ? {
   status: s.status
 } : null;
 
+/** Get the public.users row for the current Supabase Auth user. Returns null if not authenticated. */
+async function getCurrentUserRow() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase.from('users').select('id, role').eq('auth_id', user.id).maybeSingle();
+  return data ?? null;
+}
 
 export const Storage = {
   async initialize() {
@@ -34,28 +41,57 @@ export const Storage = {
   },
 
   async getUser() {
-    const { data } = await supabase.from('users').select('*').limit(1).single();
-    if (data) return mapStudent(data);
-    
-    // Seed default mock user
-    const mockUser = { email: "student@chemai.edu.vn", password: "123", full_name: "Hoá Học Learner", role: "student", overall_progress: 45 };
-    const { data: newUser } = await supabase.from('users').insert(mockUser).select().single();
-    return mapStudent(newUser);
+    const userRow = await getCurrentUserRow();
+    if (userRow) {
+      const { data } = await supabase.from('users').select('*').eq('id', userRow.id).single();
+      if (data) return mapStudent(data);
+    }
+    // Fallback: first student (for teacher view / mock)
+    const { data } = await supabase.from('users').select('*').eq('role', 'student').limit(1).single();
+    return mapStudent(data);
   },
 
-  // Get lessons filtered by grade (pass grade='10'|'11'|'12' or omit for all)
+  // Get lessons filtered by grade, with progress merged for the current logged-in student
   async getLessons(grade?: string) {
     let query = supabase.from('lessons').select('*').order('order_index', { ascending: true });
     if (grade) {
-      // Show lessons that match grade OR lessons with no grade set (shared)
       query = supabase
         .from('lessons')
         .select('*')
         .or(`grade.eq.${grade},grade.is.null,grade.eq.`)
         .order('order_index', { ascending: true });
     }
-    const { data } = await query;
-    return (data || []).map(mapLesson);
+    const { data: lessonsData } = await query;
+    const lessons = (lessonsData || []).map(mapLesson);
+
+    // Merge progress for the currently authenticated student
+    const userRow = await getCurrentUserRow();
+    if (userRow && userRow.role === 'student') {
+      const { data: progressData } = await supabase
+        .from('progress')
+        .select('lesson_id, status, score')
+        .eq('student_id', userRow.id);
+
+      if (progressData && progressData.length > 0) {
+        const progressMap: Record<number, { status: string; score: number }> = {};
+        progressData.forEach((p: any) => {
+          progressMap[p.lesson_id] = { status: p.status, score: p.score ?? 0 };
+        });
+
+        return lessons.map((lesson: any) => {
+          if (!lesson) return lesson;
+          const prog = progressMap[lesson.id];
+          return {
+            ...lesson,
+            status: prog?.status || 'not_started',
+            score: prog?.score ?? 0,
+          };
+        });
+      }
+    }
+
+    // For teachers or unauthenticated: return lessons without progress merge
+    return lessons.map((lesson: any) => lesson ? { ...lesson, status: lesson.status || 'not_started', score: lesson.score ?? 0 } : lesson);
   },
 
   async getStudents() {
@@ -153,56 +189,73 @@ export const Storage = {
   },
 
   async updateProgress(lessonId: number, status: string, score: number) {
-    const { data: userRaw } = await supabase.from('users').select('id').eq('role', 'student').limit(1).single();
-    if (!userRaw) return;
-    
-    const { data: prog } = await supabase.from('progress').select('*').eq('student_id', userRaw.id).eq('lesson_id', lessonId).single();
-    
-    if (prog) {
-      await supabase.from('progress').update({ status, score: Math.max(prog.score || 0, score), updated_at: new Date().toISOString() }).eq('id', prog.id);
-    } else {
-      await supabase.from('progress').insert({ student_id: userRaw.id, lesson_id: lessonId, status, score });
+    // Use auth to get the correct logged-in student's row
+    const userRow = await getCurrentUserRow();
+    if (!userRow) {
+      console.error('updateProgress: no authenticated user found');
+      return;
     }
     
-    const { data: allProg } = await supabase.from('progress').select('score').eq('student_id', userRaw.id).eq('status', 'completed');
+    const { data: prog } = await supabase
+      .from('progress')
+      .select('*')
+      .eq('student_id', userRow.id)
+      .eq('lesson_id', lessonId)
+      .maybeSingle();
+    
+    if (prog) {
+      await supabase.from('progress').update({
+        status,
+        score: Math.max(prog.score || 0, score),
+        updated_at: new Date().toISOString()
+      }).eq('id', prog.id);
+    } else {
+      await supabase.from('progress').insert({
+        student_id: userRow.id,
+        lesson_id: lessonId,
+        status,
+        score
+      });
+    }
+    
+    // Update overall_progress for student
+    const { data: allProg } = await supabase
+      .from('progress')
+      .select('score')
+      .eq('student_id', userRow.id)
+      .eq('status', 'completed');
     if (allProg && allProg.length > 0) {
       const total = allProg.reduce((sum: number, p: any) => sum + (p.score || 0), 0);
       const avg = Math.round(total / allProg.length);
-      await supabase.from('users').update({ overall_progress: avg }).eq('id', userRaw.id);
+      await supabase.from('users').update({ overall_progress: avg }).eq('id', userRow.id);
     }
   },
 
   // Get how many times current student attempted a lesson's practice
   async getAttemptCount(lessonId: number): Promise<number> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 0;
-    const { data: userRaw } = await supabase.from('users').select('id').eq('auth_id', user.id).maybeSingle();
-    if (!userRaw) return 0;
-    const { data } = await supabase.from('progress').select('attempt_count').eq('student_id', userRaw.id).eq('lesson_id', lessonId).maybeSingle();
+    const userRow = await getCurrentUserRow();
+    if (!userRow) return 0;
+    const { data } = await supabase.from('progress').select('attempt_count').eq('student_id', userRow.id).eq('lesson_id', lessonId).maybeSingle();
     return data?.attempt_count || 0;
   },
 
   // Increment attempt count when student starts a practice
   async incrementAttemptCount(lessonId: number) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: userRaw } = await supabase.from('users').select('id').eq('auth_id', user.id).maybeSingle();
-    if (!userRaw) return;
+    const userRow = await getCurrentUserRow();
+    if (!userRow) return;
     
-    const { data: prog } = await supabase.from('progress').select('id, attempt_count').eq('student_id', userRaw.id).eq('lesson_id', lessonId).maybeSingle();
+    const { data: prog } = await supabase.from('progress').select('id, attempt_count').eq('student_id', userRow.id).eq('lesson_id', lessonId).maybeSingle();
     if (prog) {
       await supabase.from('progress').update({ attempt_count: (prog.attempt_count || 0) + 1 }).eq('id', prog.id);
     } else {
-      await supabase.from('progress').insert({ student_id: userRaw.id, lesson_id: lessonId, status: 'in_progress', score: 0, attempt_count: 1 });
+      await supabase.from('progress').insert({ student_id: userRow.id, lesson_id: lessonId, status: 'in_progress', score: 0, attempt_count: 1 });
     }
   },
 
   async getProgress() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-    const { data: userRaw } = await supabase.from('users').select('id').eq('auth_id', user.id).maybeSingle();
-    if (!userRaw) return [];
-    const { data } = await supabase.from('progress').select('*').eq('student_id', userRaw.id);
+    const userRow = await getCurrentUserRow();
+    if (!userRow) return [];
+    const { data } = await supabase.from('progress').select('*').eq('student_id', userRow.id);
     return data || [];
   },
 
@@ -223,13 +276,15 @@ export const Storage = {
   },
 
   async addReportBug(lessonTitle: string, questionType: string, reason: string) {
-    const { data: userRaw } = await supabase.from('users').select('id').eq('role', 'student').limit(1).single();
-    if (!userRaw) return;
+    const userRow = await getCurrentUserRow();
+    if (!userRow) return;
 
     await supabase.from('reports').insert({
-      student_id: userRaw.id,
+      student_id: userRow.id,
       question_text: `[${questionType}] at ${lessonTitle}`,
       reason, status: 'pending'
     });
   }
 };
+
+
