@@ -23,6 +23,7 @@ const mapStudent = (s: any) => s ? {
   name: s.full_name,
   email: s.email,
   grade: s.grade || 'Chưa phân khối',
+  className: s.class_name || '',
   score: s.overall_progress || 0,
   status: s.status
 } : null;
@@ -176,7 +177,22 @@ export const Storage = {
   },
 
   async updateStudent(id: string, s: any) {
-    await supabase.from('users').update({ full_name: s.name, updated_at: new Date().toISOString() }).eq('id', id);
+    await supabase.from('users').update({
+      full_name: s.name,
+      grade: s.grade || null,
+      class_name: s.className || null,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+  },
+
+  async updateStudentProfile(updates: { grade?: string; className?: string }) {
+    const userRow = await getCurrentUserRow();
+    if (!userRow) throw new Error('Not authenticated');
+    await supabase.from('users').update({
+      grade: updates.grade,
+      class_name: updates.className || null,
+      updated_at: new Date().toISOString()
+    }).eq('id', userRow.id);
   },
 
   async deleteStudent(id: string) {

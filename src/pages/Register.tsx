@@ -18,19 +18,15 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [grade, setGrade] = useState('');
+  const [className, setClassName] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) {
-      toast.error('Vui lòng nhập họ và tên.');
-      return;
-    }
-    if (!grade) {
-      toast.error('Vui lòng chọn khối học.');
-      return;
-    }
+    if (!fullName.trim()) { toast.error('Vui lòng nhập họ và tên.'); return; }
+    if (!grade) { toast.error('Vui lòng chọn khối học.'); return; }
+    if (!className.trim()) { toast.error('Vui lòng nhập tên lớp của bạn (vd: 10A1).'); return; }
     setLoading(true);
 
     try {
@@ -41,24 +37,21 @@ export function Register() {
           data: {
             full_name: fullName,
             role: 'student',
-            grade: grade,         // e.g. "10", "11", "12"
+            grade,
+            class_name: className.trim(),
           },
           emailRedirectTo: undefined,
         },
       });
 
       if (error) {
-        if (
-          error.message.toLowerCase().includes('already registered') ||
-          error.message.toLowerCase().includes('user already registered')
-        ) {
+        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('user already registered')) {
           toast.error('Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.');
         } else {
           toast.error(error.message);
         }
         return;
       }
-
       if (data.user && data.user.identities && data.user.identities.length === 0) {
         toast.error('Email này đã được đăng ký. Vui lòng đăng nhập.');
         return;
@@ -85,24 +78,17 @@ export function Register() {
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent">
             Tạo Tài Khoản Mới
           </CardTitle>
-          <CardDescription>
-            Điền thông tin để bắt đầu học Hóa học cùng AI
-          </CardDescription>
+          <CardDescription>Điền thông tin để bắt đầu học Hóa học cùng AI</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
+            {/* Full name */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Họ và Tên</label>
-              <Input
-                type="text"
-                placeholder="Nguyễn Văn A"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-                autoComplete="name"
-              />
+              <Input type="text" placeholder="Nguyễn Văn A" value={fullName} onChange={e => setFullName(e.target.value)} required autoComplete="name" />
             </div>
 
+            {/* Grade picker */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Khối học <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-3 gap-2">
@@ -123,29 +109,30 @@ export function Register() {
               </div>
             </div>
 
+            {/* Class name — NEW required field */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Email</label>
+              <label className="text-sm font-medium text-slate-700">Tên lớp <span className="text-red-500">*</span></label>
               <Input
-                type="email"
-                placeholder="student@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                placeholder="Vd: 10A1, 11B2, 12C3..."
+                value={className}
+                onChange={e => setClassName(e.target.value)}
                 required
-                autoComplete="email"
+                maxLength={20}
               />
+              <p className="text-xs text-slate-400">Nhập tên lớp chính xác để giáo viên dễ quản lý</p>
             </div>
 
+            {/* Email */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Email</label>
+              <Input type="email" placeholder="student@example.com" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+            </div>
+
+            {/* Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
-              <Input
-                type="password"
-                placeholder="Tối thiểu 6 ký tự"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete="new-password"
-              />
+              <Input type="password" placeholder="Tối thiểu 6 ký tự" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
             </div>
 
             <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
@@ -156,9 +143,7 @@ export function Register() {
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-sm text-slate-500">
             Đã có tài khoản?{' '}
-            <Link to="/login" className="text-indigo-600 hover:underline font-medium">
-              Đăng nhập
-            </Link>
+            <Link to="/login" className="text-indigo-600 hover:underline font-medium">Đăng nhập</Link>
           </p>
         </CardFooter>
       </Card>

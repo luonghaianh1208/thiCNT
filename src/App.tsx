@@ -10,6 +10,7 @@ import { History } from "@/pages/History";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { PendingApproval } from "@/pages/PendingApproval";
+import { StudentSettings } from "@/pages/StudentSettings";
 import { useAuth } from "@/lib/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="practice"      element={<ProtectedRoute allowedRoles={['student']}><Practice /></ProtectedRoute>} />
           <Route path="analytics"     element={<ProtectedRoute allowedRoles={['student']}><Analytics /></ProtectedRoute>} />
           <Route path="history"       element={<ProtectedRoute allowedRoles={['student']}><History /></ProtectedRoute>} />
+          <Route path="settings"      element={<ProtectedRoute allowedRoles={['student']}><StudentSettings /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />

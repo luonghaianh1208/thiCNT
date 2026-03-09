@@ -302,11 +302,15 @@ export function TeacherDashboard() {
   const startEditStudent = (student: any) => {
     if (student.id === 999) return;
     setEditingStudentId(student.id);
-    setEditingStudentData({ name: student.name, grade: student.grade });
+    setEditingStudentData({ name: student.name, grade: student.grade, className: student.className || "" });
   };
 
   const saveEditStudent = async (id: number) => {
-    await Storage.updateStudent(id.toString(), { name: editingStudentData.name, grade: editingStudentData.grade });
+    await Storage.updateStudent(id.toString(), {
+      name: editingStudentData.name,
+      grade: editingStudentData.grade,
+      className: editingStudentData.className,
+    });
     setStudents(await Storage.getStudents());
     setEditingStudentId(null);
     toast.success("Đã cập nhật thông tin học sinh!");

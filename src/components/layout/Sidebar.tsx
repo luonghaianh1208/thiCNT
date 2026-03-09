@@ -22,6 +22,7 @@ const studentNav = [
   { name: "Luyện tập", href: "/practice", icon: PenTool },
   { name: "Lịch sử làm bài", href: "/history", icon: History },
   { name: "Phân tích AI", href: "/analytics", icon: BarChart3 },
+  { name: "Hồ sơ cá nhân", href: "/settings", icon: Settings },
 ];
 
 const teacherNav = [
