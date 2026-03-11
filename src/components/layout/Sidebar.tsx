@@ -11,8 +11,7 @@ import {
   Users,
   ShieldAlert,
   GraduationCap,
-  ChevronLeft,
-  ChevronRight,
+  Menu,
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -86,35 +85,43 @@ export function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }: Side
       >
         {/* Logo / Brand */}
         <div className={cn(
-          "flex h-16 items-center border-b border-slate-200 dark:border-slate-700 shrink-0",
-          isCollapsed ? "justify-center px-0" : "px-4 gap-2"
+          "flex h-16 items-center border-b border-slate-200 dark:border-slate-700 shrink-0 gap-2",
+          isCollapsed ? "justify-center px-2" : "px-4"
         )}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={cn(
-              "flex items-center justify-center rounded-lg bg-indigo-600 text-white shrink-0",
-              isCollapsed ? "h-8 w-8" : "h-8 w-8"
-            )}>
-              <BookOpen className="h-4 w-4" />
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0 overflow-hidden">
-                <span className="font-bold text-base text-indigo-600 dark:text-indigo-400 truncate">ChemAI LMS</span>
-                <span className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight truncate">
-                  THPT Chuyên Nguyễn Trãi
+          {/* Hamburger toggle on desktop */}
+          <button
+            onClick={onToggleCollapse}
+            className={cn(
+              "hidden lg:flex items-center justify-center p-1.5 rounded-md transition-colors shrink-0",
+              "text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            )}
+            aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {!isCollapsed && (
+            <>
+              <div className="flex items-center justify-center rounded-lg bg-indigo-600 text-white shrink-0 h-7 w-7">
+                <BookOpen className="h-3.5 w-3.5" />
+              </div>
+              <div className="flex flex-col min-w-0 overflow-hidden flex-1">
+                <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400 truncate leading-tight">ChemAI LMS</span>
+                <span className="text-[8.5px] text-slate-400 dark:text-slate-500 leading-tight">
+                  Thầy Bùi Hữu Hải &amp; Thầy Lương Hải Anh
                 </span>
               </div>
-            )}
-          </div>
 
-          {/* Mobile close button */}
-          {!isCollapsed && (
-            <button
-              onClick={onClose}
-              className="ml-auto lg:hidden p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-              aria-label="Đóng menu"
-            >
-              <X className="h-4 w-4" />
-            </button>
+              {/* Mobile close button */}
+              <button
+                onClick={onClose}
+                className="lg:hidden p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                aria-label="Đóng menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
 
@@ -187,24 +194,7 @@ export function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }: Side
           </div>
         </div>
 
-        {/* Desktop collapse toggle button */}
-        <button
-          onClick={onToggleCollapse}
-          className={cn(
-            "hidden lg:flex items-center justify-center",
-            "absolute -right-3 top-20",
-            "h-6 w-6 rounded-full border border-slate-200 dark:border-slate-700",
-            "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400",
-            "hover:text-indigo-600 dark:hover:text-indigo-400",
-            "shadow-sm transition-colors z-10"
-          )}
-          aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-        >
-          {isCollapsed
-            ? <ChevronRight className="h-3.5 w-3.5" />
-            : <ChevronLeft className="h-3.5 w-3.5" />
-          }
-        </button>
+
       </aside>
     </>
   );
