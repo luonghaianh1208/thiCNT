@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { 
@@ -12,7 +11,7 @@ import {
 } from '@/lib/db';
 import { 
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2, 
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
