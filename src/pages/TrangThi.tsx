@@ -162,7 +162,7 @@ export default function TrangThi() {
         don_vi_id: parseInt(form.donViId),
         ten_don_vi_nho: '' 
       });
-      const qs = await layCauHoiNgauNhien(chang.id, 30);
+      const qs = await layCauHoiNgauNhien(chang.id, chang.so_cau);
       
       setThiSinhId(tsId);
       setQuestions(qs);
