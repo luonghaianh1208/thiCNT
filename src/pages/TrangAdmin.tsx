@@ -413,8 +413,8 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
 
   const downloadTemplate = () => {
     const sample = [
-      { 'Câu hỏi': 'Chuyển đổi số là gì?', 'A': 'Ứng dụng công nghệ số', 'B': 'In tài liệu', 'C': 'Họp trực tiếp', 'D': 'Viết tay', 'Đáp án đúng': 'A', 'Giải thích': 'Chuyển đổi số là ứng dụng công nghệ số vào mọi mặt.' },
-      { 'Câu hỏi': 'Câu hỏi mẫu 2?', 'A': 'Đáp án A', 'B': 'Đáp án B', 'C': 'Đáp án C', 'D': 'Đáp án D', 'Đáp án đúng': 'B', 'Giải thích': '' },
+      { 'Câu hỏi': 'Chuyển đổi số là gì?', 'A': 'Ứng dụng công nghệ số', 'B': 'In tài liệu', 'C': 'Họp trực tiếp', 'D': 'Viết tay', 'Đáp án đúng': 'A' },
+      { 'Câu hỏi': 'Câu hỏi mẫu 2?', 'A': 'Đáp án A', 'B': 'Đáp án B', 'C': 'Đáp án C', 'D': 'Đáp án D', 'Đáp án đúng': 'B' },
     ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
