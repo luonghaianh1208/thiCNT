@@ -381,6 +381,10 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
 function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, cauHois: CauHoi[], refresh: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<Record<string, string>[]>([]);
+
   const downloadTemplate = () => {
     const sample = [
       { 'Câu hỏi': 'Chuyển đổi số là gì?', 'A': 'Ứng dụng công nghệ số', 'B': 'In tài liệu', 'C': 'Họp trực tiếp', 'D': 'Viết tay', 'Đáp án đúng': 'A', 'Giải thích': 'Chuyển đổi số là ứng dụng công nghệ số vào mọi mặt.' },
@@ -396,7 +400,7 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
     if (!changId) return toast.error('Chọn chặng thi để import.');
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (evt) => {
+    reader.onload = (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -404,25 +408,72 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
       const clean = data
         .filter(r => r['Câu hỏi'] && r['A'] && r['B'] && r['C'] && r['D'] && r['Đáp án đúng'])
         .map(r => ({
-          chang_id: changId,
+          chang_id: String(changId),
           noi_dung: String(r['Câu hỏi']),
           dap_an_a: String(r['A']),
           dap_an_b: String(r['B']),
           dap_an_c: String(r['C']),
           dap_an_d: String(r['D']),
           dap_an_dung: String(r['Đáp án đúng']).toUpperCase().trim(),
-          active: true,
+          active: 'true',
         }));
-      if (clean.length === 0) return toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
-      await bulkInsertCauHoi(clean);
+      if (clean.length === 0) {
+        toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
+        return;
+      }
+      setPreviewItems(clean);
+      setPreviewOpen(true);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      refresh(); toast.success(`Đã import ${clean.length} câu hỏi thành công.`);
     };
     reader.readAsBinaryString(file);
   };
 
+  const confirmImport = async () => {
+    const toInsert = previewItems.map(r => ({
+      chang_id: Number(r.chang_id),
+      noi_dung: r.noi_dung,
+      dap_an_a: r.dap_an_a,
+      dap_an_b: r.dap_an_b,
+      dap_an_c: r.dap_an_c,
+      dap_an_d: r.dap_an_d,
+      dap_an_dung: r.dap_an_dung,
+      active: true,
+    }));
+    await bulkInsertCauHoi(toInsert);
+    setPreviewOpen(false);
+    setPreviewItems([]);
+    refresh();
+    toast.success(`Đã import ${toInsert.length} câu hỏi thành công.`);
+  };
+
+  const questionColumns: ColType[] = [
+    { header: 'Câu hỏi', key: 'noi_dung', type: 'text' },
+    { header: 'A', key: 'dap_an_a', type: 'text' },
+    { header: 'B', key: 'dap_an_b', type: 'text' },
+    { header: 'C', key: 'dap_an_c', type: 'text' },
+    { header: 'D', key: 'dap_an_d', type: 'text' },
+    { header: 'Đáp án', key: 'dap_an_dung', type: 'select', options: [
+      { value: 'A', label: 'A' },
+      { value: 'B', label: 'B' },
+      { value: 'C', label: 'C' },
+      { value: 'D', label: 'D' },
+    ]},
+  ];
+
   return (
     <div className="p-4 space-y-6">
+      {/* Preview Modal */}
+      {previewOpen && (
+        <PreviewModal
+          title="Xem trước import câu hỏi"
+          columns={questionColumns}
+          data={previewItems}
+          onChange={setPreviewItems}
+          onConfirm={confirmImport}
+          onCancel={() => { setPreviewOpen(false); setPreviewItems([]); }}
+        />
+      )}
+
       {!changId ? (
         <div className="py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
           <p className="text-slate-400 font-ui font-semibold">Vui lòng chọn chặng thi ở trên để quản lý câu hỏi.</p>
@@ -472,6 +523,125 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
   );
 }
 
+// ─── SHARED PREVIEW MODAL ───────────────────────────────────────────────────────
+
+type ColText = { header: string; key: string; type: 'text' };
+type ColSelect = { header: string; key: string; type: 'select'; options: { value: string; label: string }[] };
+type ColType = ColText | ColSelect;
+
+function PreviewModal({
+  title,
+  columns,
+  data,
+  onChange,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  columns: ColType[];
+  data: Record<string, string>[];
+  onChange: (data: Record<string, string>[]) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const updateCell = (rowIdx: number, key: string, value: string) => {
+    const updated = data.map((row, i) => i === rowIdx ? { ...row, [key]: value } : row);
+    onChange(updated);
+  };
+
+  const removeRow = (rowIdx: number) => {
+    onChange(data.filter((_, i) => i !== rowIdx));
+  };
+
+  const loaiLabel = (val: string) => LOAI_DON_VI.find(l => l.value === val)?.label ?? val;
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <div>
+            <h3 className="text-lg font-black text-brand-blue font-ui">{title}</h3>
+            <p className="text-xs text-slate-400 font-ui mt-1">{data.length} dòng sẽ được import</p>
+          </div>
+          <button onClick={onCancel} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="flex-1 overflow-auto p-6">
+          <table className="w-full text-sm font-ui">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest rounded-l-xl w-10">#</th>
+                {columns.map(col => (
+                  <th key={col.key} className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{col.header}</th>
+                ))}
+                <th className="w-10 rounded-r-xl"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {data.map((row, rowIdx) => (
+                <tr key={rowIdx} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3 text-slate-400 font-bold text-xs">{rowIdx + 1}</td>
+                  {columns.map(col => (
+                    <td key={col.key} className="px-4 py-3">
+                      {col.type === 'text' ? (
+                        <input
+                          type="text"
+                          value={row[col.key] ?? ''}
+                          onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                          className="w-full bg-transparent border-b border-dashed border-slate-200 focus:border-brand-blue outline-none py-1 text-slate-700 font-semibold"
+                        />
+                      ) : (
+                        <select
+                          value={row[col.key] ?? ''}
+                          onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                          className="w-full bg-transparent border-b border-dashed border-slate-200 focus:border-brand-blue outline-none py-1 text-slate-700 font-semibold"
+                        >
+                          {col.options.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                  ))}
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => removeRow(rowIdx)}
+                      className="p-1 text-slate-300 hover:text-brand-red transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.length === 0 && (
+            <p className="text-center text-slate-400 py-12 font-ui">Không có dữ liệu nào.</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-slate-100 flex justify-end gap-3">
+          <button onClick={onCancel} className="px-6 py-3 rounded-xl bg-slate-100 text-slate-600 font-ui font-semibold text-sm hover:bg-slate-200 transition-all">
+            Hủy
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={data.length === 0}
+            className="px-6 py-3 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Xác nhận import ({data.length})
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const LOAI_DON_VI = [
   { value: 'phuong', label: 'Phường' },
   { value: 'xa', label: 'Xã' },
@@ -482,6 +652,10 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
   const [ten, setTen] = useState('');
   const [loai, setLoai] = useState('phuong');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<{ ten: string; loai: string }[]>([]);
 
   const handleAdd = async () => {
     if (!ten.trim()) return;
@@ -506,26 +680,57 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (evt) => {
+    reader.onload = (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data: any[] = XLSX.utils.sheet_to_json(ws);
       const valid = data.filter(r => r['Tên đơn vị']);
-      if (valid.length === 0) return toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
+      if (valid.length === 0) {
+        toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
+        return;
+      }
       const items = valid.map(r => ({
         ten: String(r['Tên đơn vị']).trim(),
         loai: String(r['Loại'] || 'phuong').trim(),
       }));
-      await bulkInsertDonVi(items);
+      setPreviewItems(items);
+      setPreviewOpen(true);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      refresh(); toast.success(`Đã import ${valid.length} đơn vị thành công.`);
     };
     reader.readAsBinaryString(file);
   };
 
+  const confirmImport = async () => {
+    await bulkInsertDonVi(previewItems);
+    setPreviewOpen(false);
+    setPreviewItems([]);
+    refresh();
+    toast.success(`Đã import ${previewItems.length} đơn vị thành công.`);
+  };
+
   return (
     <div className="p-4 space-y-6">
+      {/* Preview Modal */}
+      {previewOpen && (
+        <PreviewModal
+          title="Xem trước import đơn vị"
+          columns={[
+            { header: 'Tên đơn vị', key: 'ten', type: 'text' as const },
+            {
+              header: 'Loại',
+              key: 'loai',
+              type: 'select' as const,
+              options: LOAI_DON_VI.map(l => ({ value: l.value, label: l.label })),
+            },
+          ]}
+          data={previewItems}
+          onChange={setPreviewItems}
+          onConfirm={confirmImport}
+          onCancel={() => { setPreviewOpen(false); setPreviewItems([]); }}
+        />
+      )}
+
       {/* Thêm 1 đơn vị */}
       <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
         <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm đơn vị</h4>
