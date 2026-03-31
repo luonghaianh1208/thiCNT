@@ -1,57 +1,705 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getChangDangMo, 
-  getDonViList, 
-  taoThiSinh, 
-  layCauHoiNgauNhien, 
-  nopBaiThi, 
+import {
+  getChangDangMo,
+  getDonViList,
+  taoThiSinh,
+  layCauHoiNgauNhien,
+  nopBaiThi,
   ghiCanhBaoGianLan,
-  type ChangThi, 
-  type DonVi, 
+  type ChangThi,
+  type DonVi,
   type CauHoi,
-  type AnswerRecord
 } from '@/lib/db';
-import { 
-  Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft, BookOpen, User, ShieldCheck, Award, Cpu, Activity, Info, Zap, ShieldAlert, Clock
+import {
+  Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft,
+  ShieldCheck, Award, Cpu, Activity, Zap, ShieldAlert, Clock, BookOpen, User,
+  Info, MapPin, Eye, EyeOff, StopCircle, HelpCircle, BadgeCheck, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type ExamStage = 'loading' | 'pending' | 'register' | 'exam' | 'result';
+
+const STORAGE_KEY = 'thichuyendoiso_session';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const formatDateTime = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  });
+};
+
+const formatCountdown = (ms: number) => {
+  if (ms <= 0) return { days: 0, hours: 0, mins: 0, secs: 0 };
+  const totalSecs = Math.floor(ms / 1000);
+  const days = Math.floor(totalSecs / 86400);
+  const hours = Math.floor((totalSecs % 86400) / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+  const secs = totalSecs % 60;
+  return { days, hours, mins, secs };
+};
+
+// Fisher-Yates shuffle
+const shuffleArray = <T,>(arr: T[]): T[] => {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// ─── Skeleton Component ───────────────────────────────────────────────────────
+function ExamSkeleton() {
+  return (
+    <div className="min-h-screen bg-brand-dark py-20 px-6 flex items-center justify-center circuit-pattern">
+      <div className="card-tech w-full max-w-2xl bg-white p-12 border-brand-blue/20">
+        <div className="text-center mb-12">
+          <div className="h-24 w-24 mx-auto mb-8 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-10 w-64 mx-auto mb-4 rounded-xl bg-slate-200 animate-pulse" />
+          <div className="h-4 w-48 mx-auto rounded bg-slate-200 animate-pulse" />
+        </div>
+        <div className="space-y-6 mb-12">
+          <div className="grid grid-cols-2 gap-8">
+            <div className="h-20 rounded-2xl bg-slate-100 animate-pulse" />
+            <div className="h-20 rounded-2xl bg-slate-100 animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="h-14 rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-14 rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-14 rounded-2xl bg-slate-100 animate-pulse" />
+        </div>
+        <div className="h-20 mt-12 rounded-2xl bg-brand-blue/20 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Pending Page (Before Exam Time) ─────────────────────────────────────────
+function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void }) {
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
+  const startTime = new Date(chang.bat_dau).getTime();
+
+  useEffect(() => {
+    const update = () => {
+      const diff = startTime - Date.now();
+      if (diff <= 0) {
+        setCountdown({ days: 0, hours: 0, mins: 0, secs: 0 });
+        return;
+      }
+      setCountdown(formatCountdown(diff));
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [startTime]);
+
+  return (
+    <div className="min-h-screen bg-brand-dark py-20 px-6 circuit-pattern">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Card */}
+        <div className="card-tech bg-white p-10 md:p-14 text-center mb-8 border-brand-blue/20">
+          <img src={LOGO_URL} alt="Logo" className="h-20 mx-auto mb-6 drop-shadow-xl" />
+          <div className="inline-flex items-center gap-2 bg-brand-blue/10 px-4 py-2 rounded-full mb-6">
+            <div className="w-2 h-2 rounded-full bg-brand-blue animate-pulse" />
+            <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Sắp diễn ra</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-4">
+            {chang.ten}
+          </h1>
+          <p className="text-slate-500 font-ui text-lg">Hãy sẵn sàng để bước vào thử thách!</p>
+        </div>
+
+        {/* Countdown */}
+        <div className="card-tech bg-brand-blue text-white p-10 mb-8 border-brand-blue/40">
+          <h3 className="text-center font-tech font-black text-sm uppercase tracking-widest mb-8 opacity-60">
+            Thời gian đến khi bắt đầu
+          </h3>
+          <div className="grid grid-cols-4 gap-4 md:gap-8">
+            {[
+              { val: countdown.days, label: 'Ngày' },
+              { val: countdown.hours, label: 'Giờ' },
+              { val: countdown.mins, label: 'Phút' },
+              { val: countdown.secs, label: 'Giây' },
+            ].map((item, i) => (
+              <div key={i} className="text-center">
+                <div className="text-4xl md:text-6xl font-tech font-black mb-2">
+                  {String(item.val).padStart(2, '0')}
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-50">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Exam Info */}
+        <div className="card-tech bg-white p-10 mb-8">
+          <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
+            <BookOpen size={18} /> Thông tin bài thi
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-brand-blue/10 rounded-xl">
+                  <Timer size={20} className="text-brand-blue" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Thời gian làm bài</span>
+              </div>
+              <p className="text-3xl font-tech font-black text-brand-blue">{chang.thoi_gian_phut} <span className="text-base font-normal text-slate-500">phút</span></p>
+            </div>
+            <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-brand-blue/10 rounded-xl">
+                  <HelpCircle size={20} className="text-brand-blue" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Số câu hỏi</span>
+              </div>
+              <p className="text-3xl font-tech font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">câu</span></p>
+            </div>
+            <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-brand-blue/10 rounded-xl">
+                  <BadgeCheck size={20} className="text-brand-blue" />
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Điểm đạt được</span>
+              </div>
+              <p className="text-3xl font-tech font-black text-brand-blue">100 <span className="text-base font-normal text-slate-500">điểm</span></p>
+            </div>
+          </div>
+          <div className="mt-6 bg-brand-yellow/10 p-6 rounded-2xl border border-brand-yellow/20">
+            <div className="flex items-center gap-3">
+              <Clock size={18} className="text-brand-yellow" />
+              <span className="font-ui font-bold text-brand-blue">Mở cửa: {formatDateTime(chang.bat_dau)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="card-tech bg-white p-10 mb-8">
+          <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
+            <Info size={18} /> Hướng dẫn thi
+          </h3>
+          <div className="space-y-6">
+            {[
+              { icon: <User size={18} />, title: 'Đăng ký thông tin', desc: 'Nhập đầy đủ họ tên, số điện thoại và chọn đơn vị của bạn trước khi bắt đầu.' },
+              { icon: <Timer size={18} />, title: 'Làm bài trong thời gian quy định', desc: `Bạn có ${chang.thoi_gian_phut} phút để hoàn thành ${chang.so_cau} câu hỏi. Không có thời gian bổ sung.` },
+              { icon: <Eye size={18} />, title: 'Cấm thoát màn hình', desc: 'Hệ thống giám sát sẽ phát hiện nếu bạn chuyển tab hoặc thu nhỏ trình duyệt. Vi phạm sẽ được ghi nhận.' },
+              { icon: <CheckCircle2 size={18} />, title: 'Đáp án đảo thứ tự', desc: 'Mỗi thí sinh sẽ thấy các đáp án hiển thị theo thứ tự khác nhau để đảm bảo công bằng.' },
+              { icon: <MapPin size={18} />, title: 'Điều hướng nhanh', desc: 'Sử dụng bảng câu hỏi bên cạnh để nhảy nhanh giữa các câu hoặc xem câu nào đã làm.' },
+              { icon: <StopCircle size={18} />, title: 'Nộp bài', desc: 'Bạn có thể nộp bài trước khi hết giờ. Hệ thống sẽ cảnh báo nếu có câu chưa trả lời.' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <div className="p-3 bg-brand-blue/5 rounded-xl text-brand-blue flex-shrink-0">{item.icon}</div>
+                <div>
+                  <h4 className="font-ui font-bold text-brand-blue mb-1">{item.title}</h4>
+                  <p className="text-slate-500 text-sm font-ui">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Anti-cheat Warning */}
+        <div className="card-tech bg-brand-red/5 p-10 mb-8 border-brand-red/20">
+          <h3 className="font-tech font-black text-brand-red uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+            <ShieldAlert size={18} /> Lưu ý quan trọng
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={16} className="text-brand-red flex-shrink-0 mt-1" />
+              <p className="text-slate-600 font-ui text-sm">Không được chuyển tab hoặc thu nhỏ cửa sổ trình duyệt trong quá trình thi.</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={16} className="text-brand-red flex-shrink-0 mt-1" />
+              <p className="text-slate-600 font-ui text-sm">Không được mở các ứng dụng khác trong khi đang thi.</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={16} className="text-brand-red flex-shrink-0 mt-1" />
+              <p className="text-slate-600 font-ui text-sm">Mỗi hành vi vi phạm sẽ được ghi nhận vào hồ sơ dự thi.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Start Button - Disabled */}
+        <button
+          disabled
+          className="w-full h-20 rounded-2xl bg-slate-200 text-slate-400 font-ui font-black text-lg uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
+        >
+          <Clock size={24} />
+          Chưa đến giờ thi — Vui lòng chờ đến {formatDateTime(chang.bat_dau)}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Register Page ────────────────────────────────────────────────────────────
+function RegisterPage({
+  chang,
+  donVis,
+  onStart,
+  loading
+}: {
+  chang: ChangThi;
+  donVis: DonVi[];
+  onStart: (hoTen: string, sdt: string, donViId: string) => void;
+  loading: boolean;
+}) {
+  const [hoTen, setHoTen] = useState('');
+  const [sdt, setSdt] = useState('');
+  const [donViId, setDonViId] = useState('');
+
+  const handleSubmit = () => {
+    if (!hoTen.trim() || !sdt || !donViId) {
+      toast.error('Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+    if (!/^\d{10}$/.test(sdt)) {
+      toast.error('Số điện thoại phải có đúng 10 chữ số.');
+      return;
+    }
+    onStart(hoTen.trim(), sdt, donViId);
+  };
+
+  return (
+    <div className="min-h-screen bg-brand-dark py-20 px-6 circuit-pattern">
+      <div className="max-w-2xl mx-auto">
+        <div className="card-tech bg-white p-10 md:p-14 border-brand-blue/20">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <img src={LOGO_URL} alt="Logo" className="h-20 mx-auto mb-6 drop-shadow-xl" />
+            <div className="inline-flex items-center gap-2 bg-brand-yellow/20 px-4 py-2 rounded-full mb-4">
+              <div className="w-2 h-2 rounded-full bg-brand-yellow animate-pulse" />
+              <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Đang mở</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-2">
+              {chang.ten}
+            </h1>
+            <p className="text-slate-500 font-ui">Điền thông tin để bắt đầu bài thi</p>
+          </div>
+
+          {/* Exam Summary */}
+          <div className="grid grid-cols-2 gap-4 mb-10 p-6 bg-brand-blue/5 rounded-2xl border border-brand-blue/10">
+            <div className="flex items-center gap-3">
+              <Timer size={20} className="text-brand-blue" />
+              <div>
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Thời gian</p>
+                <p className="font-bold text-brand-blue font-ui">{chang.thoi_gian_phut} phút</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <HelpCircle size={20} className="text-brand-blue" />
+              <div>
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Câu hỏi</p>
+                <p className="font-bold text-brand-blue font-ui">{chang.so_cau} câu</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest font-ui block">Họ và tên thí sinh</label>
+              <input
+                type="text"
+                placeholder="NHẬP HỌ TÊN ĐẦY ĐỦ..."
+                value={hoTen}
+                onChange={e => setHoTen(e.target.value.toUpperCase())}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-base font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest font-ui block">Số điện thoại</label>
+              <input
+                type="text"
+                placeholder="0XXXXXXXXX..."
+                value={sdt}
+                onChange={e => setSdt(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-base font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest font-ui block">Đơn vị</label>
+              <select
+                value={donViId}
+                onChange={e => setDonViId(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-base font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none appearance-none font-ui"
+              >
+                <option value="">CHỌN ĐƠN VỊ...</option>
+                {donVis.map(dv => (
+                  <option key={dv.id} value={dv.id}>{dv.ten}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="mt-6 p-4 bg-brand-yellow/10 rounded-xl border border-brand-yellow/20 flex items-start gap-3">
+            <ShieldCheck size={18} className="text-brand-yellow flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-slate-600 font-ui leading-relaxed">
+              Khi bấm "BẮT ĐẦU", bạn cam kết tuân thủ các quy tắc thi và không chuyển tab, thoát ứng dụng trong suốt quá trình làm bài.
+            </p>
+          </div>
+
+          {/* Start Button */}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full mt-8 h-20 rounded-2xl bg-brand-blue text-white font-ui font-black text-lg uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-brand-blue/20"
+          >
+            {loading ? (
+              <Loader2 size={24} className="animate-spin" />
+            ) : (
+              <>
+                <Zap size={24} className="fill-current" />
+                BẮT ĐẦU LÀM BÀI
+                <ArrowRight size={24} />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Submit Confirmation Modal ────────────────────────────────────────────────
+function SubmitConfirmModal({
+  totalQuestions,
+  answeredCount,
+  onConfirm,
+  onCancel
+}: {
+  totalQuestions: number;
+  answeredCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const unanswered = totalQuestions - answeredCount;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="card-tech bg-white max-w-lg w-full p-10 text-center animate-in zoom-in duration-300">
+        {unanswered > 0 ? (
+          <>
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-yellow/10 flex items-center justify-center">
+              <AlertTriangle size={40} className="text-brand-yellow" />
+            </div>
+            <h2 className="text-2xl font-ui font-black text-brand-blue mb-4">CẢNH BÁO</h2>
+            <p className="text-slate-500 font-ui mb-2">
+              Bạn còn <strong className="text-brand-red">{unanswered} câu chưa trả lời</strong> trong bài thi.
+            </p>
+            <p className="text-slate-400 text-sm font-ui mb-8">
+              Bạn có chắc chắn muốn nộp bài không?
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-blue/10 flex items-center justify-center">
+              <CheckCircle2 size={40} className="text-brand-blue" />
+            </div>
+            <h2 className="text-2xl font-ui font-black text-brand-blue mb-4">XÁC NHẬN NỘP BÀI</h2>
+            <p className="text-slate-500 font-ui mb-8">
+              Bạn đã trả lời đủ {totalQuestions} câu. Xác nhận nộp bài?
+            </p>
+          </>
+        )}
+
+        <div className="flex gap-4">
+          <button
+            onClick={onCancel}
+            className="flex-1 h-14 rounded-2xl bg-slate-100 text-slate-600 font-ui font-bold hover:bg-slate-200 transition-all"
+          >
+            Quay lại làm bài
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 h-14 rounded-2xl bg-brand-red text-white font-ui font-bold hover:bg-brand-red/90 transition-all"
+          >
+            Nộp bài
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Exam Page ────────────────────────────────────────────────────────────────
+function ExamPage({
+  questions,
+  answers,
+  setAnswers,
+  timeLeft,
+  currentQuestionIdx,
+  setCurrentQuestionIdx,
+  optionOrders,
+  formHoTen,
+  chang,
+  onSubmit,
+  submitting,
+  showSubmitConfirm,
+  setShowSubmitConfirm,
+  onAnswer,
+  onPrev,
+  onNext,
+}: {
+  questions: CauHoi[];
+  answers: Record<number, string>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+  timeLeft: number;
+  currentQuestionIdx: number;
+  setCurrentQuestionIdx: React.Dispatch<React.SetStateAction<number>>;
+  optionOrders: Record<number, string[]>;
+  formHoTen: string;
+  chang: ChangThi;
+  onSubmit: () => void;
+  submitting: boolean;
+  showSubmitConfirm: boolean;
+  setShowSubmitConfirm: React.Dispatch<React.SetStateAction<boolean>>;
+  onAnswer: (cauHoiId: number, option: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const q = questions[currentQuestionIdx];
+
+  const formatTime = (s: number) => {
+    const min = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const answeredCount = Object.keys(answers).length;
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-ui relative overflow-hidden">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-brand-blue text-white p-4 shadow-xl border-b-2 border-white/10">
+        <div className="max-w-7xl mx-auto flex justify-between items-center h-14">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-2 rounded-xl hidden sm:block">
+              <img src={LOGO_URL} alt="Logo" className="h-8 w-auto" />
+            </div>
+            <div>
+              <h2 className="text-xs sm:text-sm font-tech font-black tracking-tight truncate max-w-[120px] sm:max-w-xs">
+                {chang.ten.toUpperCase()}
+              </h2>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest truncate max-w-[100px] sm:max-w-[150px]">
+                  {formHoTen}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-tech font-black text-lg sm:text-2xl transition-colors min-w-[120px] sm:min-w-[160px] justify-center
+            ${timeLeft < 60 ? 'bg-brand-red shadow-[0_0_20px_#CF2A2A] animate-pulse' : 'bg-white/10'}`}>
+            <Timer className={timeLeft < 60 ? 'animate-bounce' : ''} size={timeLeft < 60 ? 20 : 24} />
+            <span className="tracking-[0.1em]">{formatTime(timeLeft)}</span>
+          </div>
+
+          <button
+            onClick={() => setShowSubmitConfirm(true)}
+            className="h-10 px-4 sm:px-6 rounded-xl bg-brand-red text-white font-ui font-bold text-xs sm:text-sm hover:bg-brand-red/90 transition-all flex items-center gap-2"
+          >
+            <Send size={16} />
+            <span className="hidden sm:inline">NỘP BÀI</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 circuit-pattern">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-10">
+          {/* Question */}
+          <div className="flex-1 space-y-6">
+            <div className="card-tech bg-white p-6 md:p-12 border-2 border-brand-blue/5 min-h-[350px] flex flex-col">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="px-4 py-2 bg-brand-blue text-white text-xs font-tech font-black rounded-xl">
+                  CÂU {currentQuestionIdx + 1} / {questions.length}
+                </div>
+                <div className="h-0.5 flex-1 bg-slate-100" />
+                {answers[q.id] && (
+                  <div className="flex items-center gap-1 text-emerald-500 text-xs font-black">
+                    <CheckCircle2 size={14} /> Đã trả lời
+                  </div>
+                )}
+              </div>
+
+              <p className="text-lg sm:text-2xl font-bold text-slate-800 leading-snug mb-10 flex-1">
+                {q.noi_dung}
+              </p>
+
+              <div className="grid grid-cols-1 gap-4">
+                {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map(key => {
+                  const optionText = q[`dap_an_${key}` as keyof CauHoi] as string;
+                  if (!optionText) return null;
+                  const isSelected = answers[q.id] === optionText;
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => onAnswer(q.id, optionText)}
+                      className={`group relative p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 sm:gap-5
+                        ${isSelected
+                          ? 'bg-brand-blue border-brand-blue text-white shadow-xl -translate-x-1'
+                          : 'bg-white border-slate-100 hover:border-brand-blue/30 hover:bg-slate-50'}`}
+                    >
+                      <span className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-sm sm:text-lg transition-colors
+                        ${isSelected ? 'bg-white text-brand-blue' : 'bg-slate-100 text-slate-400 group-hover:bg-brand-blue/10 group-hover:text-brand-blue'}`}>
+                        {key.toUpperCase()}
+                      </span>
+                      <span className="flex-1 font-bold text-sm sm:text-base pt-0.5">{optionText}</span>
+                      {isSelected && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex gap-4">
+              <button
+                disabled={currentQuestionIdx === 0}
+                onClick={onPrev}
+                className="flex-1 h-14 rounded-2xl bg-white border-2 border-slate-200 text-slate-500 font-ui font-bold hover:border-brand-blue hover:text-brand-blue disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center justify-center gap-2"
+              >
+                <ChevronLeft size={20} /> Câu trước
+              </button>
+              <button
+                disabled={currentQuestionIdx === questions.length - 1}
+                onClick={onNext}
+                className="flex-1 h-14 rounded-2xl bg-brand-blue text-white font-ui font-bold hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2"
+              >
+                Câu tiếp <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <aside className="w-full lg:w-80 xl:w-96 space-y-6">
+            {/* Question Navigator */}
+            <div className="card-tech bg-white p-6 border-brand-blue/10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-xs flex items-center gap-2">
+                  <Cpu size={16} /> Câu hỏi
+                </h3>
+                <div className="px-3 py-1 bg-brand-blue/5 rounded-lg text-[10px] font-black text-brand-blue">
+                  {answeredCount}/{questions.length}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-[40vh] overflow-y-auto pr-1">
+                {questions.map((q, idx) => {
+                  const isAnswered = !!answers[q.id];
+                  const isCurrent = currentQuestionIdx === idx;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentQuestionIdx(idx)}
+                      className={`h-10 w-full rounded-xl flex items-center justify-center font-black text-xs transition-all relative
+                        ${isCurrent
+                          ? 'ring-2 ring-brand-blue ring-offset-2 bg-brand-blue text-white'
+                          : isAnswered
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'bg-slate-100 text-slate-400 hover:bg-brand-blue/10 hover:text-brand-blue'}`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-400">
+                  <div className="w-4 h-4 rounded bg-emerald-500"></div> Đã trả lời
+                </div>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-400">
+                  <div className="w-4 h-4 rounded bg-slate-100 border border-slate-200"></div> Chưa trả lời
+                </div>
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="card-tech bg-brand-blue text-white p-6">
+              <h3 className="font-tech font-black uppercase tracking-widest text-xs opacity-60 mb-4 flex items-center gap-2">
+                <Activity size={14} /> Tiến độ
+              </h3>
+              <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full bg-brand-yellow transition-all duration-500 rounded-full"
+                  style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+                />
+              </div>
+              <p className="text-center font-bold text-sm">
+                {answeredCount} / {questions.length} câu đã trả lời
+              </p>
+            </div>
+
+            {/* Security Status */}
+            <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+              <div className="flex items-center gap-2 font-tech font-black uppercase tracking-widest text-xs text-brand-blue mb-3">
+                <ShieldCheck size={14} /> Trạng thái bảo mật
+              </div>
+              <p className="text-xs text-slate-500 font-ui leading-relaxed">
+                Hệ thống đang giám sát phiên thi. Vui lòng không thoát trình duyệt.
+              </p>
+              <div className="flex items-center gap-2 mt-3 text-brand-yellow text-[10px] font-black uppercase tracking-widest">
+                <Activity size={12} className="animate-pulse" /> Đang theo dõi
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* Submit Confirm Modal */}
+      {showSubmitConfirm && (
+        <SubmitConfirmModal
+          totalQuestions={questions.length}
+          answeredCount={answeredCount}
+          onConfirm={onSubmit}
+          onCancel={() => setShowSubmitConfirm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Main TrangThi Component ─────────────────────────────────────────────────
 export default function TrangThi() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [stage, setStage] = useState<ExamStage>('loading');
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [donVis, setDonVis] = useState<DonVi[]>([]);
   const [chang, setChang] = useState<ChangThi | null>(null);
-  
-  const [stage, setStage] = useState<'info' | 'exam' | 'result'>('info');
-  
-  // Registration
-  const [form, setForm] = useState({ hoTen: '', sdt: '', donViId: '' });
-  
-  // Exam State
+
+  // Exam state
   const [questions, setQuestions] = useState<CauHoi[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [examStartTime, setExamStartTime] = useState<number | null>(null);
   const [thiSinhId, setThiSinhId] = useState<number | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  // Shuffled option order per question (questionId -> ['a','b','c','d'] shuffled)
   const [optionOrders, setOptionOrders] = useState<Record<number, string[]>>({});
-  
+  const [formHoTen, setFormHoTen] = useState('');
+
   // Anti-cheat
   const [cheatCount, setCheatCount] = useState(0);
   const [showCheatOverlay, setShowCheatOverlay] = useState(false);
-  
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
   // Results
   const [finalResult, setFinalResult] = useState<{ diem: number; so_cau_dung: number; thoi_gian_giay: number } | null>(null);
 
-  // Persistence Key
-  const STORAGE_KEY = 'thichuyendoiso_session';
-
-  // 1. Initial Load & Restore Session
+  // ─── Initial Load ────────────────────────────────────────────────────────────
   useEffect(() => {
     const init = async () => {
       try {
@@ -59,13 +707,19 @@ export default function TrangThi() {
         setChang(changData);
         setDonVis(dvData);
 
-        // Check for existing session
+        // Check if exam is pending, open, or closed
+        const now = Date.now();
+        const startTime = changData ? new Date(changData.bat_dau).getTime() : 0;
+        const endTime = changData ? new Date(changData.ket_thuc).getTime() : 0;
+
+        // Check existing session
         const saved = sessionStorage.getItem(STORAGE_KEY);
         if (saved && changData) {
           const state = JSON.parse(saved);
           if (state.changId === changData.id) {
             const elapsed = Math.floor((Date.now() - state.examStartTime) / 1000);
             const remaining = Math.max(0, (changData.thoi_gian_phut * 60) - elapsed);
+
             setQuestions(state.questions);
             setAnswers(state.answers || {});
             setThiSinhId(state.thiSinhId);
@@ -73,18 +727,34 @@ export default function TrangThi() {
             setOptionOrders(state.optionOrders || {});
             setTimeLeft(remaining);
             setCheatCount(state.cheatCount || 0);
+            setFormHoTen(state.formHoTen || '');
+
             if (remaining <= 0) {
-              // Auto-submit if time expired while away
-              setStage('exam');
-              setTimeout(() => handleSubmit(), 100);
+              setStage('loading');
+              setTimeout(() => handleSubmit(state), 100);
             } else {
               setStage('exam');
             }
+            return;
           }
+        }
+
+        // No session - determine stage based on time
+        if (!changData) {
+          setStage('loading'); // Will show "no exam" in loading check
+          return;
+        }
+
+        if (now < startTime) {
+          setStage('pending');
+        } else if (now >= startTime && now <= endTime) {
+          setStage('register');
+        } else {
+          setStage('loading'); // Exam closed
         }
       } catch (err) {
         console.error(err);
-        toast.error('Không thể kết nối hệ thống. Vui lòng thử lại.');
+        toast.error('Không thể kết nối hệ thống.');
       } finally {
         setLoading(false);
       }
@@ -92,7 +762,7 @@ export default function TrangThi() {
     init();
   }, []);
 
-  // 2. Anti-cheat Logic
+  // ─── Anti-cheat ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (stage !== 'exam' || !thiSinhId || !chang) return;
 
@@ -108,19 +778,17 @@ export default function TrangThi() {
     const handleVisibility = () => {
       if (document.hidden) handleViolation();
     };
-
     const handleBlur = () => handleViolation();
 
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('blur', handleBlur);
-    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('blur', handleBlur);
     };
   }, [stage, thiSinhId, chang]);
 
-  // 3. Timer & Persistence
+  // ─── Timer ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (stage !== 'exam' || timeLeft <= 0) return;
 
@@ -129,7 +797,7 @@ export default function TrangThi() {
         const next = prev - 1;
         if (next <= 0) {
           clearInterval(timer);
-          handleSubmit();
+          setTimeout(() => handleSubmit({ questions, answers, thiSinhId, chang }), 100);
           return 0;
         }
         return next;
@@ -139,81 +807,51 @@ export default function TrangThi() {
     return () => clearInterval(timer);
   }, [stage, timeLeft]);
 
-  const saveSession = () => {
-    if (stage !== 'exam' || !chang) return;
-    const state = {
-      changId: chang.id,
-      questions,
-      answers,
-      thiSinhId,
-      examStartTime,
-      totalDuration: chang.thoi_gian_phut * 60,
-      cheatCount
-    };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  };
-
-  // Sync answers to session immediately
+  // ─── Session Persistence ────────────────────────────────────────────────────
   useEffect(() => {
-    if (stage === 'exam') saveSession();
-  }, [answers, cheatCount]);
+    if (stage === 'exam' && chang && examStartTime) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        changId: chang.id,
+        questions,
+        answers,
+        thiSinhId,
+        examStartTime,
+        totalDuration: chang.thoi_gian_phut * 60,
+        optionOrders,
+        formHoTen,
+        cheatCount
+      }));
+    }
+  }, [questions, answers, cheatCount, stage, chang, examStartTime, optionOrders, formHoTen]);
 
-  // 4. Handlers
-  const handleStart = async () => {
-    if (loading) return;
-    const sdt = form.sdt.trim();
-    if (!form.hoTen.trim() || !sdt || !form.donViId || !chang) {
-      toast.error('Vui lòng điền đầy đủ thông tin.');
-      return;
-    }
-    if (!/^\d{10}$/.test(sdt)) {
-      toast.error('Số điện thoại phải có đúng 10 chữ số.');
-      return;
-    }
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+  const handleStart = async (hoTen: string, sdt: string, donViId: string) => {
+    if (!chang) return;
     setLoading(true);
     try {
       const tsId = await taoThiSinh({
-        ho_ten: form.hoTen.trim(),
+        ho_ten: hoTen,
         so_dien_thoai: sdt,
-        don_vi_id: parseInt(form.donViId),
+        don_vi_id: parseInt(donViId),
         ten_don_vi_nho: ''
       });
       const qs = await layCauHoiNgauNhien(chang.id, chang.so_cau);
       const startTime = Date.now();
       const totalDuration = chang.thoi_gian_phut * 60;
 
-      // Shuffle option order per question (each student gets different display)
-      const shuffleKeys = (keys: string[]) => {
-        const shuffled = [...keys];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-      };
+      // Shuffle options per question
       const orders: Record<number, string[]> = {};
-      for (const q of qs) orders[q.id] = shuffleKeys(['a', 'b', 'c', 'd']);
+      for (const q of qs) orders[q.id] = shuffleArray(['a', 'b', 'c', 'd']);
 
       setThiSinhId(tsId);
       setQuestions(qs);
+      setAnswers({});
       setOptionOrders(orders);
       setExamStartTime(startTime);
       setTimeLeft(totalDuration);
+      setFormHoTen(hoTen);
+      setCurrentQuestionIdx(0);
       setStage('exam');
-
-      // Save initial session
-      const initialState = {
-        changId: chang.id,
-        questions: qs,
-        answers: {},
-        thiSinhId: tsId,
-        examStartTime: startTime,
-        totalDuration,
-        optionOrders: orders,
-        cheatCount: 0
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
-      
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khởi tạo bài thi.');
@@ -222,184 +860,104 @@ export default function TrangThi() {
     }
   };
 
-  const handleAnswer = (cauHoiId: number, option: string) => {
-    setAnswers(prev => ({ ...prev, [cauHoiId]: option }));
-  };
-
-  const handleSubmit = async () => {
-    if (submitting || !thiSinhId || !chang) return;
+  const handleSubmit = async (stateOverride?: any) => {
+    const state = stateOverride || { questions, answers, thiSinhId, chang };
+    if (!state.thiSinhId || !state.chang) return;
     setSubmitting(true);
+    setShowSubmitConfirm(false);
     try {
-      const thoi_gian_lam = (chang.thoi_gian_phut * 60) - timeLeft;
-      
-      // Calculate score locally for immediate display
-      const correctAnswers = questions.filter(q => answers[q.id] === q.dap_an_dung).length;
-      const diem = (correctAnswers / questions.length) * 100;
+      const thoi_gian_lam = (state.chang.thoi_gian_phut * 60) - timeLeft;
+      const correctAnswers = state.questions.filter(q => state.answers[q.id] === q.dap_an_dung).length;
+      const diem = (correctAnswers / state.questions.length) * 100;
 
       await nopBaiThi({
-        thi_sinh_id: thiSinhId,
-        chang_id: chang.id,
+        thi_sinh_id: state.thiSinhId,
+        chang_id: state.chang.id,
         diem: Math.round(diem),
         so_cau_dung: correctAnswers,
-        tong_cau: questions.length,
-        thoi_gian_lam: thoi_gian_lam,
-        answers: questions.map(q => ({
+        tong_cau: state.questions.length,
+        thoi_gian_lam,
+        answers: state.questions.map(q => ({
           cau_hoi_id: q.id,
-          lua_chon: answers[q.id] || '',
-          dung: answers[q.id] === q.dap_an_dung
+          lua_chon: state.answers[q.id] || '',
+          dung: state.answers[q.id] === q.dap_an_dung
         }))
       });
 
-      setFinalResult({
-        diem: Math.round(diem),
-        so_cau_dung: correctAnswers,
-        thoi_gian_giay: thoi_gian_lam
-      });
+      setFinalResult({ diem: Math.round(diem), so_cau_dung: correctAnswers, thoi_gian_giay: thoi_gian_lam });
       sessionStorage.removeItem(STORAGE_KEY);
       setStage('result');
       toast.success('Nộp bài thành công!');
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi khi nộp bài. Đừng lo lắng, dữ liệu của bạn đã được lưu tạm thời.');
+      toast.error('Lỗi khi nộp bài.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading && stage === 'info') {
-    return (
-      <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 gap-6 circuit-pattern">
-        <Loader2 className="w-16 h-16 text-brand-yellow animate-spin" />
-        <p className="text-white/50 font-ui font-bold uppercase tracking-[0.2em] text-xs">Đang đồng bộ giao thức bảo mật...</p>
-      </div>
-    );
-  }
+  const handleAnswer = (cauHoiId: number, option: string) => {
+    setAnswers(prev => ({ ...prev, [cauHoiId]: option }));
+  };
 
-  if (!chang && stage === 'info') {
-    return (
-      <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 circuit-pattern">
-        <div className="card-tech max-w-lg text-center bg-white p-12">
-          <AlertTriangle className="w-20 h-20 text-brand-red mx-auto mb-8" />
-          <h2 className="text-3xl font-ui font-black text-brand-blue mb-4 uppercase">HỆ THỐNG ĐANG ĐÓNG</h2>
-          <p className="text-slate-500 font-bold mb-10 font-ui">Hiện tại không có chặng thi nào đang mở. Vui lòng quay lại sau theo lịch trình quy định.</p>
-          <button onClick={() => navigate('/')} className="btn-cyber w-full py-5">QUAY LẠI TRẠM CHỈ HUY</button>
-        </div>
-      </div>
-    );
-  }
+  const handlePrev = () => setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
+  const handleNext = () => setCurrentQuestionIdx(prev => Math.min(questions.length - 1, prev + 1));
 
-  // ─── STAGE: INFO (REGISTRATION) ───
-  if (stage === 'info') {
-    return (
-      <div className="min-h-screen bg-brand-dark py-20 px-6 circuit-pattern flex items-center justify-center">
-        <div className="card-tech w-full max-w-2xl bg-white p-12 border-brand-blue/20">
-          <div className="text-center mb-12">
-            <img src={LOGO_URL} alt="Logo" className="h-24 mx-auto mb-8 drop-shadow-xl" />
-            <h1 className="text-4xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-4">{chang?.ten}</h1>
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></div>
-              <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] font-ui">Hệ thống xác thực thí sinh 4.0</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">
-            <div className="flex items-center gap-4">
-              <Timer className="text-brand-blue w-8 h-8" />
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-ui">Thời gian</p>
-                <p className="text-lg font-ui font-black text-brand-blue">{chang?.thoi_gian_phut} PHÚT</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <BookOpen className="text-brand-blue w-8 h-8" />
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-ui">Số lượng</p>
-                <p className="text-lg font-ui font-black text-brand-blue">{chang?.so_cau} CÂU HỎI</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Họ và tên thí sinh</label>
-              <input
-                type="text"
-                placeholder="NHẬP HỌ TÊN ĐẦY ĐỦ..."
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
-                value={form.hoTen}
-                onChange={e => setForm({ ...form, hoTen: e.target.value.toUpperCase() })}
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Số điện thoại liên hệ</label>
-              <input
-                type="text"
-                placeholder="NHẬP SỐ ĐIỆN THOẠI..."
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
-                value={form.sdt}
-                onChange={e => setForm({ ...form, sdt: e.target.value })}
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Đơn vị trực thuộc</label>
-              <select
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none appearance-none font-ui"
-                value={form.donViId}
-                onChange={e => setForm({ ...form, donViId: e.target.value })}
-              >
-                <option value="">CHỌN ĐƠN VỊ CỦA BẠN...</option>
-                {donVis.map(dv => (
-                  <option key={dv.id} value={dv.id}>{dv.ten.toUpperCase()}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <button 
-              onClick={handleStart}
-              className="w-full btn-cyber h-20 text-lg shadow-2xl shadow-brand-blue/20"
-            >
-              KHỞI TẠO BÀI THI_
-              <Zap className="fill-current" />
-            </button>
-            <p className="text-center mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
-              <ShieldCheck size={14} className="text-emerald-500" />
-              Dữ liệu được bảo mật bởi hệ thống Thành đoàn
-            </p>
+  // ─── Render ──────────────────────────────────────────────────────────────────
+  // Loading
+  if (stage === 'loading' || (loading && stage !== 'exam')) {
+    if (!chang) {
+      return (
+        <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 circuit-pattern">
+          <div className="card-tech max-w-lg text-center bg-white p-12">
+            <AlertTriangle className="w-20 h-20 text-brand-red mx-auto mb-8" />
+            <h2 className="text-3xl font-ui font-black text-brand-blue mb-4 uppercase">HỆ THỐNG ĐÓNG</h2>
+            <p className="text-slate-500 font-bold mb-10 font-ui">Hiện tại không có chặng thi nào đang mở.</p>
+            <button onClick={() => navigate('/')} className="btn-cyber w-full py-5">QUAY LẠI TRANG CHỦ</button>
           </div>
         </div>
-      </div>
+      );
+    }
+    return <ExamSkeleton />;
+  }
+
+  // Pending (before exam time)
+  if (stage === 'pending' && chang) {
+    return <PendingPage chang={chang} onStart={() => {}} />;
+  }
+
+  // Register (during exam time, need to sign up)
+  if (stage === 'register' && chang) {
+    return (
+      <RegisterPage
+        chang={chang}
+        donVis={donVis}
+        onStart={handleStart}
+        loading={loading}
+      />
     );
   }
 
-  // ─── STAGE: EXAM ───
-  if (stage === 'exam') {
-    const q = questions[currentQuestionIdx];
-    const formatSeconds = (s: number) => {
-      const min = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    };
-
+  // Exam
+  if (stage === 'exam' && chang) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col font-ui relative overflow-hidden">
-        {/* Anti-cheat Overlay */}
+      <>
+        {/* Anti-cheat overlay */}
         {showCheatOverlay && (
           <div className="fixed inset-0 z-[100] bg-brand-dark/95 backdrop-blur-md flex items-center justify-center p-6">
             <div className="card-tech bg-white max-w-lg p-12 text-center animate-in zoom-in duration-300 border-brand-red">
               <div className="w-24 h-24 bg-brand-red/10 text-brand-red rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
                 <ShieldAlert size={48} />
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-brand-red mb-4 tracking-tighter font-ui uppercase">MISSION CONTROL</h1>
+              <h1 className="text-3xl md:text-5xl font-black text-brand-red mb-4 tracking-tighter font-ui uppercase">CẢNH BÁO</h1>
               <p className="text-slate-600 font-bold text-lg mb-4">
                 Hệ thống phát hiện bạn vừa rời khỏi màn hình thi!
               </p>
               <div className="bg-brand-red/5 p-6 rounded-2xl mb-10">
                 <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mb-2">Số lần vi phạm</p>
-                <p className="text-5xl font-ui font-black text-brand-red">0{cheatCount}</p>
+                <p className="text-5xl font-ui font-black text-brand-red">{cheatCount}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowCheatOverlay(false)}
                 className="btn-cyber w-full h-16 bg-brand-blue text-white"
               >
@@ -409,194 +967,50 @@ export default function TrangThi() {
           </div>
         )}
 
-        {/* ─── Header Exam ─── */}
-        <header className="sticky top-0 z-40 bg-brand-blue text-white p-4 shadow-xl border-b-2 border-white/10">
-          <div className="max-w-7xl mx-auto flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md hidden sm:block">
-                <img src={LOGO_URL} alt="Logo" className="h-10 w-auto" />
-              </div>
-              <div>
-                <h2 className="text-xs sm:text-base font-tech font-black tracking-tight leading-none truncate max-w-[150px] sm:max-w-md">{chang?.ten.toUpperCase()}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest truncate max-w-[120px]">{form.hoTen}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-tech font-black text-2xl transition-colors min-w-[160px] justify-center
-              ${timeLeft < 60 ? 'bg-brand-red shadow-[0_0_20px_#CF2A2A]' : 'bg-white/10'}`}>
-              <Timer className={timeLeft < 60 ? 'animate-bounce' : ''} size={28} />
-              <span className="tracking-[0.1em]">{formatSeconds(timeLeft)}</span>
-            </div>
-
-            <div className="hidden md:block">
-              <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1 text-right">Tiến độ hoàn thành</div>
-              <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden border border-white/10">
-                <div 
-                  className="h-full bg-brand-yellow transition-all duration-500 shadow-[0_0_10px_#FABD32]"
-                  style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* ─── Main Exam Area ─── */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 circuit-pattern">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
-            
-            {/* Question Card */}
-            <div className="flex-1 space-y-8">
-              <div className="card-tech bg-white p-8 md:p-16 border-2 border-brand-blue/5 min-h-[400px] flex flex-col">
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="px-5 py-2 bg-brand-blue text-white text-xs font-tech font-black rounded-xl">CÂU HỎI {currentQuestionIdx + 1}</div>
-                  <div className="h-0.5 flex-1 bg-slate-100"></div>
-                </div>
-                
-                <p className="text-xl md:text-3xl font-bold text-slate-800 leading-snug mb-12 selection:bg-brand-yellow">
-                  {q?.noi_dung}
-                </p>
-
-                <div className="grid grid-cols-1 gap-5 mt-auto">
-                  {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map(key => {
-                    const optionText = q?.[`dap_an_${key}` as keyof CauHoi];
-                    if (!optionText) return null;
-                    const isSelected = answers[q.id] === optionText;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => handleAnswer(q.id, optionText as string)}
-                        className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left flex items-start gap-5
-                          ${isSelected
-                            ? 'bg-brand-blue border-brand-blue text-white shadow-xl translate-x-2'
-                            : 'bg-white border-slate-100 hover:border-brand-blue/30 hover:bg-slate-50'}`}
-                      >
-                        <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg transition-colors
-                          ${isSelected ? 'bg-white text-brand-blue' : 'bg-slate-100 text-slate-400 group-hover:bg-brand-blue/10 group-hover:text-brand-blue'}`}>
-                          {key.toUpperCase()}
-                        </span>
-                        <span className="flex-1 font-bold text-base md:text-lg pt-1">{optionText}</span>
-                        {isSelected && <CheckCircle2 className="w-6 h-6 flex-shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Navigation Controls */}
-              <div className="flex justify-between items-center gap-6">
-                <button
-                  disabled={currentQuestionIdx === 0}
-                  onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                  className="flex-1 h-16 btn-cyber bg-white/50 border-2 border-slate-200 text-slate-500 hover:text-brand-blue disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  <ChevronLeft /> QUAY LẠI
-                </button>
-                {currentQuestionIdx < questions.length - 1 ? (
-                  <button
-                    onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                    className="flex-1 h-16 btn-cyber group"
-                  >
-                    CÂU TIẾP THEO <ChevronRight className="group-hover:translate-x-2 transition-transform" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="flex-1 h-16 btn-cyber bg-brand-red text-white hover:shadow-brand-red/30"
-                  >
-                    {submitting ? <Loader2 className="animate-spin" /> : (
-                      <div className="flex items-center gap-3">KẾT THÚC BÀI THI <Send size={20} /></div>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Sidebar Navigation */}
-            <aside className="w-full lg:w-96 space-y-8">
-              <div className="card-tech bg-white p-8 border-brand-blue/10">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-sm flex items-center gap-2">
-                    <Cpu size={18} /> THIẾT BỊ ĐIỀU KHIỂN
-                  </h3>
-                  <div className="px-3 py-1 bg-brand-blue/5 rounded-lg text-[10px] font-black text-brand-blue">
-                    {Object.keys(answers).length}/{questions.length}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                  {questions.map((q, idx) => {
-                    const isAnswered = !!answers[q.id];
-                    const isCurrent = currentQuestionIdx === idx;
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => setCurrentQuestionIdx(idx)}
-                        className={`h-12 w-full rounded-xl flex items-center justify-center font-black text-sm transition-all relative overflow-hidden group
-                          ${isCurrent 
-                            ? 'ring-2 ring-brand-blue ring-offset-2' 
-                            : isAnswered 
-                              ? 'bg-brand-blue text-white shadow-lg' 
-                              : 'bg-slate-100 text-slate-400 hover:bg-brand-blue/10 hover:text-brand-blue'}`}
-                      >
-                        {idx + 1}
-                        {isCurrent && <div className="absolute inset-0 bg-brand-blue/20 animate-pulse"></div>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-10 border-t border-slate-100 pt-8 space-y-4">
-                  <div className="flex items-center gap-3 text-xs font-black text-slate-400">
-                    <div className="w-3 h-3 rounded bg-brand-blue"></div> Đã trả lời
-                  </div>
-                  <div className="flex items-center gap-3 text-xs font-black text-slate-400">
-                    <div className="w-3 h-3 rounded bg-slate-100"></div> Chưa trả lời
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-brand-blue p-8 rounded-[2rem] text-white space-y-4 shadow-xl">
-                <div className="flex items-center gap-3 font-tech font-black uppercase tracking-widest text-xs opacity-50">
-                   <ShieldCheck size={16} /> TRẠNG THÁI BẢO MẬT
-                </div>
-                <p className="font-bold text-sm leading-relaxed">Hệ thống đang giám sát phiên thi. Vui lòng không thoát trình duyệt hoặc chuyển tab.</p>
-                <div className="flex items-center gap-2 text-brand-yellow font-black text-xs uppercase tracking-widest">
-                  <Activity size={14} className="animate-pulse" /> Đang truyền dữ liệu (Live)
-                </div>
-              </div>
-            </aside>
-          </div>
-        </main>
-      </div>
+        <ExamPage
+          questions={questions}
+          answers={answers}
+          setAnswers={setAnswers}
+          timeLeft={timeLeft}
+          currentQuestionIdx={currentQuestionIdx}
+          setCurrentQuestionIdx={setCurrentQuestionIdx}
+          optionOrders={optionOrders}
+          formHoTen={formHoTen}
+          chang={chang}
+          onSubmit={() => handleSubmit({ questions, answers, thiSinhId, chang })}
+          submitting={submitting}
+          showSubmitConfirm={showSubmitConfirm}
+          setShowSubmitConfirm={setShowSubmitConfirm}
+          onAnswer={handleAnswer}
+          onPrev={handlePrev}
+          onNext={handleNext}
+        />
+      </>
     );
   }
 
-  // ─── STAGE: RESULT ───
+  // Result
   if (stage === 'result' && finalResult) {
     return (
       <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 relative overflow-hidden circuit-pattern">
-        <div className="absolute inset-0 bg-brand-blue/5 bg-scanlines opacity-20"></div>
+        <div className="absolute inset-0 bg-brand-blue/5 bg-scanlines opacity-20" />
 
         <div className="card-tech w-full max-w-2xl bg-white p-12 md:p-20 text-center relative z-10 border-brand-yellow/30">
           <div className="mb-12 relative inline-flex items-center justify-center">
             <Award className="w-32 h-32 text-brand-yellow drop-shadow-[0_0_20px_rgba(250,189,50,0.5)]" />
-            <div className="absolute inset-0 bg-brand-yellow/20 rounded-full blur-3xl scale-125 animate-pulse-soft"></div>
+            <div className="absolute inset-0 bg-brand-yellow/20 rounded-full blur-3xl scale-125 animate-pulse-soft" />
           </div>
-          
-          <h2 className="text-3xl md:text-5xl font-tech font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO_KẾT QUẢ</h2>
-          <p className="text-slate-400 font-black text-xs md:text-sm uppercase tracking-[0.4em] mb-16">CHÚC MỪNG BẠN ĐÃ HOÀN THÀNH CHẶNG THI!</p>
+
+          <h2 className="text-3xl md:text-5xl font-tech font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO KẾT QUẢ</h2>
+          <p className="text-slate-400 font-black text-xs md:text-sm uppercase tracking-[0.4em] mb-16">CHÚC MỪNG BẠN ĐÃ HOÀN THÀNH!</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white">
-              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">ĐIỂM SỐ ĐẠT ĐƯỢC</p>
+              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">ĐIỂM SỐ</p>
               <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.diem}</div>
             </div>
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white">
-              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">CÂU TRẢ LỜI ĐÚNG</p>
+              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">CÂU ĐÚNG</p>
               <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{questions.length}</div>
             </div>
           </div>
@@ -606,29 +1020,32 @@ export default function TrangThi() {
               <Clock className="text-brand-blue" />
               <span>Thời gian hoàn thành:</span>
             </div>
-            <span className="text-xl text-brand-blue">{Math.floor(finalResult.thoi_gian_giay / 60)} phút {finalResult.thoi_gian_giay % 60} giây</span>
+            <span className="text-xl text-brand-blue">
+              {Math.floor(finalResult.thoi_gian_giay / 60)} phút {finalResult.thoi_gian_giay % 60} giây
+            </span>
           </div>
 
           <button
             onClick={() => navigate('/')}
             className="w-full btn-cyber h-20 text-lg shadow-2xl"
           >
-            QUAY LẠI TRẠM CHỈ HUY
+            QUAY LẠI TRANG CHỦ
           </button>
-          
+
           {cheatCount > 0 && (
             <div className="mt-10 flex items-center justify-center gap-3 p-4 bg-brand-red/5 text-brand-red rounded-2xl border border-brand-red/10 animate-in fade-in duration-1000">
               <ShieldAlert size={16} />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Cảnh báo: Đã ghi nhận {cheatCount} lần vi phạm gian lận vào hồ sơ số.</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                Cảnh báo: Đã ghi nhận {cheatCount} lần vi phạm gian lận.
+              </span>
             </div>
           )}
         </div>
-        
-        {/* Footer info */}
+
         <div className="mt-12 flex items-center gap-6 text-white/20 font-tech font-black text-[10px] uppercase tracking-[0.4em]">
           <span className="flex items-center gap-2"><Info size={14} /> Dữ liệu đã được mã hóa</span>
-          <div className="w-1 h-1 bg-white/20 rounded-full"></div>
-          <span>Thành Đoàn Hải Phòng Digital ID</span>
+          <div className="w-1 h-1 bg-white/20 rounded-full" />
+          <span>Thành Đoàn Hải Phòng</span>
         </div>
       </div>
     );
