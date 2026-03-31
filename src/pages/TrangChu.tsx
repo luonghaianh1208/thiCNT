@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllChangThiPublic, type ChangThi } from '@/lib/db';
-import { Calendar, Clock, Award, Users, ChevronRight, BookOpen, Trophy, Star } from 'lucide-react';
+import { Calendar, Clock, Award, Users, ChevronRight, BookOpen, Trophy, Star, ShieldCheck, Zap, Globe } from 'lucide-react';
+
+const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/d/d7/Huy_Hi%E1%BB%87u_%C4%90o%C3%A0n.png";
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  });
-};
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
     timeZone: 'Asia/Ho_Chi_Minh',
   });
 };
@@ -44,132 +38,155 @@ export default function TrangChu() {
   const hasActiveChang = changs.some(isActive);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-blue-900 text-sm">
-              ĐTN
+    <div className="min-h-screen bg-slate-50 selection:bg-brand-yellow selection:text-brand-blue">
+      {/* ─── Navigation ─── */}
+      <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-lg border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20">
+            <div className="flex items-center gap-4">
+              <img src={LOGO_URL} alt="Huy hiệu Đoàn" className="h-14 w-auto drop-shadow-sm" />
+              <div className="hidden sm:block border-l border-slate-300 pl-4">
+                <p className="text-sm font-bold text-brand-blue leading-tight uppercase tracking-wide">Đoàn TNCS Hồ Chí Minh</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Thành Đoàn Hải Phòng</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-blue-200 leading-tight">BCH Đoàn TP. Hải Phòng</p>
-              <p className="text-sm font-semibold leading-tight">Đoàn TNCS Hồ Chí Minh</p>
+            
+            <div className="flex items-center gap-2 sm:gap-6">
+              <div className="hidden md:flex gap-8">
+                <a href="#gioi-thieu" className="text-sm font-semibold text-slate-600 hover:text-brand-blue transition-colors">Giới thiệu</a>
+                <a href="#lich-thi" className="text-sm font-semibold text-slate-600 hover:text-brand-blue transition-colors">Lịch thi</a>
+                <a href="#giai-thuong" className="text-sm font-semibold text-slate-600 hover:text-brand-blue transition-colors">Giải thưởng</a>
+              </div>
+              <button
+                onClick={() => navigate('/admin/login')}
+                className="text-xs font-bold text-slate-400 hover:text-brand-blue px-3 py-1 rounded-md border border-slate-200 hover:border-brand-blue transition-all"
+              >
+                ADMIN
+              </button>
             </div>
           </div>
-          <nav className="flex gap-2">
-            <a href="#gioi-thieu" className="text-sm text-blue-200 hover:text-white px-3 py-1 rounded transition-colors">Giới thiệu</a>
-            <a href="#lich-thi" className="text-sm text-blue-200 hover:text-white px-3 py-1 rounded transition-colors">Lịch thi</a>
-            <a href="#giai-thuong" className="text-sm text-blue-200 hover:text-white px-3 py-1 rounded transition-colors">Giải thưởng</a>
-            <button
-              onClick={() => navigate('/admin/login')}
-              className="text-xs text-blue-300 hover:text-white px-2 py-1"
-            >
-              Quản trị
-            </button>
-          </nav>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-800 via-blue-700 to-blue-600 text-white">
-        <div className="max-w-6xl mx-auto px-4 py-16 text-center">
-          <div className="inline-block bg-yellow-400 text-blue-900 text-xs font-bold px-4 py-1 rounded-full mb-6 uppercase tracking-wider">
-            Cuộc thi trực tuyến 2026
+      {/* ─── Hero Section ─── */}
+      <section className="relative overflow-hidden bg-hero-pattern pt-20 pb-32">
+        {/* Animated Orbs */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-10 right-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full mb-8">
+            <Zap className="w-4 h-4 text-brand-yellow fill-brand-yellow" />
+            <span className="text-xs font-bold text-white uppercase tracking-widest">Cuộc thi trực tuyến 2026</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
-            Thanh niên Hải Phòng với
+
+          <h1 className="text-4xl md:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
+            Thanh niên Hải Phòng <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-orange-300">
+              Chuyển đổi số, Chuyển đổi xanh
+            </span>
           </h1>
-          <h2 className="text-2xl md:text-4xl font-bold text-yellow-300 leading-tight mb-4">
-            Chuyển đổi số, Chuyển đổi xanh
-          </h2>
-          <p className="text-lg md:text-xl text-blue-100 mb-8 font-medium">
-            Hành động vì thành phố đáng sống
+
+          <p className="text-lg md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto font-medium opacity-90">
+            Phát huy vai trò xung kích, sáng tạo của tuổi trẻ trong kỷ nguyên số và hành động vì một Hải Phòng xanh, bền vững.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-10 text-sm text-blue-100">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>23/3/2026 – 25/4/2026</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>Thanh niên Hải Phòng (16–35 tuổi)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span>3 chặng thi trực tuyến</span>
-            </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {hasActiveChang ? (
+              <button
+                onClick={() => navigate('/thi')}
+                className="btn-primary text-xl px-12 py-5 shadow-2xl shadow-brand-yellow/30"
+              >
+                Tham gia thi ngay
+                <ChevronRight className="w-6 h-6 animate-float" />
+              </button>
+            ) : (
+              <div className="glass px-8 py-4 rounded-full text-brand-blue font-bold flex items-center gap-3">
+                <Clock className="w-6 h-6 text-brand-blue" />
+                Vòng Sơ khảo: 28/3 – 12/4/2026
+              </div>
+            )}
+            <a href="#gioi-thieu" className="px-8 py-4 text-white font-bold hover:text-brand-yellow transition-colors bg-white/5 hover:bg-white/10 rounded-full border border-white/10">
+              Tìm hiểu thêm
+            </a>
           </div>
 
-          {hasActiveChang ? (
-            <button
-              onClick={() => navigate('/thi')}
-              className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold px-8 py-4 rounded-full text-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              Tham gia thi ngay
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-8 py-4 rounded-full text-lg">
-              <Clock className="w-5 h-5" />
-              {changs.find(isUpcoming)
-                ? `Chặng thi sẽ mở vào ${formatDateTime(changs.find(isUpcoming)!.bat_dau)}`
-                : 'Hiện chưa có chặng thi nào đang mở'}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Giới thiệu */}
-      <section id="gioi-thieu" className="py-16 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center text-blue-900 mb-3">Về cuộc thi</h2>
-          <p className="text-center text-gray-500 mb-10 max-w-2xl mx-auto">
-            Cuộc thi nhằm tuyên truyền, nâng cao nhận thức về chuyển đổi số, chuyển đổi xanh
-            và phát huy vai trò xung kích, sáng tạo của thanh niên Hải Phòng.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* Stats Bar */}
+          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-white/10 pt-10">
             {[
-              {
-                icon: <Users className="w-7 h-7 text-blue-600" />,
-                title: 'Đối tượng',
-                desc: 'Thanh niên sinh sống tại Hải Phòng, độ tuổi từ 16 đến 35 tuổi. Mỗi đội gồm 03 thành viên.',
-              },
-              {
-                icon: <BookOpen className="w-7 h-7 text-green-600" />,
-                title: 'Hình thức',
-                desc: 'Thi trắc nghiệm trực tuyến, mỗi chặng gồm 30 câu hỏi, thời gian làm bài 25 phút.',
-              },
-              {
-                icon: <Trophy className="w-7 h-7 text-yellow-600" />,
-                title: 'Xét chọn',
-                desc: 'Top 10 đội điểm cao nhất sau 3 chặng sơ khảo vào Vòng Chung kết cấp thành phố.',
-              },
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4">
-                  {item.icon}
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
+              { icon: <Users />, val: "100+", label: "Đoàn trực thuộc" },
+              { icon: <ShieldCheck />, val: "30", label: "Câu hỏi/Chặng" },
+              { icon: <Globe />, val: "24/7", label: "Nền tảng trực tuyến" },
+              { icon: <Award />, val: "🥇 🥈 🥉", label: "Cơ cấu giải thưởng" },
+            ].map((s, i) => (
+              <div key={i} className="text-center group">
+                <div className="text-brand-yellow mb-2 flex justify-center group-hover:scale-110 transition-transform">{s.icon}</div>
+                <div className="text-2xl font-black text-white">{s.val}</div>
+                <div className="text-xs text-blue-200 font-bold uppercase tracking-widest">{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Lịch thi */}
-      <section id="lich-thi" className="py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center text-blue-900 mb-3">Lịch thi</h2>
-          <p className="text-center text-gray-500 mb-10">Vòng Sơ khảo – 3 chặng thi trực tuyến</p>
+      {/* ─── Về Cuộc Thi ─── */}
+      <section id="gioi-thieu" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row gap-16 items-center">
+            <div className="flex-1 space-y-6">
+              <div className="w-16 h-1.5 bg-brand-yellow rounded-full"></div>
+              <h2 className="text-4xl font-black text-brand-blue">Tầm nhìn & Mục tiêu</h2>
+              <p className="text-lg text-slate-600 leading-relaxed italic">
+                "Thành phố Hải Phòng đang bước vào giai đoạn then chốt của công cuộc chuyển đổi số toàn diện. Thanh niên chính là lực lượng đi đầu, là chủ thể của sự thay đổi này."
+              </p>
+              <div className="space-y-4">
+                {[
+                  "Nâng cao nhận thức về chuyển đổi số và chuyển đổi xanh.",
+                  "Tìm kiếm các giải pháp, ý tưởng khởi nghiệp sáng tạo ứng dụng công nghệ.",
+                  "Kết nối thanh niên, sinh viên toàn thành phố hành động vì môi trường.",
+                ].map((text, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div className="mt-1 flex-shrink-0 w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                      <Zap className="w-3 h-3 fill-current" />
+                    </div>
+                    <span className="text-slate-700 font-medium">{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 card-hover">
+                <Users className="w-10 h-10 text-brand-blue mb-4" />
+                <h3 className="font-bold text-xl mb-2">Thí sinh</h3>
+                <p className="text-sm text-slate-500">Đoàn viên, thanh niên sinh sống tại Hải Phòng (16-35 tuổi).</p>
+              </div>
+              <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 card-hover sm:translate-y-8">
+                <Trophy className="w-10 h-10 text-brand-yellow mb-4" />
+                <h3 className="font-bold text-xl mb-2">Giải thưởng</h3>
+                <p className="text-sm text-slate-500">Giấy khen Thành đoàn Hải Phòng và giá trị tiền mặt xứng đáng.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Lịch Thi (Modern Cards) ─── */}
+      <section id="lich-thi" className="py-24 bg-brand-blue relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-white mb-4">Lịch trình thi đấu</h2>
+            <p className="text-blue-200 opacity-80">3 chặng thi trực tuyến để tìm ra những ngôi sao chuyển đổi số xuất sắc nhất</p>
+          </div>
 
           {loading ? (
-            <div className="text-center text-gray-400 py-10">Đang tải lịch thi...</div>
-          ) : changs.length === 0 ? (
-            <div className="text-center text-gray-400 py-10">Chưa có lịch thi. Vui lòng quay lại sau.</div>
+            <div className="text-center py-20">
+              <div className="w-8 h-8 border-4 border-brand-yellow border-t-transparent rounded-full animate-spin mx-auto"></div>
+            </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-8">
               {changs.map((ct, idx) => {
                 const active = isActive(ct);
                 const upcoming = isUpcoming(ct);
@@ -177,137 +194,75 @@ export default function TrangChu() {
                 return (
                   <div
                     key={ct.id}
-                    className={`rounded-2xl p-6 border-2 relative overflow-hidden transition-all ${
-                      active
-                        ? 'border-green-400 bg-green-50 shadow-md'
-                        : upcoming
-                        ? 'border-blue-200 bg-blue-50'
-                        : 'border-gray-200 bg-gray-50'
+                    className={`group relative p-1 rounded-[2rem] transition-all duration-500 hover:scale-105 ${
+                      active ? 'bg-gradient-to-br from-brand-yellow to-orange-400 shadow-2xl' : 'bg-white/10'
                     }`}
                   >
-                    {active && (
-                      <div className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                        Đang mở
+                    <div className={`h-full rounded-[1.8rem] p-8 ${active ? 'bg-white' : 'bg-slate-900/40 backdrop-blur-md border border-white/10'}`}>
+                      <div className="flex justify-between items-start mb-6">
+                        <span className={`text-4xl font-black ${active ? 'text-brand-blue' : 'text-white/20'}`}>0{idx + 1}</span>
+                        {active && (
+                          <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1">
+                            🚀 ĐANG MỞ
+                          </span>
+                        )}
+                        {past && <span className="text-white/40 text-xs font-bold uppercase">Đã đóng</span>}
+                        {upcoming && <span className="text-brand-yellow/60 text-xs font-bold uppercase">Sắp tới</span>}
                       </div>
-                    )}
-                    {past && (
-                      <div className="absolute top-3 right-3 bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">
-                        Đã kết thúc
+
+                      <h3 className={`text-xl font-bold mb-4 ${active ? 'text-slate-900' : 'text-white'}`}>{ct.ten}</h3>
+                      
+                      <div className={`space-y-3 mb-8 text-sm ${active ? 'text-slate-600' : 'text-blue-100/60'}`}>
+                        <div className="flex items-center gap-3">
+                          <Calendar className={`w-4 h-4 ${active ? 'text-brand-blue' : 'text-brand-yellow'}`} />
+                          <span>{formatDateTime(ct.bat_dau)}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Clock className={`w-4 h-4 ${active ? 'text-brand-blue' : 'text-brand-yellow'}`} />
+                          <span>Thời gian: {ct.thoi_gian_phut} phút</span>
+                        </div>
                       </div>
-                    )}
-                    <div className={`text-4xl font-black mb-3 ${active ? 'text-green-600' : upcoming ? 'text-blue-600' : 'text-gray-400'}`}>
-                      {idx + 1}
+
+                      {active && (
+                        <button
+                          onClick={() => navigate('/thi')}
+                          className="w-full btn-primary text-sm py-4"
+                        >
+                          Tham gia ngay <ChevronRight className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg mb-3">{ct.ten}</h3>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>Bắt đầu: <strong>{formatDateTime(ct.bat_dau)}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>Kết thúc: <strong>{formatDateTime(ct.ket_thuc)}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-gray-400" />
-                        <span>{ct.so_cau} câu hỏi trắc nghiệm</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span>Thời gian: {ct.thoi_gian_phut} phút</span>
-                      </div>
-                    </div>
-                    {active && (
-                      <button
-                        onClick={() => navigate('/thi')}
-                        className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-xl transition-colors text-sm"
-                      >
-                        Thi ngay →
-                      </button>
-                    )}
                   </div>
                 );
               })}
             </div>
           )}
+        </div>
+      </section>
 
-          <div className="mt-10 bg-blue-50 rounded-2xl p-6 border border-blue-100">
-            <h3 className="font-bold text-blue-900 mb-3">Lịch trình tổng thể</h3>
-            <div className="grid md:grid-cols-2 gap-3 text-sm text-gray-700">
-              {[
-                { date: '23/3/2026', desc: 'Phát động cuộc thi, cấp tài khoản dự thi' },
-                { date: '28/3 – 12/4/2026', desc: 'Vòng Sơ khảo (3 chặng thi trực tuyến)' },
-                { date: '15/4/2026', desc: 'Innovation Bootcamp – Tập huấn Đổi mới sáng tạo' },
-                { date: '25/4/2026', desc: 'Vòng Chung kết cấp thành phố (tại ĐH Hải Phòng)' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded whitespace-nowrap mt-0.5">
-                    {item.date}
-                  </div>
-                  <span>{item.desc}</span>
-                </div>
-              ))}
+      {/* ─── Footer ─── */}
+      <footer className="bg-white border-t border-slate-200 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+            <div className="flex items-center gap-6">
+              <img src={LOGO_URL} alt="Logo" className="h-20 w-auto opacity-80" />
+              <div>
+                <p className="text-xl font-black text-brand-blue uppercase">Thành Đoàn Hải Phòng</p>
+                <p className="text-slate-500 font-medium">BCH Đoàn TNCS Hồ Chí Minh TP. Hải Phòng</p>
+              </div>
+            </div>
+            
+            <div className="text-center md:text-right space-y-2">
+              <p className="text-slate-700 font-semibold italic">"Tuổi trẻ Hải Phòng xung kích vì tương lai số"</p>
+              <div className="text-sm text-slate-500">
+                <p>Địa chỉ: Lô 26A Lê Hồng Phong, Phường Gia Viên, TP. Hải Phòng</p>
+                <p>Hotline hỗ trợ: 0921.545.555</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Giải thưởng */}
-      <section id="giai-thuong" className="py-16 bg-gradient-to-br from-yellow-50 to-orange-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center text-blue-900 mb-3">Giải thưởng</h2>
-          <p className="text-center text-gray-500 mb-10">Cơ cấu giải thưởng cuộc thi</p>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[
-              { rank: '🥇', label: 'Giải Nhất', count: '01 giải', color: 'from-yellow-400 to-yellow-300' },
-              { rank: '🥈', label: 'Giải Nhì', count: '01 giải', color: 'from-gray-300 to-gray-200' },
-              { rank: '🥉', label: 'Giải Ba', count: '03 giải', color: 'from-orange-400 to-orange-300' },
-              { rank: '🌟', label: 'Khuyến khích', count: '05 giải', color: 'from-green-300 to-green-200' },
-              { rank: '👥', label: 'Bình chọn MXH', count: '01 giải', color: 'from-blue-300 to-blue-200' },
-            ].map((g, i) => (
-              <div key={i} className={`bg-gradient-to-b ${g.color} rounded-2xl p-5 text-center shadow-sm`}>
-                <div className="text-3xl mb-2">{g.rank}</div>
-                <div className="font-bold text-gray-800 text-sm">{g.label}</div>
-                <div className="text-gray-600 text-xs mt-1">{g.count}</div>
-              </div>
-            ))}
+          <div className="mt-12 pt-8 border-t border-slate-100 text-center text-xs text-slate-400 uppercase tracking-widest">
+            © 2026 Cuộc thi Chuyển đổi số, Chuyển đổi xanh. All rights reserved.
           </div>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Giải thưởng bao gồm Bằng khen của BCH Thành đoàn và phần thưởng tiền mặt.
-            Dự án tiêu biểu được hỗ trợ nhân rộng và tham gia Chương trình Khởi nghiệp của Sở KH&CN.
-          </p>
-        </div>
-      </section>
-
-      {/* CTA */}
-      {hasActiveChang && (
-        <section className="py-16 bg-blue-800 text-white text-center">
-          <div className="max-w-2xl mx-auto px-4">
-            <Star className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold mb-4">Đang có chặng thi đang mở!</h2>
-            <p className="text-blue-200 mb-8">Tham gia ngay để không bỏ lỡ cơ hội tranh tài.</p>
-            <button
-              onClick={() => navigate('/thi')}
-              className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold px-10 py-4 rounded-full text-lg transition-all shadow-lg"
-            >
-              Vào thi ngay <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 text-center text-sm">
-        <div className="max-w-6xl mx-auto px-4">
-          <p className="font-semibold text-white mb-2">
-            BCH Đoàn TP. Hải Phòng – Thành đoàn Hải Phòng
-          </p>
-          <p>Lô 26A Lê Hồng Phong, Phường Gia Viên, TP. Hải Phòng</p>
-          <p>Email: banphongtrao.tdhp@gmail.com | SĐT: 0921.545.555</p>
-          <p className="mt-3 text-xs text-gray-600">
-            © 2026 Cuộc thi "Thanh niên Hải Phòng với chuyển đổi số, chuyển đổi xanh"
-          </p>
         </div>
       </footer>
     </div>

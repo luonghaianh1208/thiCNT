@@ -1,7 +1,60 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-blue: #1e3a8a;
+  --color-brand-yellow: #facc15;
+  --color-brand-light: #f8fafc;
+}
+
 @layer base {
   html {
     font-family: 'Inter', 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+    scroll-behavior: smooth;
   }
+  
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply bg-slate-900/40 backdrop-blur-md border border-white/10 shadow-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-brand-yellow text-brand-blue font-bold px-8 py-3 rounded-full 
+           hover:shadow-lg hover:shadow-yellow-400/20 transform transition-all 
+           active:scale-95 hover:-translate-y-0.5 flex items-center justify-center gap-2;
+  }
+
+  .section-title {
+    @apply text-3xl font-bold text-brand-blue mb-4 relative inline-block;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.bg-hero-pattern {
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(225, 100%, 20%, 1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(240, 100%, 15%, 1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(210, 100%, 25%, 1) 0, transparent 50%);
 }
