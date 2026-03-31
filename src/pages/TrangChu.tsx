@@ -47,9 +47,9 @@ export default function TrangChu() {
                 <img src={LOGO_URL} alt="Logo" className="h-16 w-auto drop-shadow-lg" />
                 <div className="absolute -inset-1 bg-brand-blue/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
-              <div className="border-l-2 border-brand-blue/20 pl-4 whitespace-nowrap">
-                <p className="text-[12px] sm:text-[14px] font-black text-brand-blue uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
-                <p className="text-[11px] sm:text-[12px] font-bold text-slate-500 uppercase tracking-[0.15em] leading-tight font-ui">Thành Đoàn Hải Phòng</p>
+              <div className="border-l-2 border-brand-blue/20 pl-3 lg:pl-4 min-w-0">
+                <p className="text-[11px] sm:text-[14px] font-black text-brand-blue uppercase tracking-[0.05em] leading-tight font-ui truncate">Đoàn TNCS Hồ Chí Minh</p>
+                <p className="text-[10px] sm:text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] leading-tight font-ui hidden sm:block">Thành Đoàn Hải Phòng</p>
               </div>
             </div>
 

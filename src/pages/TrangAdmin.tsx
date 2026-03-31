@@ -79,11 +79,11 @@ export default function TrangAdmin() {
 
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-blue text-white transition-all duration-500 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 flex flex-col shadow-2xl`}>
-        <div className="p-6 flex items-center gap-4 border-b border-white/10">
-          <img src={LOGO_URL} alt="Logo" className="h-12 w-auto drop-shadow-lg" />
-          <div className="border-l-2 border-white/20 pl-4 whitespace-nowrap">
-            <p className="text-[13px] font-black text-white uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
-            <p className="text-[11px] font-semibold text-white/60 leading-tight font-ui mt-0.5">Thành Đoàn Hải Phòng</p>
+        <div className="p-4 lg:p-6 flex items-center gap-3 lg:gap-4 border-b border-white/10">
+          <img src={LOGO_URL} alt="Logo" className="h-10 lg:h-12 w-auto drop-shadow-lg flex-shrink-0" />
+          <div className="border-l-2 border-white/20 pl-3 lg:pl-4 min-w-0">
+            <p className="text-[10px] sm:text-[11px] lg:text-[13px] font-black text-white uppercase tracking-[0.05em] leading-tight font-ui truncate">Đoàn TNCS Hồ Chí Minh</p>
+            <p className="text-[10px] lg:text-[11px] font-semibold text-white/60 leading-tight font-ui mt-0.5 hidden sm:block">Thành Đoàn Hải Phòng</p>
           </div>
         </div>
 

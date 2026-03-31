@@ -386,7 +386,7 @@ export default function TrangThi() {
                 <h2 className="text-xs sm:text-base font-tech font-black tracking-tight leading-none truncate max-w-[150px] sm:max-w-md">{chang?.ten.toUpperCase()}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">{form.hoTen}</p>
+                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest truncate max-w-[120px]">{form.hoTen}</p>
                 </div>
               </div>
             </div>
