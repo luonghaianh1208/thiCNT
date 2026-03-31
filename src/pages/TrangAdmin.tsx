@@ -11,11 +11,11 @@ import {
 } from '@/lib/db';
 import { 
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2, 
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hi%E1%BB%87u_%C4%90o%C3%A0n.png";
+const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
 
 type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan';
 
@@ -80,10 +80,10 @@ export default function TrangAdmin() {
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-blue text-white transition-all duration-500 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 flex flex-col shadow-2xl`}>
         <div className="p-8 flex items-center gap-4 bg-brand-blue/20">
-          <img src={LOGO_URL} alt="Logo" className="h-12 w-auto drop-shadow-lg" />
-          <div className="border-l border-white/20 pl-4">
-            <h1 className="text-sm font-tech font-black uppercase leading-tight tracking-tighter">HỆ THỐNG</h1>
-            <p className="text-[10px] text-brand-yellow font-black uppercase tracking-[0.2em] leading-tight">QUẢN TRỊ VIÊN</p>
+          <img src={LOGO_URL} alt="Logo" className="h-14 w-auto drop-shadow-lg" />
+          <div className="border-l border-white/20 pl-4 whitespace-nowrap">
+            <h1 className="text-[12px] font-tech font-black uppercase leading-tight tracking-tighter">HỆ THỐNG</h1>
+            <p className="text-[11px] text-brand-yellow font-black uppercase tracking-[0.1em] leading-tight font-ui">QUẢN TRỊ VIÊN</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function TrangAdmin() {
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-brand-blue hover:bg-slate-100 rounded-xl transition-colors">
               <Menu />
             </button>
-            <h2 className="text-xl font-tech font-black text-brand-blue uppercase tracking-tighter">
+            <h2 className="text-2xl font-tech font-black text-brand-blue uppercase tracking-tighter">
               {TABS.find(t => t.id === activeTab)?.label}
             </h2>
           </div>
@@ -251,13 +251,24 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
 
   const handleAdd = async () => {
     if(!form.ten || !form.bat_dau || !form.ket_thuc) return toast.error('Vui lòng nhập đủ thông tin.');
-    await addChangThi(form.ten, form.bat_dau, form.ket_thuc, form.thoi_gian_phut);
+    await addChangThi({ 
+      ten: form.ten, 
+      bat_dau: form.bat_dau, 
+      ket_thuc: form.ket_thuc, 
+      thoi_gian_phut: form.thoi_gian_phut,
+      so_cau: 30 
+    });
     refresh(); toast.success('Đã thêm chặng thi.');
   };
 
   const handleUpdate = async () => {
     if(!editing) return;
-    await updateChangThi(editing.id, form.ten, form.bat_dau, form.ket_thuc, form.thoi_gian_phut);
+    await updateChangThi(editing.id, {
+      ten: form.ten,
+      bat_dau: form.bat_dau,
+      ket_thuc: form.ket_thuc,
+      thoi_gian_phut: form.thoi_gian_phut
+    });
     setEditing(null); refresh(); toast.success('Cập nhật thành công.');
   };
 
@@ -323,7 +334,8 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
         dap_an_c: r['C'] || r['dap_an_c'],
         dap_an_d: r['D'] || r['dap_an_d'],
         dap_an_dung: r['Đáp án đúng'] || r['dap_an_dung'],
-        mo_ta_giai_thich: r['Giải thích'] || r['mo_ta_giai_thich']
+        mo_ta_giai_thich: r['Giải thích'] || r['mo_ta_giai_thich'],
+        active: true
       }));
       await bulkInsertCauHoi(clean);
       refresh(); toast.success(`Import success ${clean.length} questions.`);
@@ -378,7 +390,7 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
 
 function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => void }) {
   const [ten, setTen] = useState('');
-  const handleAdd = async () => { if(!ten) return; await addDonVi(ten); setTen(''); refresh(); };
+  const handleAdd = async () => { if(!ten) return; await addDonVi(ten, 'Khác'); setTen(''); refresh(); };
   return (
     <div className="p-4 space-y-8">
       <div className="flex gap-4 bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">

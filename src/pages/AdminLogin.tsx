@@ -4,7 +4,7 @@ import { adminLogin } from '@/lib/db';
 import { Loader2, Lock, ChevronLeft, ShieldCheck, Mail, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hi%E1%BB%87u_%C4%90o%C3%A0n.png";
+const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -46,19 +46,19 @@ export default function AdminLogin() {
       <div className="card-tech w-full max-w-md bg-white p-12 border-brand-blue/20 shadow-[0_0_50px_rgba(30,69,159,0.1)] relative z-10">
         <div className="text-center mb-12">
           <div className="relative inline-block mb-8">
-            <img src={LOGO_URL} alt="Logo" className="h-28 mx-auto relative z-10 drop-shadow-2xl" />
+            <img src={LOGO_URL} alt="Logo" className="h-32 mx-auto relative z-10 drop-shadow-2xl" />
             <div className="absolute inset-0 bg-brand-blue/10 rounded-full blur-2xl scale-150"></div>
           </div>
-          <h1 className="text-3xl font-tech font-black text-brand-blue uppercase tracking-tighter">Hệ thống_Admin</h1>
+          <h1 className="text-3xl font-tech font-black text-brand-blue uppercase tracking-tighter">HỆ THỐNG_VẬN HÀNH</h1>
           <div className="mt-4 flex items-center justify-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse"></div>
-            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Cơ hội Chuyển đổi số Hải Phòng</p>
+            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em] font-ui">CƠ HỘI CHUYỂN ĐỔI SỐ HẢI PHÒNG</p>
           </div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-8">
           <div className="space-y-3">
-            <label className="text-[10px] font-tech font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-2 px-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2 px-2 font-ui">
               <Mail size={12} className="text-brand-blue" />
               Tên đăng nhập
             </label>
@@ -68,13 +68,13 @@ export default function AdminLogin() {
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Nhập tên tài khoản..."
-                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all outline-none"
+                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all outline-none font-ui"
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="text-[10px] font-tech font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-2 px-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2 px-2 font-ui">
               <Lock size={12} className="text-brand-blue" />
               Mật mã bảo mật
             </label>
@@ -84,7 +84,7 @@ export default function AdminLogin() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all outline-none"
+                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all outline-none font-ui"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function AdminLogin() {
         <div className="mt-12 pt-8 border-t border-slate-100 flex justify-center">
           <button 
             onClick={() => navigate('/')}
-            className="group flex items-center gap-3 text-[10px] font-black text-slate-400 hover:text-brand-blue uppercase tracking-[0.4em] transition-all"
+            className="group flex items-center gap-3 text-[10px] font-black text-slate-400 hover:text-brand-blue uppercase tracking-[0.4em] transition-all font-ui"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
             QUAY LẠI TRANG CHỦ
@@ -123,7 +123,7 @@ export default function AdminLogin() {
       
       {/* Footer HUD info */}
       <div className="absolute bottom-8 text-[9px] font-tech font-black text-white/20 uppercase tracking-[0.5em] flex items-center gap-4">
-        <span>Version 4.0.0 (Futuristic)</span>
+        <span>Version 5.0.0 (Refined)</span>
         <div className="w-1 h-1 bg-white/20 rounded-full"></div>
         <span>Secure Protocol Activated</span>
       </div>

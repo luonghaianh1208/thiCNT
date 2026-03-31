@@ -13,11 +13,11 @@ import {
   type AnswerRecord
 } from '@/lib/db';
 import { 
-  Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft, BookOpen, User, ShieldCheck, Award, Cpu, Activity, Info
+  Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft, BookOpen, User, ShieldCheck, Award, Cpu, Activity, Info, Zap, ShieldAlert, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hi%E1%BB%87u_%C4%90o%C3%A0n.png";
+const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
 
 export default function TrangThi() {
   const navigate = useNavigate();
@@ -156,10 +156,15 @@ export default function TrangThi() {
     }
     setLoading(true);
     try {
-      const ts = await taoThiSinh(form.hoTen, form.sdt, parseInt(form.donViId));
+      const tsId = await taoThiSinh({
+        ho_ten: form.hoTen,
+        so_dien_thoai: form.sdt,
+        don_vi_id: parseInt(form.donViId),
+        ten_don_vi_nho: '' 
+      });
       const qs = await layCauHoiNgauNhien(chang.id, 30);
       
-      setThiSinhId(ts.id);
+      setThiSinhId(tsId);
       setQuestions(qs);
       setTimeLeft(chang.thoi_gian_phut * 60);
       setStage('exam');
@@ -169,7 +174,7 @@ export default function TrangThi() {
         changId: chang.id,
         questions: qs,
         answers: {},
-        thiSinhId: ts.id,
+        thiSinhId: tsId,
         timeLeft: chang.thoi_gian_phut * 60,
         cheatCount: 0
       };
@@ -191,16 +196,30 @@ export default function TrangThi() {
     if (submitting || !thiSinhId || !chang) return;
     setSubmitting(true);
     try {
-      const records: AnswerRecord[] = questions.map(q => ({
-        cau_hoi_id: q.id,
-        dap_an_chon: answers[q.id] || ''
-      }));
+      const thoi_gian_lam = (chang.thoi_gian_phut * 60) - timeLeft;
       
-      const ketQua = await nopBaiThi(thiSinhId, chang.id, records);
+      // Calculate score locally for immediate display
+      const correctAnswers = questions.filter(q => answers[q.id] === q.dap_an_dung).length;
+      const diem = (correctAnswers / questions.length) * 100;
+
+      await nopBaiThi({
+        thi_sinh_id: thiSinhId,
+        chang_id: chang.id,
+        diem: Math.round(diem),
+        so_cau_dung: correctAnswers,
+        tong_cau: questions.length,
+        thoi_gian_lam: thoi_gian_lam,
+        answers: questions.map(q => ({
+          cau_hoi_id: q.id,
+          lua_chon: answers[q.id] || '',
+          dung: answers[q.id] === q.dap_an_dung
+        }))
+      });
+
       setFinalResult({
-        diem: ketQua.diem,
-        so_cau_dung: ketQua.so_cau_dung,
-        thoi_gian_giay: (chang.thoi_gian_phut * 60) - timeLeft
+        diem: Math.round(diem),
+        so_cau_dung: correctAnswers,
+        thoi_gian_giay: thoi_gian_lam
       });
       sessionStorage.removeItem(STORAGE_KEY);
       setStage('result');
@@ -266,31 +285,31 @@ export default function TrangThi() {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 font-tech">Họ và tên thí sinh</label>
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Họ và tên thí sinh</label>
               <input
                 type="text"
                 placeholder="NHẬP HỌ TÊN ĐẦY ĐỦ..."
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
                 value={form.hoTen}
                 onChange={e => setForm({ ...form, hoTen: e.target.value.toUpperCase() })}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 font-tech">Số điện thoại liên hệ</label>
+            <div className="space-y-3">
+              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Số điện thoại liên hệ</label>
               <input
                 type="text"
                 placeholder="NHẬP SỐ ĐIỆN THOẠI..."
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
                 value={form.sdt}
                 onChange={e => setForm({ ...form, sdt: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 font-tech">Đơn vị trực thuộc</label>
+            <div className="space-y-3">
+              <label className="text-[12px] font-black uppercase tracking-widest text-slate-400 px-2 font-ui">Đơn vị trực thuộc</label>
               <select
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none appearance-none"
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-6 text-lg font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none appearance-none font-ui"
                 value={form.donViId}
                 onChange={e => setForm({ ...form, donViId: e.target.value })}
               >

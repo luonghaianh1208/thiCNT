@@ -28,6 +28,10 @@
     font-family: var(--font-tech);
     letter-spacing: -0.02em;
   }
+
+  .font-ui {
+    font-family: var(--font-ui) !important;
+  }
 }
 
 @layer components {
@@ -37,7 +41,7 @@
 
   /* High-Tech Card: Sharp, Glitch-free, Clipped Corners */
   .card-tech {
-    @apply bg-white/90 border-2 border-brand-blue/10 rounded-2xl p-8 relative overflow-hidden transition-all duration-300;
+    @apply bg-white/95 border-2 border-brand-blue/10 rounded-2xl p-8 relative overflow-hidden transition-all duration-300;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
     box-shadow: 0 10px 30px -10px rgba(30, 69, 159, 0.1);
   }
@@ -59,7 +63,7 @@
   }
 
   .nav-link-tech {
-    @apply text-[10px] font-black text-slate-500 hover:text-brand-blue transition-all uppercase tracking-[0.3em] relative;
+    @apply text-[14px] font-tech font-black uppercase tracking-[0.15em] text-slate-500 hover:text-brand-blue transition-all relative py-2;
   }
 
   .nav-link-tech::after {
@@ -69,6 +73,24 @@
 
   .nav-link-tech:hover::after {
     @apply w-full;
+  }
+
+  /* High Resolution CSS Background (Hero) */
+  .bg-hero-cyber {
+    background: radial-gradient(circle at 50% 50%, #1E459F 0%, #0F172A 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bg-hero-cyber::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.3;
   }
 }
 
