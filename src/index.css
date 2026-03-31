@@ -13,27 +13,28 @@
   }
   
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-slate-50 text-slate-800;
   }
 }
 
 @layer components {
+  /* Reduced blur for better clarity */
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply bg-white border border-slate-200 shadow-xl;
   }
   
   .glass-dark {
-    @apply bg-slate-900/40 backdrop-blur-md border border-white/10 shadow-2xl;
+    @apply bg-slate-900 border border-slate-800 shadow-2xl;
   }
 
   .btn-primary {
     @apply bg-brand-yellow text-brand-blue font-bold px-8 py-3 rounded-full 
-           hover:shadow-lg hover:shadow-yellow-400/20 transform transition-all 
-           active:scale-95 hover:-translate-y-0.5 flex items-center justify-center gap-2;
+           hover:shadow-lg hover:shadow-yellow-400/30 transform transition-all 
+           active:scale-95 flex items-center justify-center gap-2;
   }
 
   .section-title {
-    @apply text-3xl font-bold text-brand-blue mb-4 relative inline-block;
+    @apply text-3xl font-black text-brand-blue mb-4 relative inline-block;
   }
 
   .card-hover {
@@ -41,20 +42,16 @@
   }
 }
 
-/* Custom animations */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+/* Sharp Hero Background */
+.bg-hero-solid {
+  background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
-.bg-hero-pattern {
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(225, 100%, 20%, 1) 0, transparent 50%), 
-    radial-gradient(at 50% 0%, hsla(240, 100%, 15%, 1) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, hsla(210, 100%, 25%, 1) 0, transparent 50%);
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
