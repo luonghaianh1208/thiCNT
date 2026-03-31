@@ -61,13 +61,13 @@ export default function TrangAdmin() {
   };
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'dashboard', label: 'TỔNG QUAN', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { id: 'chang-thi', label: 'CHẶNG THI', icon: <BarChart3 className="w-5 h-5" /> },
-    { id: 'cau-hoi', label: 'CÂU HỎI', icon: <HelpCircle className="w-5 h-5" /> },
-    { id: 'don-vi', label: 'ĐƠN VỊ', icon: <Building2 className="w-5 h-5" /> },
-    { id: 'thi-sinh', label: 'THÍ SINH', icon: <Users className="w-5 h-5" /> },
-    { id: 'ket-qua', label: 'KẾT QUẢ', icon: <Trophy className="w-5 h-5" /> },
-    { id: 'gian-lan', label: 'GIAN LÂN', icon: <ShieldAlert className="w-5 h-5" /> },
+    { id: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { id: 'chang-thi', label: 'Chặng thi', icon: <BarChart3 className="w-5 h-5" /> },
+    { id: 'cau-hoi', label: 'Câu hỏi', icon: <HelpCircle className="w-5 h-5" /> },
+    { id: 'don-vi', label: 'Đơn vị', icon: <Building2 className="w-5 h-5" /> },
+    { id: 'thi-sinh', label: 'Thí sinh', icon: <Users className="w-5 h-5" /> },
+    { id: 'ket-qua', label: 'Kết quả', icon: <Trophy className="w-5 h-5" /> },
+    { id: 'gian-lan', label: 'Gian lận', icon: <ShieldAlert className="w-5 h-5" /> },
   ];
 
   return (
@@ -79,11 +79,11 @@ export default function TrangAdmin() {
 
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-blue text-white transition-all duration-500 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 flex flex-col shadow-2xl`}>
-        <div className="p-8 flex items-center gap-4 bg-brand-blue/20">
-          <img src={LOGO_URL} alt="Logo" className="h-14 w-auto drop-shadow-lg" />
-          <div className="border-l-2 border-brand-blue/20 pl-4 whitespace-nowrap">
-            <p className="text-[14px] font-black text-brand-blue uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
-            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-tight font-ui">Thành Đoàn Hải Phòng</p>
+        <div className="p-6 flex items-center gap-4 border-b border-white/10">
+          <img src={LOGO_URL} alt="Logo" className="h-12 w-auto drop-shadow-lg" />
+          <div className="border-l-2 border-white/20 pl-4 whitespace-nowrap">
+            <p className="text-[13px] font-black text-white uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
+            <p className="text-[11px] font-semibold text-white/60 leading-tight font-ui mt-0.5">Thành Đoàn Hải Phòng</p>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function TrangAdmin() {
             <button
               key={t.id}
               onClick={() => { setActiveTab(t.id); if(window.innerWidth < 1024) setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-tech font-black text-[10px] uppercase tracking-[0.2em] ${
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-ui font-bold text-sm ${
                 activeTab === t.id 
                   ? 'bg-brand-yellow text-brand-blue shadow-[0_10px_20px_rgba(250,189,50,0.2)] scale-105' 
                   : 'text-white/60 hover:bg-white/10 hover:text-white'
@@ -108,7 +108,7 @@ export default function TrangAdmin() {
         <div className="p-6 border-t border-white/10 bg-brand-blue/30 backdrop-blur-md">
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-tech font-black uppercase tracking-[0.3em] hover:bg-brand-red hover:border-brand-red transition-all"
+            className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-ui font-semibold hover:bg-brand-red hover:border-brand-red transition-all"
           >
             <LogOut size={16} /> ĐĂNG XUẤT
           </button>
@@ -123,7 +123,7 @@ export default function TrangAdmin() {
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-brand-blue hover:bg-slate-100 rounded-xl transition-colors">
               <Menu />
             </button>
-            <h2 className="text-2xl font-tech font-black text-brand-blue uppercase tracking-tighter">
+            <h2 className="text-xl font-ui font-black text-brand-blue">
               {TABS.find(t => t.id === activeTab)?.label}
             </h2>
           </div>
@@ -247,63 +247,109 @@ export default function TrangAdmin() {
 
 function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => void }) {
   const [editing, setEditing] = useState<ChangThi | null>(null);
-  const [form, setForm] = useState({ ten: '', bat_dau: '', ket_thuc: '', thoi_gian_phut: 15 });
+  const [form, setForm] = useState({ ten: '', bat_dau: '', ket_thuc: '', thoi_gian_phut: 25, so_cau: 30 });
+
+  const resetForm = () => {
+    setEditing(null);
+    setForm({ ten: '', bat_dau: '', ket_thuc: '', thoi_gian_phut: 25, so_cau: 30 });
+  };
 
   const handleAdd = async () => {
-    if(!form.ten || !form.bat_dau || !form.ket_thuc) return toast.error('Vui lòng nhập đủ thông tin.');
-    await addChangThi({ 
-      ten: form.ten, 
-      bat_dau: form.bat_dau, 
-      ket_thuc: form.ket_thuc, 
-      thoi_gian_phut: form.thoi_gian_phut,
-      so_cau: 30 
+    if (!form.ten || !form.bat_dau || !form.ket_thuc) return toast.error('Vui lòng nhập đủ thông tin.');
+    await addChangThi({
+      ten: form.ten,
+      bat_dau: form.bat_dau,
+      ket_thuc: form.ket_thuc,
+      thoi_gian_phut: Number(form.thoi_gian_phut),
+      so_cau: Number(form.so_cau),
     });
-    refresh(); toast.success('Đã thêm chặng thi.');
+    resetForm(); refresh(); toast.success('Đã thêm chặng thi.');
   };
 
   const handleUpdate = async () => {
-    if(!editing) return;
+    if (!editing) return;
     await updateChangThi(editing.id, {
       ten: form.ten,
       bat_dau: form.bat_dau,
       ket_thuc: form.ket_thuc,
-      thoi_gian_phut: form.thoi_gian_phut
+      thoi_gian_phut: Number(form.thoi_gian_phut),
+      so_cau: Number(form.so_cau),
     });
-    setEditing(null); refresh(); toast.success('Cập nhật thành công.');
+    resetForm(); refresh(); toast.success('Cập nhật thành công.');
   };
 
   const handleDelete = async (id: number) => {
-    if(!confirm('Xóa chặng thi này sẽ xóa toàn bộ câu hỏi và kết quả liên quan. Bạn chắc chắn?')) return;
+    if (!confirm('Xóa chặng thi này sẽ xóa toàn bộ câu hỏi và kết quả liên quan. Bạn chắc chắn?')) return;
     await deleteChangThi(id); refresh();
   };
 
   return (
     <div className="space-y-8 p-4">
-      <div className="bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">
-        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-blue mb-6 font-tech">Cấu hình tham số chặng thi</h4>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <input className="input-admin-tech" placeholder="Tên chặng thi..." value={form.ten} onChange={e => setForm({...form, ten: e.target.value})} />
-          <input className="input-admin-tech" type="datetime-local" value={form.bat_dau} onChange={e => setForm({...form, bat_dau: e.target.value})} />
-          <input className="input-admin-tech" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({...form, ket_thuc: e.target.value})} />
-          <button onClick={editing ? handleUpdate : handleAdd} className="btn-cyber h-full text-[9px] min-h-[52px]">
-            {editing ? 'CẬP NHẬT_DATA' : 'KHỞI TẠO_CHẶNG'}
+      <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+        <h4 className="text-sm font-bold text-brand-blue mb-5 font-ui">
+          {editing ? `Đang chỉnh sửa: ${editing.ten}` : 'Thêm chặng thi mới'}
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Tên chặng</label>
+            <input className="input-admin-tech w-full" placeholder="Vd: Chặng 1" value={form.ten} onChange={e => setForm({...form, ten: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian bắt đầu</label>
+            <input className="input-admin-tech w-full" type="datetime-local" value={form.bat_dau} onChange={e => setForm({...form, bat_dau: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian kết thúc</label>
+            <input className="input-admin-tech w-full" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({...form, ket_thuc: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số câu hỏi mỗi bài thi</label>
+            <input className="input-admin-tech w-full" type="number" min={1} max={100} placeholder="30" value={form.so_cau} onChange={e => setForm({...form, so_cau: parseInt(e.target.value) || 30})} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời lượng làm bài (phút)</label>
+            <input className="input-admin-tech w-full" type="number" min={1} max={180} placeholder="25" value={form.thoi_gian_phut} onChange={e => setForm({...form, thoi_gian_phut: parseInt(e.target.value) || 25})} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={editing ? handleUpdate : handleAdd} className="bg-brand-blue text-white font-ui font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all">
+            {editing ? 'Cập nhật chặng' : 'Thêm chặng thi'}
           </button>
+          {editing && (
+            <button onClick={resetForm} className="bg-slate-100 text-slate-600 font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-slate-200 transition-all">
+              Hủy
+            </button>
+          )}
         </div>
       </div>
-      <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
-        <table className="w-full text-left text-sm font-bold">
-          <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Tên</th><th className="px-6 py-4">Bắt đầu</th><th className="px-6 py-4">Kết thúc</th><th className="px-6 py-4">Action</th></tr>
+
+      <div className="overflow-x-auto rounded-2xl border border-slate-100">
+        <table className="w-full text-left text-sm font-ui">
+          <thead className="bg-slate-50 text-xs font-bold text-slate-500">
+            <tr>
+              <th className="px-5 py-4">Tên chặng</th>
+              <th className="px-5 py-4">Bắt đầu</th>
+              <th className="px-5 py-4">Kết thúc</th>
+              <th className="px-5 py-4 text-center">Số câu</th>
+              <th className="px-5 py-4 text-center">Thời gian</th>
+              <th className="px-5 py-4">Thao tác</th>
+            </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-slate-100">
             {changs.map(c => (
               <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 text-brand-blue font-black">{c.ten}</td>
-                <td className="px-6 py-4 text-slate-500">{new Date(c.bat_dau).toLocaleString()}</td>
-                <td className="px-6 py-4 text-slate-500">{new Date(c.ket_thuc).toLocaleString()}</td>
-                <td className="px-6 py-4 space-x-2">
-                  <button onClick={() => { setEditing(c); setForm(c); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Pencil size={16}/></button>
-                  <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+                <td className="px-5 py-4 text-brand-blue font-bold">{c.ten}</td>
+                <td className="px-5 py-4 text-slate-500">{new Date(c.bat_dau).toLocaleString('vi-VN')}</td>
+                <td className="px-5 py-4 text-slate-500">{new Date(c.ket_thuc).toLocaleString('vi-VN')}</td>
+                <td className="px-5 py-4 text-center">
+                  <span className="px-3 py-1 bg-brand-blue/10 text-brand-blue text-xs font-bold rounded-lg">{c.so_cau} câu</span>
+                </td>
+                <td className="px-5 py-4 text-center">
+                  <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">{c.thoi_gian_phut} phút</span>
+                </td>
+                <td className="px-5 py-4 space-x-1">
+                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: c.bat_dau.slice(0,16), ket_thuc: c.ket_thuc.slice(0,16), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15}/></button>
+                  <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={15}/></button>
                 </td>
               </tr>
             ))}
@@ -317,65 +363,85 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
 function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, cauHois: CauHoi[], refresh: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const downloadTemplate = () => {
+    const sample = [
+      { 'Câu hỏi': 'Chuyển đổi số là gì?', 'A': 'Ứng dụng công nghệ số', 'B': 'In tài liệu', 'C': 'Họp trực tiếp', 'D': 'Viết tay', 'Đáp án đúng': 'A', 'Giải thích': 'Chuyển đổi số là ứng dụng công nghệ số vào mọi mặt.' },
+      { 'Câu hỏi': 'Câu hỏi mẫu 2?', 'A': 'Đáp án A', 'B': 'Đáp án B', 'C': 'Đáp án C', 'D': 'Đáp án D', 'Đáp án đúng': 'B', 'Giải thích': '' },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sample);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'CauHoi');
+    XLSX.writeFile(wb, 'mau_cau_hoi.xlsx');
+  };
+
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if(!changId) return toast.error('Chọn chặng thi để import.');
-    const file = e.target.files?.[0]; if(!file) return;
+    if (!changId) return toast.error('Chọn chặng thi để import.');
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data: any[] = XLSX.utils.sheet_to_json(ws);
-      const clean = data.map(r => ({
-        chang_id: changId,
-        noi_dung: r['Câu hỏi'] || r['noi_dung'],
-        dap_an_a: r['A'] || r['dap_an_a'],
-        dap_an_b: r['B'] || r['dap_an_b'],
-        dap_an_c: r['C'] || r['dap_an_c'],
-        dap_an_d: r['D'] || r['dap_an_d'],
-        dap_an_dung: r['Đáp án đúng'] || r['dap_an_dung'],
-        mo_ta_giai_thich: r['Giải thích'] || r['mo_ta_giai_thich'],
-        active: true
-      }));
+      const clean = data
+        .filter(r => r['Câu hỏi'] && r['A'] && r['B'] && r['C'] && r['D'] && r['Đáp án đúng'])
+        .map(r => ({
+          chang_id: changId,
+          noi_dung: String(r['Câu hỏi']),
+          dap_an_a: String(r['A']),
+          dap_an_b: String(r['B']),
+          dap_an_c: String(r['C']),
+          dap_an_d: String(r['D']),
+          dap_an_dung: String(r['Đáp án đúng']).toUpperCase().trim(),
+          active: true,
+        }));
+      if (clean.length === 0) return toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
       await bulkInsertCauHoi(clean);
-      refresh(); toast.success(`Import success ${clean.length} questions.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      refresh(); toast.success(`Đã import ${clean.length} câu hỏi thành công.`);
     };
     reader.readAsBinaryString(file);
   };
 
   return (
-    <div className="p-4 space-y-8">
+    <div className="p-4 space-y-6">
       {!changId ? (
-        <div className="py-20 text-center bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
-          <p className="text-slate-400 font-bold">Vui lòng chọn 1 chặng thi cụ thể để quản lý câu hỏi.</p>
+        <div className="py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+          <p className="text-slate-400 font-ui font-semibold">Vui lòng chọn chặng thi ở trên để quản lý câu hỏi.</p>
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center bg-brand-blue/5 p-8 rounded-3xl">
-             <div>
-               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-blue mb-2 font-tech">Kho dữ liệu tri thức</h4>
-               <p className="text-xs text-slate-500 font-bold">Hiện có {cauHois.length} câu hỏi trong chặng này.</p>
-             </div>
-             <div className="flex gap-4">
-                <input type="file" ref={fileInputRef} className="hidden" onChange={handleImport} accept=".xlsx,.xls" />
-                <button onClick={() => fileInputRef.current?.click()} className="btn-cyber-gold px-8 py-3 rounded-2xl flex items-center gap-2 text-[9px] font-tech min-h-[52px]">
-                   <FileSpreadsheet size={16} /> IMPORT EXCEL_DATA
-                </button>
-             </div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+            <div>
+              <h4 className="text-sm font-bold text-brand-blue font-ui">Ngân hàng câu hỏi</h4>
+              <p className="text-xs text-slate-500 font-ui mt-1">Hiện có <strong>{cauHois.length}</strong> câu hỏi trong chặng này.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={downloadTemplate} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 font-ui font-semibold text-sm px-4 py-2.5 rounded-xl hover:border-brand-blue hover:text-brand-blue transition-all">
+                <FileSpreadsheet size={15} /> Tải file mẫu
+              </button>
+              <input type="file" ref={fileInputRef} className="hidden" onChange={handleImport} accept=".xlsx,.xls" />
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-brand-blue text-white font-ui font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-brand-blue/90 transition-all">
+                <FileSpreadsheet size={15} /> Import Excel
+              </button>
+            </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {cauHois.map((q, idx) => (
-              <div key={q.id} className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+              <div key={q.id} className="p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all">
                 <div className="flex gap-4">
-                  <span className="font-tech font-black text-brand-blue/20 text-3xl">0{idx+1}</span>
+                  <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx+1).padStart(2,'0')}</span>
                   <div className="flex-1">
-                    <p className="font-bold text-slate-800 mb-4 selection:bg-brand-yellow pr-10">{q.noi_dung}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-bold">
-                       {['a','b','c','d'].map(k => (
-                         <div key={k} className={`px-4 py-2 rounded-xl rounded-bl-sm border ${q.dap_an_dung.toLowerCase() === k.toLowerCase() || q[`dap_an_${k}` as keyof CauHoi] === q.dap_an_dung ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-50'}`}>
-                           {k.toUpperCase()}. {String(q[`dap_an_${k}` as keyof CauHoi])}
-                         </div>
-                       ))}
+                    <p className="font-semibold text-slate-800 mb-3 font-ui">{q.noi_dung}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-ui">
+                      {['a','b','c','d'].map(k => {
+                        const isCorrect = q.dap_an_dung.toUpperCase() === k.toUpperCase();
+                        return (
+                          <div key={k} className={`px-3 py-2 rounded-xl border font-semibold ${isCorrect ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                            {k.toUpperCase()}. {String(q[`dap_an_${k}` as keyof CauHoi])}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -390,18 +456,89 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
 
 function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => void }) {
   const [ten, setTen] = useState('');
-  const handleAdd = async () => { if(!ten) return; await addDonVi(ten, 'Khác'); setTen(''); refresh(); };
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAdd = async () => {
+    if (!ten.trim()) return;
+    await addDonVi(ten.trim(), 'phuong');
+    setTen(''); refresh();
+    toast.success('Đã thêm đơn vị.');
+  };
+
+  const downloadTemplate = () => {
+    const sample = [
+      { 'Tên đơn vị': 'Phường Hồng Bàng', 'Loại': 'phuong' },
+      { 'Tên đơn vị': 'Xã Tân Dương', 'Loại': 'xa' },
+      { 'Tên đơn vị': 'Đặc khu Đồ Sơn', 'Loại': 'dac_khu' },
+      { 'Tên đơn vị': 'Đoàn Trường THPT Lê Hồng Phong', 'Loại': 'doan_truc_thuoc' },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sample);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DonVi');
+    XLSX.writeFile(wb, 'mau_don_vi.xlsx');
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const bstr = evt.target?.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data: any[] = XLSX.utils.sheet_to_json(ws);
+      const valid = data.filter(r => r['Tên đơn vị']);
+      if (valid.length === 0) return toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
+      for (const r of valid) {
+        await addDonVi(String(r['Tên đơn vị']).trim(), String(r['Loại'] || 'phuong').trim());
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      refresh(); toast.success(`Đã import ${valid.length} đơn vị thành công.`);
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
-    <div className="p-4 space-y-8">
-      <div className="flex gap-4 bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">
-        <input className="input-admin-tech flex-1" placeholder="Nhập tên đơn vị mới..." value={ten} onChange={e=>setTen(e.target.value)} />
-        <button onClick={handleAdd} className="btn-cyber px-10 h-full min-h-[52px] text-[9px]">XÁC NHẬN_SYSTEM</button>
+    <div className="p-4 space-y-6">
+      {/* Thêm 1 đơn vị */}
+      <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+        <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm đơn vị</h4>
+        <div className="flex gap-3">
+          <input
+            className="input-admin-tech flex-1"
+            placeholder="Nhập tên đơn vị mới..."
+            value={ten}
+            onChange={e => setTen(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <button onClick={handleAdd} className="bg-brand-blue text-white font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all whitespace-nowrap">
+            Thêm
+          </button>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      {/* Import hàng loạt */}
+      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+        <h4 className="text-sm font-bold text-slate-700 font-ui mb-3">Import hàng loạt từ Excel</h4>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={downloadTemplate} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 font-ui font-semibold text-sm px-4 py-2.5 rounded-xl hover:border-brand-blue hover:text-brand-blue transition-all">
+            <FileSpreadsheet size={15} /> Tải file mẫu
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" onChange={handleImport} accept=".xlsx,.xls" />
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-brand-blue text-white font-ui font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-brand-blue/90 transition-all">
+            <FileSpreadsheet size={15} /> Import Excel
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Loại</strong> (phuong / xa / dac_khu / doan_truc_thuoc)</p>
+      </div>
+
+      {/* Danh sách */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {donVis.map(dv => (
-          <div key={dv.id} className="p-6 bg-white border border-slate-100 rounded-3xl flex justify-between items-center group hover:border-brand-blue transition-all">
-            <span className="font-bold text-slate-700 uppercase tracking-tight text-xs">{dv.ten}</span>
-            <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-2 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16}/></button>
+          <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
+            <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
+            <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
+              <Trash2 size={14}/>
+            </button>
           </div>
         ))}
       </div>
