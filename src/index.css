@@ -1,57 +1,76 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #1e3a8a;
-  --color-brand-yellow: #facc15;
-  --color-brand-light: #f8fafc;
+  --color-brand-blue: #1E459F;
+  --color-brand-red: #CF2A2A;
+  --color-brand-yellow: #FABD32;
+  --color-brand-beige: #E1DCCA;
+  --color-brand-dark: #0F172A;
 }
 
 @layer base {
   html {
-    font-family: 'Inter', 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', 'Be Vietnam Pro', system-ui, sans-serif;
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
   }
   
   body {
-    @apply bg-slate-50 text-slate-800;
+    @apply bg-brand-beige/20 text-slate-900;
   }
 }
 
 @layer components {
-  /* Reduced blur for better clarity */
-  .glass {
-    @apply bg-white border border-slate-200 shadow-xl;
-  }
-  
-  .glass-dark {
-    @apply bg-slate-900 border border-slate-800 shadow-2xl;
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  /* Sharp Glass - No Blur as requested for clarity, but keeping the "feel" */
+  .card-premium {
+    @apply bg-white border border-slate-200 shadow-xl rounded-[2rem] p-8 transition-transform hover:-translate-y-1 hover:shadow-2xl;
+  }
+
+  /* Solid High Contrast Buttons */
   .btn-primary {
-    @apply bg-brand-yellow text-brand-blue font-bold px-8 py-3 rounded-full 
-           hover:shadow-lg hover:shadow-yellow-400/30 transform transition-all 
-           active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-brand-yellow text-brand-blue font-black px-10 py-4 rounded-2xl 
+           shadow-lg shadow-brand-yellow/20 hover:shadow-brand-yellow/40 
+           transform transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest text-sm;
   }
 
-  .section-title {
-    @apply text-3xl font-black text-brand-blue mb-4 relative inline-block;
+  .btn-accent {
+    @apply bg-brand-red text-white font-black px-10 py-4 rounded-2xl 
+           shadow-lg shadow-brand-red/20 hover:shadow-brand-red/40 
+           transform transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest text-sm;
   }
 
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  .nav-link {
+    @apply text-sm font-black text-slate-600 hover:text-brand-blue transition-colors uppercase tracking-widest;
   }
 }
 
-/* Sharp Hero Background */
-.bg-hero-solid {
-  background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+/* Sharp Gradients for Hero */
+.bg-hero-gradient {
+  background: linear-gradient(135deg, #1E459F 0%, #0F172A 100%);
+}
+
+.text-gradient-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-yellow to-[#FFD700];
 }
 
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Responsive adjustments for line breaks */
+.hero-title {
+  @apply text-5xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tighter text-white;
+}
+
+.hero-subtitle {
+  @apply text-brand-yellow drop-shadow-lg inline-block whitespace-nowrap;
 }

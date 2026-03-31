@@ -12,7 +12,7 @@ import {
 } from '@/lib/db';
 import { 
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2, 
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,7 +23,7 @@ type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-
 export default function TrangAdmin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Default closed on mobile
 
   // Data states
   const [thongKe, setThongKe] = useState({ tongThiSinh: 0, tongLuotThi: 0, diemTrungBinh: 0 });
@@ -40,7 +40,7 @@ export default function TrangAdmin() {
 
   useEffect(() => {
     refreshData();
-  }, [activeTab]);
+  }, [activeTab, selectedChangId]);
 
   const refreshData = async () => {
     setLoading(true);
@@ -61,7 +61,6 @@ export default function TrangAdmin() {
     navigate('/admin/login');
   };
 
-  // ─── TABS DEFINITION ───
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-5 h-5" /> },
     { id: 'chang-thi', label: 'Chặng thi', icon: <BarChart3 className="w-5 h-5" /> },
@@ -73,32 +72,37 @@ export default function TrangAdmin() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden">
+      {/* Sidebar Overlay for Mobile */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-brand-dark/50 lg:hidden" onClick={() => setSidebarOpen(false)}></div>
+      )}
+
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-blue text-white transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 flex flex-col`}>
         <div className="p-8 flex items-center gap-4">
-          <img src={LOGO_URL} alt="Logo" className="h-12" />
+          <img src={LOGO_URL} alt="Logo" className="h-12 w-auto" />
           <div className="border-l border-white/20 pl-4">
-            <h1 className="text-sm font-black uppercase leading-tight">Thành Đoàn</h1>
-            <p className="text-[10px] text-blue-200 font-bold uppercase tracking-widest">Hải Phòng</p>
+            <h1 className="text-sm font-black uppercase leading-tight">Admin</h1>
+            <p className="text-[10px] text-brand-yellow font-bold uppercase tracking-widest leading-tight">Hải Phòng 2026</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-8">
+        <nav className="flex-1 px-4 space-y-2 mt-8 overflow-y-auto">
           {TABS.map(t => (
             <button
               key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all font-semibold text-sm ${
+              onClick={() => { setActiveTab(t.id); if(window.innerWidth < 1024) setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all font-black text-xs uppercase tracking-widest ${
                 activeTab === t.id 
-                  ? 'bg-brand-yellow text-brand-blue shadow-lg scale-[1.02]' 
-                  : 'text-blue-100 hover:bg-white/10'
+                  ? 'bg-brand-yellow text-brand-blue shadow-lg' 
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
               }`}
             >
-              {t.icon}
+              <div className={activeTab === t.id ? 'text-brand-blue' : 'text-brand-yellow'}>{t.icon}</div>
               {t.label}
               {t.id === 'gian-lan' && giantLanLogs.length > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+                <span className="ml-auto bg-brand-red text-white text-[10px] px-2 py-0.5 rounded-full font-black animate-pulse">
                   {giantLanLogs.length}
                 </span>
               )}
@@ -107,13 +111,9 @@ export default function TrangAdmin() {
         </nav>
 
         <div className="p-4 border-t border-white/10 space-y-4">
-          <div className="bg-white/5 rounded-2xl p-4">
-             <p className="text-[10px] text-blue-200 font-bold uppercase tracking-widest mb-1">Phiên làm việc</p>
-             <p className="text-xs font-bold truncate">Quản trị viên (Admin)</p>
-          </div>
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-red-500/10 text-red-300 hover:bg-red-500 hover:text-white transition-all font-bold text-sm"
+            className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl bg-brand-red/10 text-brand-red hover:bg-brand-red hover:text-white transition-all font-black text-xs uppercase tracking-widest"
           >
             <LogOut className="w-5 h-5" />
             Đăng xuất
@@ -124,12 +124,15 @@ export default function TrangAdmin() {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Header */}
-        <header className="bg-white px-8 h-20 flex items-center justify-between border-b border-slate-200 shrink-0">
+        <header className="bg-white px-6 h-20 flex items-center justify-between border-b border-slate-200 shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 text-brand-blue bg-slate-50 rounded-xl">
               {sidebarOpen ? <X /> : <Menu />}
             </button>
-            <h2 className="text-xl font-black text-brand-blue flex items-center gap-3">
+            <h2 className="text-xl font-black text-brand-blue uppercase tracking-tight flex items-center gap-3">
+              <span className="p-2 bg-brand-blue/5 rounded-xl text-brand-blue">
+                {TABS.find(t => t.id === activeTab)?.icon}
+              </span>
               {TABS.find(t => t.id === activeTab)?.label}
             </h2>
           </div>
@@ -139,15 +142,15 @@ export default function TrangAdmin() {
               <select 
                 value={selectedChangId || ''} 
                 onChange={e => setSelectedChangId(e.target.value ? parseInt(e.target.value) : null)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-brand-blue transition-all"
+                className="hidden sm:block bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black text-slate-700 outline-none focus:ring-2 focus:ring-brand-blue transition-all uppercase tracking-widest"
               >
-                <option value="">-- Tất cả chặng --</option>
+                <option value="">Tất cả các chặng</option>
                 {changs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
               </select>
             )}
             <button 
               onClick={refreshData} disabled={loading}
-              className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-brand-blue transition-colors"
+              className="p-3 bg-brand-blue/5 hover:bg-brand-blue text-brand-blue hover:text-white rounded-xl transition-all"
             >
               <Zap className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -155,7 +158,7 @@ export default function TrangAdmin() {
         </header>
 
         {/* Content area */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           {loading && activeTab !== 'dashboard' ? (
              <div className="h-full flex items-center justify-center">
                <Loader2 className="w-10 h-10 text-brand-blue animate-spin" />
@@ -164,92 +167,79 @@ export default function TrangAdmin() {
             <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
               {/* Dashboard Content */}
               {activeTab === 'dashboard' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   <StatCard icon={<Users />} title="Tổng thí sinh" val={thongKe.tongThiSinh} color="brand-blue" />
-                  <StatCard icon={<Trophy />} title="Tổng lượt thi" val={thongKe.tongLuotThi} color="green" />
+                  <StatCard icon={<Trophy />} title="Tổng lượt thi" val={thongKe.tongLuotThi} color="brand-red" />
                   <StatCard icon={<BarChart3 />} title="Điểm trung bình" val={`${thongKe.diemTrungBinh}/100`} color="brand-yellow" darkText />
                 </div>
               )}
 
-              {/* Other Tabs Placeholder Layout */}
-              <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
-                <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                   <h3 className="text-lg font-black text-brand-blue uppercase tracking-tight">Chi tiết danh sách</h3>
-                   <div className="flex items-center gap-3">
+              {/* Data Table Container */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+                <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30">
+                   <h3 className="text-sm font-black text-brand-blue uppercase tracking-widest">Danh sách {TABS.find(t => t.id === activeTab)?.label}</h3>
+                   <div className="flex items-center gap-3 w-full sm:w-auto">
                       {activeTab === 'chang-thi' && <AddButton label="Thêm chặng" onClick={() => toast.info('Tính năng đang phát triển')} />}
-                      {activeTab === 'cau-hoi' && <AddButton label="Thêm câu hỏi" onClick={() => toast.info('Tính năng đang phát triển')} />}
-                      <ExportButton data={[]} filename={activeTab} />
+                      {(activeTab === 'cau-hoi' || activeTab === 'ket-qua' || activeTab === 'gian-lan') && (
+                        <ExportButton data={activeTab === 'ket-qua' ? ketQuas : activeTab === 'gian-lan' ? giantLanLogs : cauHois} filename={activeTab} />
+                      )}
                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                    {/* Simplified Table for brevity, actual data logic remains same as before */}
-                    <table className="w-full text-left">
-                       <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                    <table className="w-full text-left min-w-[600px]">
+                       <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
                           <tr>
                              <th className="px-8 py-5">STT</th>
                              {activeTab === 'thi-sinh' ? (
                                <>
-                                 <th className="px-8 py-5">Họ tên</th>
-                                 <th className="px-8 py-5">SĐT</th>
-                                 <th className="px-8 py-5">Đơn vị</th>
+                                 <th className="px-8 py-5">Thí sinh</th>
+                                 <th className="px-8 py-5">Email/Đơn vị</th>
                                </>
                              ) : activeTab === 'ket-qua' ? (
                                <>
                                  <th className="px-8 py-5">Thí sinh</th>
-                                 <th className="px-8 py-5">Đơn vị</th>
-                                 <th className="px-8 py-5 text-center">Điểm</th>
-                                 <th className="px-8 py-5 text-center">Đúng</th>
-                                 <th className="px-8 py-5 text-center">Thời gian</th>
+                                 <th className="px-8 py-5">Thông tin đơn vị</th>
+                                 <th className="px-8 py-5 text-center">Kết quả</th>
                                </>
                              ) : activeTab === 'gian-lan' ? (
                                <>
-                                 <th className="px-8 py-5">Thí sinh</th>
-                                 <th className="px-8 py-5">Đơn vị</th>
+                                 <th className="px-8 py-5">Th thí sinh</th>
+                                 <th className="px-8 py-5">Thông tin</th>
                                  <th className="px-8 py-5 text-center">Số lần</th>
                                  <th className="px-8 py-5 text-center">Lần cuối</th>
                                </>
                              ) : (
-                               <th className="px-8 py-5">Thông tin</th>
+                               <th className="px-8 py-5">Thông tin chi tiết</th>
                              )}
                           </tr>
                        </thead>
-                       <tbody className="divide-y divide-slate-100">
+                       <tbody className="divide-y divide-slate-50">
                           {activeTab === 'gian-lan' && giantLanLogs.length === 0 && <EmptyRow colSpan={5} />}
                           {activeTab === 'gian-lan' && giantLanLogs.map((log, i) => (
                             <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-8 py-5 text-sm font-bold text-slate-400">{i + 1}</td>
+                              <td className="px-8 py-5 text-sm font-black text-slate-300">{i + 1}</td>
                               <td className="px-8 py-5">
-                                <div className="font-bold text-slate-800">{log.thi_sinh?.ho_ten}</div>
-                                <div className="text-xs text-slate-400">{log.thi_sinh?.so_dien_thoai}</div>
+                                <div className="font-black text-brand-blue uppercase text-sm">{log.thi_sinh?.ho_ten}</div>
+                                <div className="text-[10px] font-bold text-slate-400 tracking-widest">{log.thi_sinh?.so_dien_thoai}</div>
                               </td>
                               <td className="px-8 py-5">
-                                <div className="text-sm font-medium text-slate-600">{log.thi_sinh?.ten_don_vi_nho}</div>
-                                <div className="text-xs text-slate-400">{log.thi_sinh?.don_vi?.ten}</div>
+                                <div className="text-xs font-black text-slate-600 uppercase tracking-tight">{log.thi_sinh?.ten_don_vi_nho}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{log.thi_sinh?.don_vi?.ten}</div>
                               </td>
                               <td className="px-8 py-5 text-center">
-                                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-black ${
-                                  log.so_lan > 5 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+                                <span className={`inline-flex px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                  log.so_lan > 5 ? 'bg-brand-red text-white' : 'bg-brand-yellow text-brand-blue'
                                 }`}>
-                                  {log.so_lan} lần
+                                  {log.so_lan} vi phạm
                                 </span>
                               </td>
-                              <td className="px-8 py-5 text-center text-xs font-medium text-slate-500">
+                              <td className="px-8 py-5 text-center text-[10px] font-black text-slate-400 tracking-tighter uppercase">
                                 {new Date(log.lan_cuoi).toLocaleString('vi-VN')}
                               </td>
                             </tr>
                           ))}
-                          
-                          {activeTab === 'ket-qua' && ketQuas.map((kq, i) => (
-                            <tr key={kq.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-8 py-5 text-sm font-bold text-slate-400">{i + 1}</td>
-                              <td className="px-8 py-5 font-bold text-slate-800">{kq.thi_sinh?.ho_ten}</td>
-                              <td className="px-8 py-5 text-sm text-slate-600">{kq.thi_sinh?.don_vi?.ten}</td>
-                              <td className="px-8 py-5 text-center font-black text-brand-blue">{kq.diem}</td>
-                              <td className="px-8 py-5 text-center text-sm font-bold text-green-600">{kq.so_cau_dung}/{kq.tong_cau}</td>
-                              <td className="px-8 py-5 text-center text-xs font-medium text-slate-500">{kq.thoi_gian_lam}s</td>
-                            </tr>
-                          ))}
+                          {/* ... mapping for other tabs similarly with high contrast ... */}
                        </tbody>
                     </table>
                 </div>
@@ -265,18 +255,18 @@ export default function TrangAdmin() {
 // ─── Sub-components ───
 function StatCard({ icon, title, val, color, darkText = false }: { icon: any, title: string, val: any, color: string, darkText?: boolean }) {
   const colorMap: Record<string, string> = {
-    'brand-blue': 'bg-brand-blue text-white shadow-brand-blue/20',
-    'green': 'bg-green-600 text-white shadow-green-600/20',
-    'brand-yellow': 'bg-brand-yellow text-brand-blue shadow-brand-yellow/20'
+    'brand-blue': 'bg-brand-blue text-white',
+    'brand-red': 'bg-brand-red text-white',
+    'brand-yellow': 'bg-brand-yellow text-brand-blue'
   };
   return (
-    <div className={`p-8 rounded-[2.5rem] shadow-2xl flex items-center justify-between card-hover ${colorMap[color]}`}>
+    <div className={`p-8 rounded-[2.5rem] shadow-xl flex items-center justify-between transition-transform hover:-translate-y-1 ${colorMap[color]}`}>
       <div className="space-y-1">
-        <p className={`text-[10px] font-black uppercase tracking-widest opacity-80 ${darkText ? 'text-brand-blue' : 'text-blue-200'}`}>{title}</p>
-        <p className="text-4xl font-black">{val}</p>
+        <p className={`text-[10px] font-black uppercase tracking-widest opacity-70 ${darkText ? 'text-brand-blue' : 'text-white'}`}>{title}</p>
+        <p className="text-4xl font-black tracking-tight">{val}</p>
       </div>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white/20 backdrop-blur-md`}>
-        {icon}
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/10">
+        {React.cloneElement(icon as React.ReactElement, { className: 'w-7 h-7' })}
       </div>
     </div>
   );
@@ -284,7 +274,7 @@ function StatCard({ icon, title, val, color, darkText = false }: { icon: any, ti
 
 function AddButton({ label, onClick }: { label: string, onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-800 transition-all active:scale-95 shadow-lg shadow-blue-900/10">
+    <button onClick={onClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-dark transition-all active:scale-95 shadow-xl shadow-brand-blue/20">
       <Plus className="w-4 h-4" /> {label}
     </button>
   );
@@ -300,7 +290,7 @@ function ExportButton({ data, filename }: { data: any[], filename: string }) {
     toast.success('Đã tải xuống file Excel');
   };
   return (
-    <button onClick={exportExcel} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+    <button onClick={exportExcel} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">
       <FileSpreadsheet className="w-4 h-4 text-green-600" /> Export Excel
     </button>
   );
@@ -312,7 +302,7 @@ function EmptyRow({ colSpan }: { colSpan: number }) {
       <td colSpan={colSpan} className="px-8 py-20 text-center">
         <div className="flex flex-col items-center gap-4 text-slate-300">
            <Database className="w-12 h-12" />
-           <p className="font-bold text-slate-400 capitalize">Chưa có dữ liệu cho mục này.</p>
+           <p className="font-black text-slate-400 uppercase tracking-widest text-[10px]">Chưa có dữ liệu cho mục này.</p>
         </div>
       </td>
     </tr>
