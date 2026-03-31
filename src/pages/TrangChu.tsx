@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllChangThiPublic, type ChangThi } from '@/lib/db';
-import { Calendar, Clock, Award, Users, ChevronRight, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu } from 'lucide-react';
+import { Calendar, Clock, Award, Users, ChevronRight, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu, PlayCircle } from 'lucide-react';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
@@ -33,6 +33,8 @@ export default function TrangChu() {
   }, []);
 
   const hasActiveChang = changs.some(isActive);
+  const activeChang = changs.find(isActive);
+  const nextChang = changs.find(c => new Date() < new Date(c.bat_dau));
 
   return (
     <div className="min-h-screen bg-brand-beige/5 selection:bg-brand-yellow selection:text-brand-blue overflow-x-hidden circuit-pattern">
@@ -51,11 +53,28 @@ export default function TrangChu() {
               </div>
             </div>
 
-            {/* Desktop Nav — no admin button */}
-            <div className="hidden md:flex items-center gap-10">
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-8">
               <a href="#gioi-thieu" className="nav-link-tech">Giới thiệu</a>
               <a href="#lich-thi" className="nav-link-tech">Lịch thi</a>
               <a href="#giai-thuong" className="nav-link-tech">Giải thưởng</a>
+              {hasActiveChang ? (
+                <button
+                  onClick={() => navigate('/thi')}
+                  className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-black text-sm px-6 py-3 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-brand-yellow/30 font-ui animate-pulse-soft"
+                >
+                  <PlayCircle size={18} />
+                  Vào thi ngay
+                </button>
+              ) : (
+                <button
+                  onClick={() => document.getElementById('lich-thi')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="flex items-center gap-2 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/10 transition-all font-ui"
+                >
+                  <Clock size={16} />
+                  Lịch thi
+                </button>
+              )}
             </div>
 
             <div className="md:hidden flex items-center">
@@ -71,10 +90,25 @@ export default function TrangChu() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-brand-blue/10 p-6 space-y-6 animate-in slide-in-from-top duration-300">
+          <div className="md:hidden bg-white border-t border-brand-blue/10 p-6 space-y-4 animate-in slide-in-from-top duration-300">
             <a href="#gioi-thieu" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Giới thiệu</a>
             <a href="#lich-thi" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Lịch thi</a>
             <a href="#giai-thuong" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Giải thưởng</a>
+            <div className="pt-2">
+              {hasActiveChang ? (
+                <button
+                  onClick={() => { navigate('/thi'); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center justify-center gap-3 bg-brand-yellow text-brand-blue font-black text-base py-4 rounded-2xl hover:bg-yellow-400 transition-all shadow-lg font-ui"
+                >
+                  <PlayCircle size={20} /> Vào thi ngay
+                </button>
+              ) : (
+                <div className="w-full flex items-center justify-center gap-3 bg-slate-50 border-2 border-slate-200 text-slate-500 font-bold text-sm py-4 rounded-2xl font-ui">
+                  <Clock size={16} />
+                  {nextChang ? `Mở thi: ${formatDateTime(nextChang.bat_dau)}` : 'Chưa có lịch thi'}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </nav>
@@ -109,15 +143,29 @@ export default function TrangChu() {
             {hasActiveChang ? (
               <button
                 onClick={() => navigate('/thi')}
-                className="w-full sm:w-auto bg-brand-yellow text-brand-blue font-black text-lg px-12 py-5 rounded-2xl hover:bg-yellow-400 transition-all shadow-2xl flex items-center justify-center gap-3 group"
+                className="w-full sm:w-auto relative bg-brand-yellow text-brand-blue font-black text-xl px-14 py-6 rounded-2xl hover:bg-yellow-400 transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] flex items-center justify-center gap-3 group overflow-hidden"
               >
-                Vào phòng thi
+                <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
+                <PlayCircle className="w-7 h-7" />
+                Vào thi ngay
                 <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </button>
             ) : (
-              <div className="w-full sm:w-auto bg-white/10 backdrop-blur-xl border-2 border-brand-yellow px-10 py-5 rounded-2xl text-brand-yellow font-ui font-black text-lg flex items-center justify-center gap-4 shadow-2xl">
-                <Clock className="w-6 h-6" />
-                Vòng Sơ khảo: 28/03 – 12/04/2026
+              <div className="w-full sm:w-auto flex flex-col items-center gap-3">
+                <button
+                  onClick={() => document.getElementById('lich-thi')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="w-full bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 px-12 py-5 rounded-2xl text-white font-ui font-black text-lg flex items-center justify-center gap-4 shadow-2xl hover:bg-white/20 transition-all group"
+                >
+                  <PlayCircle className="w-6 h-6 text-brand-yellow" />
+                  Vào thi
+                  <span className="text-brand-yellow/80 font-normal text-sm ml-1">(chưa đến giờ)</span>
+                </button>
+                {nextChang && (
+                  <div className="flex items-center gap-2 text-brand-yellow/80 text-sm font-ui font-semibold">
+                    <Clock size={14} />
+                    Mở thi: {formatDateTime(nextChang.bat_dau)}
+                  </div>
+                )}
               </div>
             )}
             <a
@@ -314,6 +362,21 @@ export default function TrangChu() {
           </div>
         </div>
       </section>
+
+      {/* ─── Sticky Floating CTA (when active) ─── */}
+      {hasActiveChang && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom duration-500">
+          <button
+            onClick={() => navigate('/thi')}
+            className="flex items-center gap-3 bg-brand-yellow text-brand-blue font-black text-base px-10 py-4 rounded-full shadow-[0_8px_40px_rgba(250,189,50,0.5)] hover:bg-yellow-400 hover:shadow-[0_8px_50px_rgba(250,189,50,0.7)] transition-all group"
+          >
+            <span className="w-3 h-3 rounded-full bg-brand-blue/30 animate-ping absolute"></span>
+            <PlayCircle size={22} />
+            Vào thi ngay — {activeChang?.ten}
+            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      )}
 
       {/* ─── Footer ─── */}
       <footer className="bg-white border-t border-brand-blue/10 py-20 relative overflow-hidden">
