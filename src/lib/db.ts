@@ -287,6 +287,11 @@ export async function bulkInsertThiSinh(list: { ho_ten: string; so_dien_thoai: s
   if (error) throw error;
 }
 
+export async function deleteThiSinh(id: number): Promise<void> {
+  const { error } = await supabase.from('thi_sinh').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // Kết quả
 export async function getKetQuaAdmin(changId?: number): Promise<any[]> {
   let query = supabase

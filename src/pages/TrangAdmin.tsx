@@ -5,7 +5,7 @@ import {
   getThongKe, getAllChangThi, addChangThi, updateChangThi, deleteChangThi,
   getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
   getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
-  getAllThiSinh, bulkInsertThiSinh,
+  getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
   getKetQuaAdmin, getCanhBaoGianLan,
   type ChangThi, type CauHoi, type DonVi
 } from '@/lib/db';
@@ -44,12 +44,25 @@ export default function TrangAdmin() {
     title: string;
     columns: PreviewCol[];
     data: Record<string, string>[];
-    onConfirm: () => void;
+    onConfirm: (data: Record<string, string>[]) => void;
   }>({ open: false, title: '', columns: [], data: [], onConfirm: () => {} });
 
   useEffect(() => {
     refreshData();
   }, [activeTab, selectedChangId]);
+
+  // Load changs when entering tabs that need it
+  useEffect(() => {
+    if (['cau-hoi', 'ket-qua', 'gian-lan'].includes(activeTab)) {
+      getAllChangThi().then(data => {
+        setChangs(data);
+        // Auto-select first chang if none selected
+        if (!selectedChangId && data.length > 0) {
+          setSelectedChangId(data[0].id);
+        }
+      });
+    }
+  }, [activeTab]);
 
   const refreshData = async () => {
     setLoading(true);
@@ -239,7 +252,7 @@ export default function TrangAdmin() {
                     {activeTab === 'chang-thi' && <ChangManager changs={changs} refresh={refreshData} />}
                     {activeTab === 'cau-hoi' && <CauHoiManager changId={selectedChangId} cauHois={cauHois} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
-                    {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} />}
+                    {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={giantLanLogs} />}
                   </div>
@@ -258,7 +271,7 @@ export default function TrangAdmin() {
           data={previewState.data}
           onChange={(data) => setPreviewState(prev => ({ ...prev, data }))}
           onConfirm={previewState.onConfirm}
-          onCancel={() => setPreviewState({ open: false, title: '', columns: [], data: [], onConfirm: () => {} })}
+          onCancel={() => setPreviewState(prev => ({ ...prev, open: false }))}
         />
       )}
     </div>
@@ -464,8 +477,8 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
           ]},
         ],
         data: clean,
-        onConfirm: async () => {
-          const toInsert = clean.map(r => ({
+        onConfirm: async (editedData) => {
+          const toInsert = editedData.map(r => ({
             chang_id: Number(r.chang_id),
             noi_dung: r.noi_dung,
             dap_an_a: r.dap_an_a,
@@ -578,7 +591,7 @@ function PreviewModal({
   columns: ColType[];
   data: Record<string, string>[];
   onChange: (data: Record<string, string>[]) => void;
-  onConfirm: () => void;
+  onConfirm: (data: Record<string, string>[]) => void;
   onCancel: () => void;
 }) {
   const updateCell = (rowIdx: number, key: string, value: string) => {
@@ -678,7 +691,7 @@ function PreviewModal({
             Hủy bỏ
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(data)}
             disabled={data.length === 0}
             className="px-6 py-2.5 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-blue/20"
           >
@@ -763,11 +776,12 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
           { header: 'Loại', key: 'loai', type: 'select', options: LOAI_DON_VI.map(l => ({ value: l.value, label: l.label })) },
         ],
         data: items,
-        onConfirm: async () => {
-          await bulkInsertDonVi(items);
+        onConfirm: async (editedData) => {
+          const finalItems = editedData.map(r => ({ ten: r.ten, loai: r.loai }));
+          await bulkInsertDonVi(finalItems);
           setPreviewState(prev => ({ ...prev, open: false }));
           refresh();
-          toast.success(`Đã import ${items.length} đơn vị thành công.`);
+          toast.success(`Đã import ${finalItems.length} đơn vị thành công.`);
         },
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -872,7 +886,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
   );
 }
 
-function ThiSinhManager({ thiSinhs }: { thiSinhs: any[] }) {
+function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () => void }) {
   const [searchText, setSearchText] = useState('');
 
   const filteredThiSinhs = thiSinhs.filter(ts =>
@@ -880,6 +894,13 @@ function ThiSinhManager({ thiSinhs }: { thiSinhs: any[] }) {
     ts.sdt.includes(searchText) ||
     ts.don_vi?.ten.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Xóa thí sinh này?')) return;
+    await deleteThiSinh(id);
+    refresh();
+    toast.success('Đã xóa thí sinh.');
+  };
 
   return (
     <div className="p-4 space-y-4">
@@ -905,15 +926,20 @@ function ThiSinhManager({ thiSinhs }: { thiSinhs: any[] }) {
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Ngày tạo</th></tr>
+            <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Ngày tạo</th><th className="px-6 py-4"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {(searchText ? filteredThiSinhs : thiSinhs).map(ts => (
-              <tr key={ts.id} className="hover:bg-slate-50">
+              <tr key={ts.id} className="hover:bg-slate-50 group">
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
                 <td className="px-6 py-4 text-slate-500">{ts.sdt}</td>
                 <td className="px-6 py-4 font-black">{ts.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
+                <td className="px-6 py-4">
+                  <button onClick={() => handleDelete(ts.id)} className="p-2 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                    <Trash2 size={15}/>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -935,7 +961,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
       'Chặng thi': r.chang_thi?.ten,
       'Điểm số': r.diem,
       'Câu đúng': r.so_cau_dung,
-      'Thời gian (giây)': r.thoi_gian_giay,
+      'Thời gian (giây)': r.thoi_gian_lam,
       'Ngày thi': new Date(r.created_at).toLocaleString('vi-VN', { timeZone: VN_TZ })
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -964,7 +990,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
                 <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.sdt}</div></td>
                 <td className="px-6 py-4 font-black">{r.thi_sinh?.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{r.diem}</td>
-                <td className="px-6 py-4 text-slate-400 font-tech">{r.thoi_gian_giay}s</td>
+                <td className="px-6 py-4 text-slate-400 font-tech">{r.thoi_gian_lam}s</td>
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] rounded-lg border border-brand-blue/10">{r.chang_thi?.ten}</span></td>
               </tr>
             ))}

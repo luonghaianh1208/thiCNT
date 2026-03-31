@@ -35,8 +35,11 @@ export default function TrangThi() {
   const [questions, setQuestions] = useState<CauHoi[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(0);
+  const [examStartTime, setExamStartTime] = useState<number | null>(null);
   const [thiSinhId, setThiSinhId] = useState<number | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  // Shuffled option order per question (questionId -> ['a','b','c','d'] shuffled)
+  const [optionOrders, setOptionOrders] = useState<Record<number, string[]>>({});
   
   // Anti-cheat
   const [cheatCount, setCheatCount] = useState(0);
@@ -61,12 +64,22 @@ export default function TrangThi() {
         if (saved && changData) {
           const state = JSON.parse(saved);
           if (state.changId === changData.id) {
+            const elapsed = Math.floor((Date.now() - state.examStartTime) / 1000);
+            const remaining = Math.max(0, (changData.thoi_gian_phut * 60) - elapsed);
             setQuestions(state.questions);
             setAnswers(state.answers || {});
             setThiSinhId(state.thiSinhId);
-            setTimeLeft(state.timeLeft);
+            setExamStartTime(state.examStartTime);
+            setOptionOrders(state.optionOrders || {});
+            setTimeLeft(remaining);
             setCheatCount(state.cheatCount || 0);
-            setStage('exam');
+            if (remaining <= 0) {
+              // Auto-submit if time expired while away
+              setStage('exam');
+              setTimeout(() => handleSubmit(), 100);
+            } else {
+              setStage('exam');
+            }
           }
         }
       } catch (err) {
@@ -119,10 +132,6 @@ export default function TrangThi() {
           handleSubmit();
           return 0;
         }
-        // Save state every 5 seconds or simplified
-        if (next % 5 === 0) {
-          saveSession(next);
-        }
         return next;
       });
     }, 1000);
@@ -130,14 +139,15 @@ export default function TrangThi() {
     return () => clearInterval(timer);
   }, [stage, timeLeft]);
 
-  const saveSession = (currentRemaining: number) => {
+  const saveSession = () => {
     if (stage !== 'exam' || !chang) return;
     const state = {
       changId: chang.id,
       questions,
       answers,
       thiSinhId,
-      timeLeft: currentRemaining,
+      examStartTime,
+      totalDuration: chang.thoi_gian_phut * 60,
       cheatCount
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -145,37 +155,61 @@ export default function TrangThi() {
 
   // Sync answers to session immediately
   useEffect(() => {
-    if (stage === 'exam') saveSession(timeLeft);
+    if (stage === 'exam') saveSession();
   }, [answers, cheatCount]);
 
   // 4. Handlers
   const handleStart = async () => {
-    if (!form.hoTen || !form.sdt || !form.donViId || !chang) {
-      toast.error('Vui lòng điền đầy đủ thông tin hành chính.');
+    if (loading) return;
+    const sdt = form.sdt.trim();
+    if (!form.hoTen.trim() || !sdt || !form.donViId || !chang) {
+      toast.error('Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+    if (!/^\d{10}$/.test(sdt)) {
+      toast.error('Số điện thoại phải có đúng 10 chữ số.');
       return;
     }
     setLoading(true);
     try {
       const tsId = await taoThiSinh({
-        ho_ten: form.hoTen,
-        so_dien_thoai: form.sdt,
+        ho_ten: form.hoTen.trim(),
+        so_dien_thoai: sdt,
         don_vi_id: parseInt(form.donViId),
-        ten_don_vi_nho: '' 
+        ten_don_vi_nho: ''
       });
       const qs = await layCauHoiNgauNhien(chang.id, chang.so_cau);
-      
+      const startTime = Date.now();
+      const totalDuration = chang.thoi_gian_phut * 60;
+
+      // Shuffle option order per question (each student gets different display)
+      const shuffleKeys = (keys: string[]) => {
+        const shuffled = [...keys];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+      const orders: Record<number, string[]> = {};
+      for (const q of qs) orders[q.id] = shuffleKeys(['a', 'b', 'c', 'd']);
+
       setThiSinhId(tsId);
       setQuestions(qs);
-      setTimeLeft(chang.thoi_gian_phut * 60);
+      setOptionOrders(orders);
+      setExamStartTime(startTime);
+      setTimeLeft(totalDuration);
       setStage('exam');
-      
+
       // Save initial session
       const initialState = {
         changId: chang.id,
         questions: qs,
         answers: {},
         thiSinhId: tsId,
-        timeLeft: chang.thoi_gian_phut * 60,
+        examStartTime: startTime,
+        totalDuration,
+        optionOrders: orders,
         cheatCount: 0
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
@@ -280,7 +314,7 @@ export default function TrangThi() {
               <BookOpen className="text-brand-blue w-8 h-8" />
               <div>
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-ui">Số lượng</p>
-                <p className="text-lg font-ui font-black text-brand-blue">30 CÂU HỎI</p>
+                <p className="text-lg font-ui font-black text-brand-blue">{chang?.so_cau} CÂU HỎI</p>
               </div>
             </div>
           </div>
@@ -426,7 +460,7 @@ export default function TrangThi() {
                 </p>
 
                 <div className="grid grid-cols-1 gap-5 mt-auto">
-                  {['a', 'b', 'c', 'd'].map(key => {
+                  {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map(key => {
                     const optionText = q?.[`dap_an_${key}` as keyof CauHoi];
                     if (!optionText) return null;
                     const isSelected = answers[q.id] === optionText;
@@ -435,8 +469,8 @@ export default function TrangThi() {
                         key={key}
                         onClick={() => handleAnswer(q.id, optionText as string)}
                         className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left flex items-start gap-5
-                          ${isSelected 
-                            ? 'bg-brand-blue border-brand-blue text-white shadow-xl translate-x-2' 
+                          ${isSelected
+                            ? 'bg-brand-blue border-brand-blue text-white shadow-xl translate-x-2'
                             : 'bg-white border-slate-100 hover:border-brand-blue/30 hover:bg-slate-50'}`}
                       >
                         <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg transition-colors
@@ -563,7 +597,7 @@ export default function TrangThi() {
             </div>
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white">
               <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">CÂU TRẢ LỜI ĐÚNG</p>
-              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/30</div>
+              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{questions.length}</div>
             </div>
           </div>
 
