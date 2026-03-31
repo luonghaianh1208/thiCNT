@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, createPortal } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { 
@@ -37,6 +37,16 @@ export default function TrangAdmin() {
   const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Shared Preview Modal state (lifted to root to avoid overflow clipping)
+  type PreviewCol = { header: string; key: string; type: 'text' | 'select'; options?: { value: string; label: string }[] };
+  const [previewState, setPreviewState] = useState<{
+    open: boolean;
+    title: string;
+    columns: PreviewCol[];
+    data: Record<string, string>[];
+    onConfirm: () => void;
+  }>({ open: false, title: '', columns: [], data: [], onConfirm: () => {} });
+
   useEffect(() => {
     refreshData();
   }, [activeTab, selectedChangId]);
@@ -71,7 +81,7 @@ export default function TrangAdmin() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-hidden font-ui">
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden font-ui relative">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-brand-dark/50 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>
@@ -227,8 +237,8 @@ export default function TrangAdmin() {
                 {activeTab !== 'dashboard' && (
                   <div className="card-tech bg-white p-2 md:p-6 overflow-hidden animate-in slide-in-from-bottom duration-500">
                     {activeTab === 'chang-thi' && <ChangManager changs={changs} refresh={refreshData} />}
-                    {activeTab === 'cau-hoi' && <CauHoiManager changId={selectedChangId} cauHois={cauHois} refresh={refreshData} />}
-                    {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} />}
+                    {activeTab === 'cau-hoi' && <CauHoiManager changId={selectedChangId} cauHois={cauHois} refresh={refreshData} setPreviewState={setPreviewState} />}
+                    {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={giantLanLogs} />}
@@ -239,6 +249,18 @@ export default function TrangAdmin() {
           </div>
         </div>
       </main>
+
+      {/* Shared Preview Modal - rendered at root level to avoid overflow clipping */}
+      {previewState.open && (
+        <PreviewModal
+          title={previewState.title}
+          columns={previewState.columns}
+          data={previewState.data}
+          onChange={(data) => setPreviewState(prev => ({ ...prev, data }))}
+          onConfirm={previewState.onConfirm}
+          onCancel={() => setPreviewState({ open: false, title: '', columns: [], data: [], onConfirm: () => {} })}
+        />
+      )}
     </div>
   );
 }
@@ -378,12 +400,8 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
   );
 }
 
-function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, cauHois: CauHoi[], refresh: () => void }) {
+function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Preview state
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewItems, setPreviewItems] = useState<Record<string, string>[]>([]);
 
   const downloadTemplate = () => {
     const sample = [
@@ -421,59 +439,47 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
         toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
         return;
       }
-      setPreviewItems(clean);
-      setPreviewOpen(true);
+      setPreviewState({
+        open: true,
+        title: 'Xem trước import câu hỏi',
+        columns: [
+          { header: 'Câu hỏi', key: 'noi_dung', type: 'text' },
+          { header: 'A', key: 'dap_an_a', type: 'text' },
+          { header: 'B', key: 'dap_an_b', type: 'text' },
+          { header: 'C', key: 'dap_an_c', type: 'text' },
+          { header: 'D', key: 'dap_an_d', type: 'text' },
+          { header: 'Đáp án', key: 'dap_an_dung', type: 'select', options: [
+            { value: 'A', label: 'A' },
+            { value: 'B', label: 'B' },
+            { value: 'C', label: 'C' },
+            { value: 'D', label: 'D' },
+          ]},
+        ],
+        data: clean,
+        onConfirm: async () => {
+          const toInsert = clean.map(r => ({
+            chang_id: Number(r.chang_id),
+            noi_dung: r.noi_dung,
+            dap_an_a: r.dap_an_a,
+            dap_an_b: r.dap_an_b,
+            dap_an_c: r.dap_an_c,
+            dap_an_d: r.dap_an_d,
+            dap_an_dung: r.dap_an_dung,
+            active: true,
+          }));
+          await bulkInsertCauHoi(toInsert);
+          setPreviewState(prev => ({ ...prev, open: false }));
+          refresh();
+          toast.success(`Đã import ${toInsert.length} câu hỏi thành công.`);
+        },
+      });
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsBinaryString(file);
   };
 
-  const confirmImport = async () => {
-    const toInsert = previewItems.map(r => ({
-      chang_id: Number(r.chang_id),
-      noi_dung: r.noi_dung,
-      dap_an_a: r.dap_an_a,
-      dap_an_b: r.dap_an_b,
-      dap_an_c: r.dap_an_c,
-      dap_an_d: r.dap_an_d,
-      dap_an_dung: r.dap_an_dung,
-      active: true,
-    }));
-    await bulkInsertCauHoi(toInsert);
-    setPreviewOpen(false);
-    setPreviewItems([]);
-    refresh();
-    toast.success(`Đã import ${toInsert.length} câu hỏi thành công.`);
-  };
-
-  const questionColumns: ColType[] = [
-    { header: 'Câu hỏi', key: 'noi_dung', type: 'text' },
-    { header: 'A', key: 'dap_an_a', type: 'text' },
-    { header: 'B', key: 'dap_an_b', type: 'text' },
-    { header: 'C', key: 'dap_an_c', type: 'text' },
-    { header: 'D', key: 'dap_an_d', type: 'text' },
-    { header: 'Đáp án', key: 'dap_an_dung', type: 'select', options: [
-      { value: 'A', label: 'A' },
-      { value: 'B', label: 'B' },
-      { value: 'C', label: 'C' },
-      { value: 'D', label: 'D' },
-    ]},
-  ];
-
   return (
     <div className="p-4 space-y-6">
-      {/* Preview Modal */}
-      {previewOpen && (
-        <PreviewModal
-          title="Xem trước import câu hỏi"
-          columns={questionColumns}
-          data={previewItems}
-          onChange={setPreviewItems}
-          onConfirm={confirmImport}
-          onCancel={() => { setPreviewOpen(false); setPreviewItems([]); }}
-        />
-      )}
-
       {!changId ? (
         <div className="py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
           <p className="text-slate-400 font-ui font-semibold">Vui lòng chọn chặng thi ở trên để quản lý câu hỏi.</p>
@@ -652,7 +658,7 @@ function PreviewModal({
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return modalContent;
 }
 
 const LOAI_DON_VI = [
@@ -661,14 +667,10 @@ const LOAI_DON_VI = [
   { value: 'dac_khu', label: 'Đặc khu' },
 ];
 
-function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => void }) {
+function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: any }) {
   const [ten, setTen] = useState('');
   const [loai, setLoai] = useState('phuong');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Preview state
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewItems, setPreviewItems] = useState<{ ten: string; loai: string }[]>([]);
 
   const handleAdd = async () => {
     if (!ten.trim()) return;
@@ -707,42 +709,28 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
         ten: String(r['Tên đơn vị']).trim(),
         loai: String(r['Loại'] || 'phuong').trim(),
       }));
-      setPreviewItems(items);
-      setPreviewOpen(true);
+      setPreviewState({
+        open: true,
+        title: 'Xem trước import đơn vị',
+        columns: [
+          { header: 'Tên đơn vị', key: 'ten', type: 'text' },
+          { header: 'Loại', key: 'loai', type: 'select', options: LOAI_DON_VI.map(l => ({ value: l.value, label: l.label })) },
+        ],
+        data: items,
+        onConfirm: async () => {
+          await bulkInsertDonVi(items);
+          setPreviewState(prev => ({ ...prev, open: false }));
+          refresh();
+          toast.success(`Đã import ${items.length} đơn vị thành công.`);
+        },
+      });
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsBinaryString(file);
   };
 
-  const confirmImport = async () => {
-    await bulkInsertDonVi(previewItems);
-    setPreviewOpen(false);
-    setPreviewItems([]);
-    refresh();
-    toast.success(`Đã import ${previewItems.length} đơn vị thành công.`);
-  };
-
   return (
     <div className="p-4 space-y-6">
-      {/* Preview Modal */}
-      {previewOpen && (
-        <PreviewModal
-          title="Xem trước import đơn vị"
-          columns={[
-            { header: 'Tên đơn vị', key: 'ten', type: 'text' as const },
-            {
-              header: 'Loại',
-              key: 'loai',
-              type: 'select' as const,
-              options: LOAI_DON_VI.map(l => ({ value: l.value, label: l.label })),
-            },
-          ]}
-          data={previewItems}
-          onChange={setPreviewItems}
-          onConfirm={confirmImport}
-          onCancel={() => { setPreviewOpen(false); setPreviewItems([]); }}
-        />
-      )}
 
       {/* Thêm 1 đơn vị */}
       <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
