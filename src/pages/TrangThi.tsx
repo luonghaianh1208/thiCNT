@@ -1,20 +1,34 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getChangDangMo, getDonViList, kiemTraDaThi, taoThiSinh,
-  layCauHoiNgauNhien, nopBaiThi,
+  layCauHoiNgauNhien, nopBaiThi, ghiCanhBaoGianLan,
   type ChangThi, type DonVi, type CauHoi, type AnswerRecord,
 } from '@/lib/db';
-import { Clock, CheckCircle, XCircle, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, ArrowLeft, AlertCircle, Loader2, ShieldAlert } from 'lucide-react';
 
 type Stage = 'loading' | 'closed' | 'register' | 'checking' | 'already_taken' | 'confirm' | 'exam' | 'submitting' | 'result';
 
+const STORAGE_KEY = 'thi_state';
 const PAD = (n: number) => String(n).padStart(2, '0');
 
 function formatTime(secs: number) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${PAD(m)}:${PAD(s)}`;
+}
+
+interface ThiState {
+  changId: number;
+  thiSinhId: number;
+  hoTen: string;
+  donViId: number;
+  tenDonViNho: string;
+  soDienThoai: string;
+  questions: CauHoi[];
+  answers: Record<number, string>;
+  startTime: number;
+  timeLeft: number;
 }
 
 export default function TrangThi() {
@@ -34,13 +48,41 @@ export default function TrangThi() {
   // Exam state
   const [thiSinhId, setThiSinhId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<CauHoi[]>([]);
-  const [answers, setAnswers] = useState<Record<number, string>>({}); // questionId → 'A'|'B'|'C'|'D'
+  const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentIdx, setCurrentIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [startTime, setStartTime] = useState(0);
 
+  // Gian lận
+  const [soLanGianLan, setSoLanGianLan] = useState(0);
+  const [showGianLanWarning, setShowGianLanWarning] = useState(false);
+
   // Result
   const [result, setResult] = useState<{ diem: number; soCauDung: number; tongCau: number; thoiGianLam: number } | null>(null);
+
+  // Ref để tránh submitExam gọi 2 lần
+  const isSubmitting = useRef(false);
+
+  // ── Helpers lưu/xóa sessionStorage ────────────────────────────────────────
+  const saveToSession = useCallback((override?: Partial<ThiState>) => {
+    if (!chang || !thiSinhId) return;
+    const state: ThiState = {
+      changId: chang.id,
+      thiSinhId: thiSinhId!,
+      hoTen,
+      donViId: donViId as number,
+      tenDonViNho,
+      soDienThoai,
+      questions,
+      answers,
+      startTime,
+      timeLeft,
+      ...override,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [chang, thiSinhId, hoTen, donViId, tenDonViNho, soDienThoai, questions, answers, startTime, timeLeft]);
+
+  const clearSession = () => sessionStorage.removeItem(STORAGE_KEY);
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -49,10 +91,32 @@ export default function TrangThi() {
         setDonViList(dvl);
         if (!ct) {
           setStage('closed');
-        } else {
-          setChang(ct);
-          setStage('register');
+          return;
         }
+        setChang(ct);
+
+        // Cố gắng restore từ sessionStorage
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            const s: ThiState = JSON.parse(saved);
+            // Chỉ restore nếu cùng chặng thi
+            if (s.changId === ct.id && s.thiSinhId && s.questions?.length > 0 && s.timeLeft > 0) {
+              setThiSinhId(s.thiSinhId);
+              setHoTen(s.hoTen);
+              setDonViId(s.donViId);
+              setTenDonViNho(s.tenDonViNho);
+              setSoDienThoai(s.soDienThoai);
+              setQuestions(s.questions);
+              setAnswers(s.answers || {});
+              setStartTime(s.startTime);
+              setTimeLeft(s.timeLeft);
+              setStage('exam');
+              return;
+            }
+          } catch { /* ignore corrupt data */ }
+        }
+        setStage('register');
       })
       .catch(() => setStage('closed'));
   }, []);
@@ -64,9 +128,42 @@ export default function TrangThi() {
       submitExam();
       return;
     }
-    const t = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    const t = setInterval(() => {
+      setTimeLeft(prev => {
+        const next = prev - 1;
+        // Cập nhật sessionStorage mỗi 5 giây để không gây lag
+        if (next % 5 === 0) {
+          const saved = sessionStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            try {
+              const s = JSON.parse(saved);
+              sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, timeLeft: next }));
+            } catch { /* ignore */ }
+          }
+        }
+        return next;
+      });
+    }, 1000);
     return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, timeLeft]);
+
+  // ── Phát hiện gian lận (rời tab) ──────────────────────────────────────────
+  useEffect(() => {
+    if (stage !== 'exam' || !thiSinhId || !chang) return;
+
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) return; // chỉ xử lý khi TAB BỊ ẨN
+      try {
+        const soLan = await ghiCanhBaoGianLan(thiSinhId!, chang!.id);
+        setSoLanGianLan(soLan);
+        setShowGianLanWarning(true);
+      } catch { /* không chặn thi nếu lỗi ghi log */ }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [stage, thiSinhId, chang]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleRegister = async () => {
@@ -111,12 +208,31 @@ export default function TrangThi() {
         setStage('confirm');
         return;
       }
+
+      const now = Date.now();
+      const tl = chang.thoi_gian_phut * 60;
+
       setQuestions(qs);
       setAnswers({});
       setCurrentIdx(0);
-      setTimeLeft(chang.thoi_gian_phut * 60);
-      setStartTime(Date.now());
+      setTimeLeft(tl);
+      setStartTime(now);
       setStage('exam');
+
+      // Lưu trạng thái ban đầu vào sessionStorage
+      const state: ThiState = {
+        changId: chang.id,
+        thiSinhId: id,
+        hoTen: hoTen.trim(),
+        donViId: donViId as number,
+        tenDonViNho: tenDonViNho.trim(),
+        soDienThoai: soDienThoai.trim(),
+        questions: qs,
+        answers: {},
+        startTime: now,
+        timeLeft: tl,
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       alert('Lỗi khởi động bài thi. Vui lòng thử lại.');
       setStage('confirm');
@@ -124,7 +240,8 @@ export default function TrangThi() {
   };
 
   const submitExam = useCallback(async () => {
-    if (!chang || !thiSinhId) return;
+    if (!chang || !thiSinhId || isSubmitting.current) return;
+    isSubmitting.current = true;
     setStage('submitting');
 
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -146,14 +263,34 @@ export default function TrangThi() {
         thoi_gian_lam: elapsed,
         answers: records,
       });
-      setResult({ diem, soCauDung, tongCau: questions.length, thoiGianLam: elapsed });
-      setStage('result');
-    } catch {
-      // Duplicate (race condition) - still show result
-      setResult({ diem, soCauDung, tongCau: questions.length, thoiGianLam: elapsed });
-      setStage('result');
+    } catch (err: any) {
+      // Nếu lỗi UNIQUE (đã nộp rồi) thì bỏ qua, vẫn hiện kết quả
+      if (!err?.code || err.code !== '23505') {
+        alert('Lỗi khi nộp bài. Kết quả của bạn chưa được lưu. Vui lòng liên hệ BTC.');
+        isSubmitting.current = false;
+        setStage('exam');
+        return;
+      }
     }
+
+    clearSession();
+    setResult({ diem, soCauDung, tongCau: questions.length, thoiGianLam: elapsed });
+    setStage('result');
   }, [chang, thiSinhId, questions, answers, startTime]);
+
+  // Lưu liên tục khi answers thay đổi
+  const handleAnswer = (questionId: number, opt: string) => {
+    const newAnswers = { ...answers, [questionId]: opt };
+    setAnswers(newAnswers);
+    // Cập nhật answers trong sessionStorage
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, answers: newAnswers }));
+      } catch { /* ignore */ }
+    }
+  };
 
   const currentQuestion = questions[currentIdx];
 
@@ -335,7 +472,8 @@ export default function TrangThi() {
           </p>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6 text-sm text-yellow-800">
-            ⚠️ Không được thoát khỏi trang trong khi làm bài. Bài sẽ tự động nộp khi hết giờ.
+            ⚠️ Không được thoát khỏi trang trong khi làm bài. Hành vi rời trang sẽ bị ghi nhận.
+            Bài sẽ tự động nộp khi hết giờ.
           </div>
 
           <div className="flex gap-3">
@@ -364,6 +502,31 @@ export default function TrangThi() {
 
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Overlay cảnh báo gian lận */}
+        {showGianLanWarning && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+              <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-red-700 mb-2">⚠️ Cảnh báo vi phạm</h2>
+              <p className="text-gray-700 mb-2">
+                Bạn đã <strong>rời khỏi màn hình thi</strong>.
+              </p>
+              <p className="text-gray-600 text-sm mb-4">
+                Hành vi này đã được ghi nhận. Lần vi phạm: <strong className="text-red-600">{soLanGianLan}</strong>
+              </p>
+              <p className="text-gray-500 text-xs mb-6">
+                Tiếp tục vi phạm có thể ảnh hưởng đến kết quả của bạn.
+              </p>
+              <button
+                onClick={() => setShowGianLanWarning(false)}
+                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition-colors"
+              >
+                Tôi đã hiểu, tiếp tục thi
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Top bar */}
         <div className="bg-blue-800 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow">
           <div className="text-sm font-medium">{chang?.ten} – {hoTen}</div>
@@ -394,7 +557,7 @@ export default function TrangThi() {
                   return (
                     <button
                       key={opt}
-                      onClick={() => setAnswers(prev => ({ ...prev, [currentQuestion.id]: opt }))}
+                      onClick={() => handleAnswer(currentQuestion.id, opt)}
                       className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm ${
                         selected
                           ? 'border-blue-500 bg-blue-50 text-blue-800 font-semibold'

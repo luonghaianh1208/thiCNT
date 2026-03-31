@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminLogin } from '@/lib/db';
 import { Loader2, Lock } from 'lucide-react';
@@ -10,7 +10,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!username.trim() || !password) { setError('Vui lòng nhập đầy đủ thông tin.'); return; }
@@ -18,7 +18,8 @@ export default function AdminLogin() {
     try {
       const ok = await adminLogin(username, password);
       if (ok) {
-        localStorage.setItem('admin_logged_in', 'true');
+        // Lưu token trong sessionStorage (tự xóa khi đóng tab)
+        sessionStorage.setItem('admin_token', 'authenticated');
         navigate('/admin', { replace: true });
       } else {
         setError('Tên đăng nhập hoặc mật khẩu không đúng.');

@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
@@ -6,26 +7,25 @@ import {
   getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
   getDonViList, addDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh,
-  getKetQuaAdmin, getThongKe,
+  getKetQuaAdmin, getThongKe, getCanhBaoGianLan,
   type ChangThi, type CauHoi, type DonVi,
 } from '@/lib/db';
 import {
   LayoutDashboard, Clock, BookOpen, Building2, Users, LogOut,
   Plus, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, X, Save,
+  ShieldAlert,
 } from 'lucide-react';
 
-type Tab = 'thongke' | 'changthi' | 'cauhoi' | 'donvi' | 'thisinh';
+type Tab = 'thongke' | 'changthi' | 'cauhoi' | 'donvi' | 'thisinh' | 'gianlAN';
 
 const VN_DATETIME = (iso: string) =>
   new Date(iso).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-// Convert local datetime-local input value to ISO string in UTC
 const localToISO = (val: string) => val ? new Date(val).toISOString() : '';
-// Convert ISO to value for datetime-local input (Vietnam time display)
 const isoToLocal = (iso: string) => {
   if (!iso) return '';
   const d = new Date(iso);
-  const offset = 7 * 60; // UTC+7
+  const offset = 7 * 60;
   const local = new Date(d.getTime() + offset * 60000);
   return local.toISOString().slice(0, 16);
 };
@@ -178,8 +178,8 @@ function TabChangThi({ onToast }: { onToast: (m: string) => void }) {
     if (!editing.ten?.trim() || !editing.bat_dau || !editing.ket_thuc) { alert('Vui lòng điền đầy đủ.'); return; }
     setLoading(true);
     try {
-      if (editing.id) await updateChangThi(editing.id, editing);
-      else await addChangThi(editing as Omit<ChangThi, 'id'>);
+      if (editing.id) await updateChangThi(editing.id, { ...editing, bat_dau: localToISO(editing.bat_dau), ket_thuc: localToISO(editing.ket_thuc) });
+      else await addChangThi({ ...editing as Omit<ChangThi, 'id'>, bat_dau: localToISO(editing.bat_dau!), ket_thuc: localToISO(editing.ket_thuc!) });
       await load();
       setEditing(null);
       onToast('Đã lưu chặng thi');
@@ -299,7 +299,7 @@ function TabCauHoi({ onToast }: { onToast: (m: string) => void }) {
 
   const save = async () => {
     if (!editing) return;
-    const { noi_dung, dap_an_a, dap_an_b, dap_an_c, dap_an_d, dap_an_dung } = editing;
+    const { noi_dung, dap_an_a, dap_an_b, dap_an_c, dap_an_d } = editing;
     if (!noi_dung?.trim() || !dap_an_a?.trim() || !dap_an_b?.trim() || !dap_an_c?.trim() || !dap_an_d?.trim()) {
       alert('Vui lòng điền đầy đủ nội dung câu hỏi và 4 đáp án.'); return;
     }
@@ -632,6 +632,130 @@ function TabThiSinh({ onToast }: { onToast: (m: string) => void }) {
   );
 }
 
+// ── Gian lận ──────────────────────────────────────────────────────────────────
+function TabGianLan() {
+  const [list, setList] = useState<any[]>([]);
+  const [changs, setChangs] = useState<ChangThi[]>([]);
+  const [selChang, setSelChang] = useState<number | ''>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getAllChangThi().then(setChangs);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    getCanhBaoGianLan(selChang || undefined)
+      .then(setList)
+      .finally(() => setLoading(false));
+  }, [selChang]);
+
+  const exportExcel = () => {
+    const rows = list.map((r: any, i: number) => ({
+      'STT': i + 1,
+      'Họ tên': r.thi_sinh?.ho_ten || '',
+      'SĐT': r.thi_sinh?.so_dien_thoai || '',
+      'Đơn vị': r.thi_sinh?.don_vi?.ten || '',
+      'Đơn vị nhỏ': r.thi_sinh?.ten_don_vi_nho || '',
+      'Chặng': r.chang_thi?.ten || '',
+      'Số lần thoát': r.so_lan,
+      'Lần cuối': VN_DATETIME(r.lan_cuoi),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Cảnh báo gian lận');
+    XLSX.writeFile(wb, 'canh_bao_gian_lan.xlsx');
+  };
+
+  return (
+    <div>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 text-sm text-red-800 flex items-start gap-3">
+        <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold mb-1">Theo dõi gian lận rời màn hình</p>
+          <p>Hệ thống ghi nhận khi thí sinh chuyển tab, thu nhỏ cửa sổ hoặc rời khỏi màn hình thi. Đây là dữ liệu tham khảo, không tự động trừ điểm.</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800">
+            Danh sách vi phạm
+            {list.length > 0 && (
+              <span className="ml-2 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{list.length}</span>
+            )}
+          </h3>
+          <div className="flex gap-3 items-center">
+            <select
+              value={selChang}
+              onChange={e => setSelChang(e.target.value ? Number(e.target.value) : '')}
+              className="border border-gray-200 rounded-lg text-sm px-3 py-1.5"
+            >
+              <option value="">Tất cả chặng</option>
+              {changs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
+            </select>
+            {list.length > 0 && (
+              <button onClick={exportExcel} className="flex items-center gap-1.5 bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-green-700">
+                <Download className="w-3.5 h-3.5" /> Excel
+              </button>
+            )}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" /> Đang tải...
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-left">#</th>
+                  <th className="px-4 py-3 text-left">Họ tên</th>
+                  <th className="px-4 py-3 text-left">SĐT</th>
+                  <th className="px-4 py-3 text-left">Đơn vị</th>
+                  <th className="px-4 py-3 text-left">Chặng</th>
+                  <th className="px-4 py-3 text-center">Số lần thoát</th>
+                  <th className="px-4 py-3 text-left">Lần cuối</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {list.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                    <ShieldAlert className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+                    Chưa có vi phạm nào được ghi nhận.
+                  </td></tr>
+                )}
+                {list.map((r: any, i: number) => (
+                  <tr key={r.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium">{r.thi_sinh?.ho_ten}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.thi_sinh?.so_dien_thoai}</td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {r.thi_sinh?.don_vi?.ten}
+                      {r.thi_sinh?.ten_don_vi_nho && <span className="text-xs text-gray-400 ml-1">· {r.thi_sinh.ten_don_vi_nho}</span>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{r.chang_thi?.ten}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block font-bold px-2.5 py-0.5 rounded-full text-xs ${
+                        r.so_lan >= 5 ? 'bg-red-100 text-red-700' :
+                        r.so_lan >= 3 ? 'bg-orange-100 text-orange-700' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>{r.so_lan} lần</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">{VN_DATETIME(r.lan_cuoi)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Admin Page ────────────────────────────────────────────────────────────
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'thongke', label: 'Thống kê & Kết quả', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -639,6 +763,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'cauhoi', label: 'Ngân hàng câu hỏi', icon: <BookOpen className="w-4 h-4" /> },
   { id: 'donvi', label: 'Đơn vị đoàn', icon: <Building2 className="w-4 h-4" /> },
   { id: 'thisinh', label: 'Thí sinh', icon: <Users className="w-4 h-4" /> },
+  { id: 'gianlAN', label: 'Cảnh báo gian lận', icon: <ShieldAlert className="w-4 h-4" /> },
 ];
 
 export default function TrangAdmin() {
@@ -647,7 +772,7 @@ export default function TrangAdmin() {
   const [toast, setToast] = useState('');
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_logged_in');
+    sessionStorage.removeItem('admin_token');
     navigate('/admin/login', { replace: true });
   };
 
@@ -680,6 +805,8 @@ export default function TrangAdmin() {
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                   activeTab === t.id
                     ? 'bg-blue-50 text-blue-700 font-semibold border-r-2 border-blue-700'
+                    : t.id === 'gianlAN'
+                    ? 'text-red-600 hover:bg-red-50'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -700,6 +827,7 @@ export default function TrangAdmin() {
           {activeTab === 'cauhoi' && <TabCauHoi onToast={showToast} />}
           {activeTab === 'donvi' && <TabDonVi onToast={showToast} />}
           {activeTab === 'thisinh' && <TabThiSinh onToast={showToast} />}
+          {activeTab === 'gianlAN' && <TabGianLan />}
         </main>
       </div>
 

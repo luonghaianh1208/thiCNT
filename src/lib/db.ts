@@ -54,6 +54,15 @@ export interface AnswerRecord {
   dung: boolean;
 }
 
+export interface CanhBaoGianLan {
+  id: number;
+  thi_sinh_id: number;
+  chang_id: number;
+  so_lan: number;
+  lan_cuoi: string;
+  created_at: string;
+}
+
 // ─── Public (Contestant) functions ───────────────────────────────────────────
 
 /** Lấy chặng thi đang mở (hiện tại trong khoảng thời gian) */
@@ -158,16 +167,41 @@ export async function nopBaiThi(data: {
   if (error) throw error;
 }
 
+// ─── Gian lận ─────────────────────────────────────────────────────────────────
+
+/** Ghi/cập nhật cảnh báo gian lận (upsert theo thi_sinh + chang).
+ *  Trả về số lần vi phạm hiện tại.
+ */
+export async function ghiCanhBaoGianLan(thiSinhId: number, changId: number): Promise<number> {
+  const { data, error } = await supabase.rpc('ghi_canh_bao_gian_lan', {
+    p_thi_sinh_id: thiSinhId,
+    p_chang_id: changId,
+  });
+  if (error) throw error;
+  return data as number;
+}
+
+/** Lấy danh sách cảnh báo gian lận (kèm thông tin thí sinh và chặng) */
+export async function getCanhBaoGianLan(changId?: number): Promise<any[]> {
+  let query = supabase
+    .from('canh_bao_gian_lan')
+    .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_don_vi_nho, don_vi(ten)), chang_thi(ten)')
+    .order('so_lan', { ascending: false });
+  if (changId) query = query.eq('chang_id', changId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
 // ─── Admin functions ──────────────────────────────────────────────────────────
 
-/** Đăng nhập admin */
+/** Đăng nhập admin — gọi SECURITY DEFINER function, so sánh bcrypt hash server-side */
 export async function adminLogin(username: string, matKhau: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('admins')
-    .select('id')
-    .eq('username', username.trim())
-    .eq('mat_khau', matKhau)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc('verify_admin_login', {
+    p_username: username.trim(),
+    p_password: matKhau,
+  });
+  if (error) throw error;
   return !!data;
 }
 
