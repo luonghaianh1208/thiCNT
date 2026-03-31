@@ -1,0 +1,289 @@
+import { supabase } from './supabase';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface DonVi {
+  id: number;
+  ten: string;
+  loai: string;
+}
+
+export interface ChangThi {
+  id: number;
+  ten: string;
+  bat_dau: string;
+  ket_thuc: string;
+  so_cau: number;
+  thoi_gian_phut: number;
+}
+
+export interface CauHoi {
+  id: number;
+  noi_dung: string;
+  dap_an_a: string;
+  dap_an_b: string;
+  dap_an_c: string;
+  dap_an_d: string;
+  dap_an_dung: string;
+  chang_id: number;
+  active: boolean;
+}
+
+export interface ThiSinh {
+  id: number;
+  ho_ten: string;
+  so_dien_thoai: string;
+  don_vi_id: number;
+  ten_don_vi_nho: string;
+}
+
+export interface KetQua {
+  id: number;
+  thi_sinh_id: number;
+  chang_id: number;
+  diem: number;
+  so_cau_dung: number;
+  tong_cau: number;
+  thoi_gian_lam: number;
+  answers: AnswerRecord[];
+}
+
+export interface AnswerRecord {
+  cau_hoi_id: number;
+  lua_chon: string;
+  dung: boolean;
+}
+
+// ─── Public (Contestant) functions ───────────────────────────────────────────
+
+/** Lấy chặng thi đang mở (hiện tại trong khoảng thời gian) */
+export async function getChangDangMo(): Promise<ChangThi | null> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('chang_thi')
+    .select('*')
+    .lte('bat_dau', now)
+    .gte('ket_thuc', now)
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Lấy tất cả chặng thi (cho trang chủ) */
+export async function getAllChangThiPublic(): Promise<ChangThi[]> {
+  const { data, error } = await supabase
+    .from('chang_thi')
+    .select('*')
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Lấy danh sách đơn vị */
+export async function getDonViList(): Promise<DonVi[]> {
+  const { data, error } = await supabase
+    .from('don_vi')
+    .select('*')
+    .order('ten', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Kiểm tra thí sinh (theo SĐT) đã thi chặng này chưa */
+export async function kiemTraDaThi(soDienThoai: string, changId: number): Promise<boolean> {
+  const { data: thiSinhList } = await supabase
+    .from('thi_sinh')
+    .select('id')
+    .eq('so_dien_thoai', soDienThoai.trim());
+  if (!thiSinhList || thiSinhList.length === 0) return false;
+
+  const ids = thiSinhList.map((t: any) => t.id);
+  const { data: kq } = await supabase
+    .from('ket_qua')
+    .select('id')
+    .in('thi_sinh_id', ids)
+    .eq('chang_id', changId)
+    .limit(1);
+  return !!(kq && kq.length > 0);
+}
+
+/** Tạo thí sinh mới và trả về ID */
+export async function taoThiSinh(data: {
+  ho_ten: string;
+  so_dien_thoai: string;
+  don_vi_id: number;
+  ten_don_vi_nho: string;
+}): Promise<number> {
+  const { data: result, error } = await supabase
+    .from('thi_sinh')
+    .insert(data)
+    .select('id')
+    .single();
+  if (error) throw error;
+  return result.id;
+}
+
+/** Lấy câu hỏi ngẫu nhiên cho chặng thi */
+export async function layCauHoiNgauNhien(changId: number, soCau: number): Promise<CauHoi[]> {
+  const { data, error } = await supabase
+    .from('cau_hoi')
+    .select('*')
+    .eq('chang_id', changId)
+    .eq('active', true);
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  // Fisher-Yates shuffle
+  const shuffled = [...data];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, Math.min(soCau, shuffled.length));
+}
+
+/** Nộp bài thi */
+export async function nopBaiThi(data: {
+  thi_sinh_id: number;
+  chang_id: number;
+  diem: number;
+  so_cau_dung: number;
+  tong_cau: number;
+  thoi_gian_lam: number;
+  answers: AnswerRecord[];
+}): Promise<void> {
+  const { error } = await supabase.from('ket_qua').insert(data);
+  if (error) throw error;
+}
+
+// ─── Admin functions ──────────────────────────────────────────────────────────
+
+/** Đăng nhập admin */
+export async function adminLogin(username: string, matKhau: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('username', username.trim())
+    .eq('mat_khau', matKhau)
+    .maybeSingle();
+  return !!data;
+}
+
+// Chặng thi
+export async function getAllChangThi(): Promise<ChangThi[]> {
+  const { data, error } = await supabase.from('chang_thi').select('*').order('id');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addChangThi(ct: Omit<ChangThi, 'id'>): Promise<void> {
+  const { error } = await supabase.from('chang_thi').insert(ct);
+  if (error) throw error;
+}
+
+export async function updateChangThi(id: number, ct: Partial<ChangThi>): Promise<void> {
+  const { error } = await supabase.from('chang_thi').update(ct).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteChangThi(id: number): Promise<void> {
+  const { error } = await supabase.from('chang_thi').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// Câu hỏi
+export async function getCauHoiByChang(changId: number): Promise<CauHoi[]> {
+  const { data, error } = await supabase
+    .from('cau_hoi')
+    .select('*')
+    .eq('chang_id', changId)
+    .order('id');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addCauHoi(ch: Omit<CauHoi, 'id' | 'active'>): Promise<void> {
+  const { error } = await supabase.from('cau_hoi').insert({ ...ch, active: true });
+  if (error) throw error;
+}
+
+export async function updateCauHoi(id: number, ch: Partial<CauHoi>): Promise<void> {
+  const { error } = await supabase.from('cau_hoi').update(ch).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteCauHoi(id: number): Promise<void> {
+  const { error } = await supabase.from('cau_hoi').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function bulkInsertCauHoi(cauHois: Omit<CauHoi, 'id'>[]): Promise<void> {
+  const { error } = await supabase.from('cau_hoi').insert(cauHois);
+  if (error) throw error;
+}
+
+// Đơn vị
+export async function addDonVi(ten: string, loai: string): Promise<void> {
+  const { error } = await supabase.from('don_vi').insert({ ten, loai });
+  if (error) throw error;
+}
+
+export async function updateDonVi(id: number, ten: string, loai: string): Promise<void> {
+  const { error } = await supabase.from('don_vi').update({ ten, loai }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteDonVi(id: number): Promise<void> {
+  const { error } = await supabase.from('don_vi').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// Thí sinh
+export async function getAllThiSinh(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('thi_sinh')
+    .select('*, don_vi(ten)')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function bulkInsertThiSinh(list: { ho_ten: string; so_dien_thoai: string }[]): Promise<void> {
+  const { error } = await supabase.from('thi_sinh').insert(list);
+  if (error) throw error;
+}
+
+// Kết quả
+export async function getKetQuaAdmin(changId?: number): Promise<any[]> {
+  let query = supabase
+    .from('ket_qua')
+    .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_don_vi_nho, don_vi(ten)), chang_thi(ten)')
+    .order('diem', { ascending: false });
+  if (changId) query = query.eq('chang_id', changId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
+// Thống kê tổng quan
+export async function getThongKe(): Promise<{
+  tongThiSinh: number;
+  tongLuotThi: number;
+  diemTrungBinh: number;
+}> {
+  const [thiSinhRes, ketQuaRes] = await Promise.all([
+    supabase.from('thi_sinh').select('id', { count: 'exact', head: true }),
+    supabase.from('ket_qua').select('diem'),
+  ]);
+  const diems = (ketQuaRes.data || []).map((k: any) => k.diem);
+  const trungBinh = diems.length > 0
+    ? Math.round(diems.reduce((a: number, b: number) => a + b, 0) / diems.length)
+    : 0;
+  return {
+    tongThiSinh: thiSinhRes.count || 0,
+    tongLuotThi: diems.length,
+    diemTrungBinh: trungBinh,
+  };
+}
