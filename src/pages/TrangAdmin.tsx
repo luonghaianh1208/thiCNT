@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, createPortal } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { 
@@ -553,9 +553,12 @@ function PreviewModal({
     onChange(data.filter((_, i) => i !== rowIdx));
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-7xl h-[95vh] sm:h-[90vh] flex flex-col shadow-2xl border border-slate-100">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" onClick={onCancel}>
+      <div
+        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-7xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 flex-shrink-0">
           <div>
@@ -567,37 +570,45 @@ function PreviewModal({
           </button>
         </div>
 
+        {/* Table section title */}
+        <div className="px-4 sm:px-6 pt-2 pb-1 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-blue"></div>
+            <h4 className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-widest font-ui">Bảng dữ liệu</h4>
+          </div>
+        </div>
+
         {/* Table wrapper - scrollable */}
-        <div className="flex-1 overflow-auto min-h-0 p-3 sm:p-4">
-          <div className="overflow-x-auto min-w-full">
+        <div className="flex-1 overflow-auto min-h-0 px-3 sm:px-4 pb-3">
+          <div className="overflow-x-auto min-w-full rounded-xl border border-slate-100">
             <table className="w-full text-[11px] sm:text-sm font-ui border-collapse">
-              <thead className="sticky top-0 z-10">
-                <tr className="bg-brand-blue text-white">
-                  <th className="px-2 py-2.5 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-l-lg w-8">#</th>
+              <thead className="sticky top-0 z-10 bg-brand-blue text-white shadow-lg">
+                <tr>
+                  <th className="px-3 py-3 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-tl-xl w-10">#</th>
                   {columns.map(col => (
-                    <th key={col.key} className="px-2 py-2.5 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider whitespace-nowrap min-w-[100px]">{col.header}</th>
+                    <th key={col.key} className="px-3 py-3 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider whitespace-nowrap min-w-[120px]">{col.header}</th>
                   ))}
-                  <th className="w-8 rounded-r-lg"></th>
+                  <th className="w-10 rounded-tr-xl"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {data.map((row, rowIdx) => (
-                  <tr key={rowIdx} className="hover:bg-slate-50/80 transition-colors bg-white">
-                    <td className="px-2 py-2 text-slate-400 font-bold text-[10px] sm:text-xs">{rowIdx + 1}</td>
+                  <tr key={rowIdx} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-3 py-2.5 text-slate-400 font-bold text-[10px] sm:text-xs bg-slate-50/50">{rowIdx + 1}</td>
                     {columns.map(col => (
-                      <td key={col.key} className="px-2 py-1.5 min-w-[100px]">
+                      <td key={col.key} className="px-3 py-2 min-w-[120px]">
                         {col.type === 'text' ? (
                           <input
                             type="text"
                             value={row[col.key] ?? ''}
                             onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                            className="w-full bg-transparent border border-slate-200 rounded-lg px-2 py-1.5 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm"
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm shadow-sm"
                           />
                         ) : (
                           <select
                             value={row[col.key] ?? ''}
                             onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm"
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm shadow-sm"
                           >
                             {col.options.map(opt => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -606,7 +617,7 @@ function PreviewModal({
                         )}
                       </td>
                     ))}
-                    <td className="px-2 py-1.5 text-center">
+                    <td className="px-3 py-2 text-center">
                       <button
                         onClick={() => removeRow(rowIdx)}
                         className="p-1.5 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg transition-colors"
@@ -640,6 +651,8 @@ function PreviewModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 const LOAI_DON_VI = [
