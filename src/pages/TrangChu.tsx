@@ -73,11 +73,11 @@ export default function TrangChu() {
                 </button>
               ) : (
                 <button
-                  onClick={() => document.getElementById('lich-thi')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => navigate('/thi')}
                   className="flex items-center gap-2 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/10 transition-all font-ui"
                 >
                   <Clock size={16} />
-                  Lịch thi
+                  Xem lịch thi
                 </button>
               )}
             </div>
@@ -108,10 +108,13 @@ export default function TrangChu() {
                   <PlayCircle size={20} /> Vào thi ngay
                 </button>
               ) : (
-                <div className="w-full flex items-center justify-center gap-3 bg-slate-50 border-2 border-slate-200 text-slate-500 font-bold text-sm py-4 rounded-2xl font-ui">
+                <button
+                  onClick={() => { navigate('/thi'); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center justify-center gap-3 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm py-4 rounded-2xl font-ui"
+                >
                   <Clock size={16} />
-                  {nextChang ? `Mở thi: ${formatDateTime(nextChang.bat_dau)}` : 'Chưa có lịch thi'}
-                </div>
+                  {nextChang ? `Mở thi: ${formatDateTime(nextChang.bat_dau)}` : 'Xem lịch thi'}
+                </button>
               )}
             </div>
           </div>
@@ -145,34 +148,20 @@ export default function TrangChu() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 px-6">
-            {hasActiveChang ? (
-              <button
-                onClick={() => navigate('/thi')}
-                className="w-full sm:w-auto relative bg-brand-yellow text-brand-blue font-black text-xl px-14 py-6 rounded-2xl hover:bg-yellow-400 transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] flex items-center justify-center gap-3 group overflow-hidden"
-              >
-                <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
-                <PlayCircle className="w-7 h-7" />
-                Vào thi ngay
-                <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </button>
-            ) : (
-              <div className="w-full sm:w-auto flex flex-col items-center gap-3">
-                <button
-                  onClick={() => document.getElementById('lich-thi')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="w-full bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 px-12 py-5 rounded-2xl text-white font-ui font-black text-lg flex items-center justify-center gap-4 shadow-2xl hover:bg-white/20 transition-all group"
-                >
-                  <PlayCircle className="w-6 h-6 text-brand-yellow" />
-                  Vào thi
-                  <span className="text-brand-yellow/80 font-normal text-sm ml-1">(chưa đến giờ)</span>
-                </button>
-                {nextChang && (
-                  <div className="flex items-center gap-2 text-brand-yellow/80 text-sm font-ui font-semibold">
-                    <Clock size={14} />
-                    Mở thi: {formatDateTime(nextChang.bat_dau)}
-                  </div>
-                )}
-              </div>
-            )}
+            <button
+              onClick={() => navigate('/thi')}
+              className={`w-full sm:w-auto relative font-black text-xl px-14 py-6 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)]
+                ${hasActiveChang
+                  ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400'
+                  : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'
+                }`}
+            >
+              <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
+              <PlayCircle className="w-7 h-7" />
+              Vào thi ngay
+              {!hasActiveChang && <span className="text-brand-yellow/80 font-normal text-sm ml-1">(chưa đến giờ)</span>}
+              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+            </button>
             <a
               href="#gioi-thieu"
               className="w-full sm:w-auto border-2 border-white/40 text-white font-bold text-base px-10 py-5 rounded-2xl hover:bg-white/10 transition-all font-ui flex items-center justify-center"
