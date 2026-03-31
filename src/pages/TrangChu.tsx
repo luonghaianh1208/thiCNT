@@ -108,19 +108,18 @@ export default function TrangChu() {
         <div className="section-container relative z-10 text-center">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-full mb-12 animate-pulse-soft">
             <div className="w-2.5 h-2.5 rounded-full bg-brand-yellow shadow-[0_0_15px_#FABD32]"></div>
-            <span className="text-[12px] font-black text-white uppercase tracking-[0.2em] font-ui text-grow-gold whitespace-nowrap">Kỷ nguyên số 2026 • Hải Phòng Smart City</span>
+            <span className="text-[12px] font-black text-white uppercase tracking-[0.2em] font-ui whitespace-nowrap">Cuộc thi trực tuyến • Thành đoàn Hải Phòng • 2026</span>
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-black text-white mb-12 leading-[1.1] font-ui tracking-tighter uppercase drop-shadow-2xl">
-            Thanh niên <br className="hidden md:block" />
+          <h1 className="text-4xl md:text-7xl font-black text-white mb-8 leading-[1.15] font-ui drop-shadow-2xl">
+            Thanh niên Hải Phòng với <br className="hidden md:block" />
             <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
-              Phát triển số - Xanh
+              Chuyển đổi số, Chuyển đổi xanh
             </span>
           </h1>
 
-          <p className="text-xl md:text-3xl text-white/90 mb-16 max-w-4xl mx-auto font-medium leading-relaxed px-6 tracking-wide font-ui">
-            Phát huy tinh thần xung kích, sáng tạo của tuổi trẻ Hải Phòng <br className="hidden sm:block" /> 
-            trên hành trình chinh phục công nghệ và chuyển đổi xanh bền vững.
+          <p className="text-lg md:text-2xl text-white/90 mb-16 max-w-4xl mx-auto font-semibold leading-relaxed px-6 font-ui italic">
+            "Hành động vì thành phố đáng sống"
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 px-6">
@@ -147,9 +146,9 @@ export default function TrangChu() {
           <div className="mt-32 grid grid-cols-2 md:grid-cols-4 gap-12 max-w-6xl mx-auto border-t border-white/20 pt-16 px-6">
             {[
               { icon: <Users size={32} />, val: "100+", label: "Đơn vị tham gia", color: "text-brand-yellow" },
-              { icon: <Cpu size={32} />, val: "30", label: "Cấp độ/Chặng", color: "text-blue-400" },
-              { icon: <Globe size={32} />, val: "24h", label: "Hoạt động liên tục", color: "text-emerald-400" },
-              { icon: <Trophy size={32} />, val: "TOP 50", label: "Quà tặng công nghệ", color: "text-brand-red" },
+              { icon: <Cpu size={32} />, val: "3", label: "Chặng thi Sơ khảo", color: "text-blue-400" },
+              { icon: <Globe size={32} />, val: "Miễn phí", label: "Đăng ký dự thi", color: "text-emerald-400" },
+              { icon: <Trophy size={32} />, val: "TOP 10", label: "Vào Vòng Chung kết", color: "text-brand-red" },
             ].map((s, i) => (
               <div key={i} className="text-center group transition-transform hover:scale-110">
                 <div className={`${s.color} mb-4 flex justify-center drop-shadow-[0_0_15px_currentColor]`}>{s.icon}</div>
@@ -166,16 +165,16 @@ export default function TrangChu() {
         <div className="section-container">
           <div className="flex flex-col lg:flex-row gap-24 lg:items-center">
             <div className="flex-1 space-y-12">
-              <div className="inline-block px-6 py-2 bg-brand-red text-white text-xs font-black uppercase tracking-[0.2em] font-ui">Sứ mệnh số</div>
-              <h2 className="text-5xl md:text-7xl font-black text-brand-blue tracking-tighter leading-[0.9] uppercase font-ui">Tầm nhìn <br />& Chiến lược</h2>
+              <div className="inline-block px-6 py-2 bg-brand-red text-white text-xs font-black uppercase tracking-[0.2em] font-ui">Về Cuộc Thi</div>
+              <h2 className="text-5xl md:text-6xl font-black text-brand-blue leading-tight font-ui">Mục đích <br />& Ý nghĩa</h2>
               <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-medium font-ui">
-                "Thành phố Hải Phòng đang trong giai đoạn lịch sử chuyển mình mạnh mẽ. Thanh niên Hải Phòng là những chiến binh trên mặt trận công nghệ."
+                Cuộc thi hướng tới nâng cao nhận thức và hành động của đoàn viên, thanh niên Hải Phòng về chuyển đổi số, chuyển đổi xanh và đổi mới sáng tạo.
               </p>
               <div className="space-y-8 pt-6">
                 {[
-                  "Ứng dụng trí tuệ nhân tạo (AI) trong quản lý đoàn vụ.",
-                  "Hành động xanh thông qua các giải pháp số bền vững.",
-                  "Kết nối thanh niên Hải Phòng toàn cầu qua nền tảng Cloud.",
+                  "Nâng cao nhận thức về chuyển đổi số, chuyển đổi xanh và đổi mới sáng tạo.",
+                  "Phát huy vai trò xung kích, sáng tạo của thanh niên Hải Phòng.",
+                  "Đề xuất ý tưởng, sáng kiến ứng dụng công nghệ số gắn với bảo vệ môi trường, phát triển bền vững.",
                 ].map((text, i) => (
                   <div key={i} className="flex gap-6 items-start group">
                     <div className="mt-1 flex-shrink-0 w-12 h-12 bg-brand-blue/5 text-brand-blue rounded-2xl flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white group-hover:shadow-lg transition-all duration-300">
@@ -190,13 +189,13 @@ export default function TrangChu() {
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-8 pt-12 lg:pt-0">
               <div className="card-tech hover:bg-brand-blue hover:text-white group">
                 <Users className="w-16 h-16 text-brand-blue mb-8 group-hover:text-white" />
-                <h3 className="font-tech font-black text-2xl mb-6 uppercase tracking-tight text-brand-blue group-hover:text-white transition-colors">Chiến binh số</h3>
-                <p className="font-medium text-slate-500 group-hover:text-white/80 text-lg leading-relaxed font-ui transition-colors">Đoàn viên, thanh niên, sinh viên khao khát làm chủ công nghệ tại TP. Hải Phòng.</p>
+                <h3 className="font-ui font-black text-2xl mb-6 text-brand-blue group-hover:text-white transition-colors">Đối tượng dự thi</h3>
+                <p className="font-medium text-slate-500 group-hover:text-white/80 text-lg leading-relaxed font-ui transition-colors">Thanh niên sinh sống tại Hải Phòng, độ tuổi từ 16 đến 35. Mỗi đơn vị tối thiểu 02 đội (3 thành viên/đội).</p>
               </div>
               <div className="card-tech sm:mt-16 bg-brand-beige/10 border-brand-red/20 group hover:bg-brand-red hover:text-white">
                 <Trophy className="w-16 h-16 text-brand-red mb-8 group-hover:text-white" />
-                <h3 className="font-tech font-black text-2xl mb-6 uppercase tracking-tight text-brand-red group-hover:text-white transition-colors">Vinh danh</h3>
-                <p className="font-medium text-slate-500 group-hover:text-white/80 text-lg leading-relaxed font-ui transition-colors">Hệ thống giải thưởng lên tới hàng trăm triệu đồng cùng chứng nhận uy tín.</p>
+                <h3 className="font-ui font-black text-2xl mb-6 text-brand-red group-hover:text-white transition-colors">Giải thưởng</h3>
+                <p className="font-medium text-slate-500 group-hover:text-white/80 text-lg leading-relaxed font-ui transition-colors">Giải Nhất, Nhì, Ba kèm Bằng khen và tiền mặt. Top 10 đội xuất sắc nhất vào Vòng Chung kết ngày 25/4/2026.</p>
               </div>
             </div>
           </div>
@@ -210,9 +209,9 @@ export default function TrangChu() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="mb-24">
-            <h2 className="text-5xl md:text-7xl font-black text-white mb-8 uppercase tracking-tighter font-tech">Hành trình_chinh phục</h2>
+            <h2 className="text-5xl md:text-7xl font-black text-white mb-8 font-ui">Lịch thi Vòng Sơ khảo</h2>
             <div className="w-32 h-2 bg-brand-yellow mx-auto mb-10 rounded-full shadow-[0_0_20px_#FABD32]"></div>
-            <p className="text-white/60 font-medium text-lg md:text-2xl max-w-3xl mx-auto font-ui">Vượt qua mọi giới hạn để ghi tên mình vào bảng vàng công nghệ số</p>
+            <p className="text-white/60 font-medium text-lg md:text-2xl max-w-3xl mx-auto font-ui">Thi trắc nghiệm trực tuyến • 30 câu hỏi • 25 phút • Mỗi đội 3 thành viên</p>
           </div>
 
           {loading ? (
@@ -273,6 +272,56 @@ export default function TrangChu() {
         </div>
       </section>
 
+      {/* ─── Giải thưởng ─── */}
+      <section id="giai-thuong" className="py-32 bg-white relative">
+        <div className="section-container">
+          <div className="text-center mb-20">
+            <div className="inline-block px-6 py-2 bg-brand-yellow text-brand-blue text-xs font-black uppercase tracking-[0.2em] font-ui mb-6">Cơ cấu giải thưởng</div>
+            <h2 className="text-5xl md:text-6xl font-black text-brand-blue leading-tight font-ui">Giải thưởng</h2>
+            <div className="w-32 h-2 bg-brand-yellow mx-auto mt-8 rounded-full shadow-[0_0_20px_#FABD32]"></div>
+            <p className="text-slate-500 font-ui text-lg mt-8 max-w-2xl mx-auto">Căn cứ kết quả chung cuộc, Ban Tổ chức trao giải thưởng kèm Bằng khen của Ban Chấp hành Thành đoàn Hải Phòng.</p>
+          </div>
+
+          {/* Giải chính */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div className="card-tech border-brand-yellow/40 bg-brand-yellow/5 text-center">
+              <Trophy className="w-14 h-14 text-brand-yellow mx-auto mb-6" />
+              <h3 className="text-3xl font-black text-brand-blue font-ui mb-3">01 Giải Nhất</h3>
+              <p className="text-slate-500 font-ui">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
+            </div>
+            <div className="card-tech text-center sm:mt-10">
+              <Award className="w-14 h-14 text-slate-400 mx-auto mb-6" />
+              <h3 className="text-3xl font-black text-brand-blue font-ui mb-3">01 Giải Nhì</h3>
+              <p className="text-slate-500 font-ui">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
+            </div>
+            <div className="card-tech border-amber-700/20 bg-amber-50/30 text-center">
+              <Star className="w-14 h-14 text-amber-700 mx-auto mb-6" />
+              <h3 className="text-3xl font-black text-brand-blue font-ui mb-3">03 Giải Ba</h3>
+              <p className="text-slate-500 font-ui">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
+            </div>
+          </div>
+
+          {/* Giải phụ */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="card-tech text-center">
+              <ShieldCheck className="w-10 h-10 text-brand-blue mx-auto mb-4" />
+              <h3 className="text-xl font-black text-brand-blue font-ui mb-2">05 Giải Khuyến Khích</h3>
+              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn Hải Phòng</p>
+            </div>
+            <div className="card-tech text-center">
+              <Globe className="w-10 h-10 text-brand-red mx-auto mb-4" />
+              <h3 className="text-xl font-black text-brand-blue font-ui mb-2">Giải Bình Chọn Facebook</h3>
+              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn Hải Phòng</p>
+            </div>
+            <div className="card-tech text-center">
+              <Users className="w-10 h-10 text-emerald-600 mx-auto mb-4" />
+              <h3 className="text-xl font-black text-brand-blue font-ui mb-2">Giải Đơn Vị Xuất Sắc</h3>
+              <p className="text-slate-500 font-ui text-sm">Đơn vị có tổng điểm cao nhất Vòng Sơ khảo</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── Footer ─── */}
       <footer className="bg-white py-24 relative overflow-hidden">
         <div className="section-container">
@@ -293,11 +342,11 @@ export default function TrangChu() {
               <div className="text-sm font-bold text-slate-500 space-y-4 uppercase tracking-widest font-ui">
                 <p className="flex items-center gap-3 justify-center lg:justify-start">
                   <Globe size={18} className="text-brand-blue" />
-                  Số 22 Trần Hưng Đạo, Hồng Bàng, Hải Phòng
+                  Lô 26A Lê Hồng Phong, phường Gia Viên, TP. Hải Phòng
                 </p>
                 <p className="flex items-center gap-3 justify-center lg:justify-start">
                   <Star size={18} className="text-brand-yellow" />
-                  Hotline: 0225.123.4567 • Email: thanhdoanhp@gmail.com
+                  Hotline: 0921.545.555 • Email: banphongtrao.tdhp@gmail.com
                 </p>
               </div>
             </div>
