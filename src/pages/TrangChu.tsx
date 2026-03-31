@@ -277,18 +277,18 @@ export default function TrangChu() {
 
           {/* Giải chính */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="rounded-2xl border-2 border-brand-yellow/50 bg-brand-yellow/5 p-8 text-center">
-              <Trophy className="w-12 h-12 text-brand-yellow mx-auto mb-5" />
+            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
+              <Trophy className="w-12 h-12 text-brand-yellow mb-5" />
               <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">01 Giải Nhất</h3>
               <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
             </div>
-            <div className="rounded-2xl border-2 border-slate-200 bg-white p-8 text-center md:mt-8">
-              <Award className="w-12 h-12 text-slate-400 mx-auto mb-5" />
+            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
+              <Award className="w-12 h-12 text-brand-yellow mb-5" />
               <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">01 Giải Nhì</h3>
               <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
             </div>
-            <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/40 p-8 text-center">
-              <Star className="w-12 h-12 text-amber-600 mx-auto mb-5" />
+            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
+              <Star className="w-12 h-12 text-brand-yellow mb-5" />
               <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">03 Giải Ba</h3>
               <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
             </div>
@@ -329,9 +329,11 @@ export default function TrangChu() {
 
             <div className="max-w-lg space-y-6">
               <p className="text-brand-blue text-xl font-bold italic leading-relaxed font-ui">
-                "Thanh niên Hải Phòng:{' '}
-                <span className="text-brand-red">Xung kích</span> –{' '}
-                <span className="text-brand-yellow">Sáng tạo</span> –{' '}
+                "Thanh niên Hải Phòng:<br />
+                <span className="text-brand-red">Xung kích</span>
+                {' – '}
+                <span className="text-brand-yellow">Sáng tạo</span>
+                {' – '}
                 <span className="text-brand-blue">Chuyên nghiệp</span>"
               </p>
               <div className="text-sm font-semibold text-slate-500 space-y-3 font-ui">
