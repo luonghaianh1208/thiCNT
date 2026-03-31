@@ -110,7 +110,7 @@ export default function TrangAdmin() {
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-ui font-semibold hover:bg-brand-red hover:border-brand-red transition-all"
           >
-            <LogOut size={16} /> ĐĂNG XUẤT
+            <LogOut size={16} /> Đăng xuất
           </button>
         </div>
       </aside>
@@ -131,11 +131,11 @@ export default function TrangAdmin() {
           <div className="flex items-center gap-4">
             {activeTab === 'cau-hoi' || activeTab === 'ket-qua' || activeTab === 'gian-lan' ? (
               <select 
-                className="bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 text-xs font-black text-brand-blue focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all uppercase tracking-widest"
+                className="bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-blue focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-ui"
                 value={selectedChangId || ''}
                 onChange={e => setSelectedChangId(e.target.value ? parseInt(e.target.value) : null)}
               >
-                <option value="">TẤT CẢ CHẶNG THI_</option>
+                <option value="">Tất cả chặng thi</option>
                 {changs.map(c => <option key={c.id} value={c.id}>{c.ten.toUpperCase()}</option>)}
               </select>
             ) : null}
@@ -152,7 +152,7 @@ export default function TrangAdmin() {
             {loading && activeTab !== 'dashboard' ? (
               <div className="flex flex-col items-center justify-center py-32 gap-6">
                 <Loader2 className="w-16 h-16 text-brand-blue animate-spin" />
-                <p className="text-slate-400 font-tech font-black text-[10px] uppercase tracking-[0.4em]">Đang đồng bộ dữ liệu số...</p>
+                <p className="text-slate-400 font-ui font-semibold text-sm">Đang tải dữ liệu...</p>
               </div>
             ) : (
               <>
@@ -165,7 +165,7 @@ export default function TrangAdmin() {
                           <Users className="w-12 h-12 text-brand-blue group-hover:scale-110 transition-transform" />
                           <div className="bg-brand-blue/5 p-2 rounded-xl text-[10px] font-black text-brand-blue uppercase tracking-widest">User Base</div>
                         </div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 font-tech">Tổng số thí sinh</h3>
+                        <h3 className="text-xs font-bold text-slate-400 mb-2 font-ui">Tổng số thí sinh</h3>
                         <p className="text-5xl font-tech font-black text-brand-blue">{thongKe.tongThiSinh}</p>
                         <div className="mt-6 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-brand-blue w-2/3 shadow-[0_0_10px_rgba(30,69,159,0.3)]"></div>
@@ -176,7 +176,7 @@ export default function TrangAdmin() {
                           <Zap className="w-12 h-12 text-brand-yellow group-hover:scale-110 transition-transform" />
                           <div className="bg-brand-yellow/5 p-2 rounded-xl text-[10px] font-black text-brand-yellow uppercase tracking-widest">Active Hits</div>
                         </div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 font-tech">Tổng lượt dự thi</h3>
+                        <h3 className="text-xs font-bold text-slate-400 mb-2 font-ui">Tổng lượt dự thi</h3>
                         <p className="text-5xl font-tech font-black text-brand-blue">{thongKe.tongLuotThi}</p>
                         <div className="mt-6 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-brand-yellow w-1/2 shadow-[0_0_10px_rgba(250,189,50,0.3)]"></div>
@@ -187,7 +187,7 @@ export default function TrangAdmin() {
                           <Award className="w-12 h-12 text-brand-red group-hover:scale-110 transition-transform" />
                           <div className="bg-brand-red/5 p-2 rounded-xl text-[10px] font-black text-brand-red uppercase tracking-widest">Avg Score</div>
                         </div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 font-tech">Điểm trung bình</h3>
+                        <h3 className="text-xs font-bold text-slate-400 mb-2 font-ui">Điểm trung bình</h3>
                         <p className="text-5xl font-tech font-black text-brand-blue">{thongKe.diemTrungBinh.toFixed(1)}</p>
                         <div className="mt-6 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-brand-red w-3/4 shadow-[0_0_10px_rgba(207,42,42,0.3)]"></div>
@@ -197,7 +197,7 @@ export default function TrangAdmin() {
 
                     <div className="card-tech bg-white p-10">
                       <div className="flex items-center justify-between mb-10">
-                        <h3 className="text-xl font-tech font-black text-brand-blue uppercase tracking-tight">Hành động nhanh</h3>
+                        <h3 className="text-xl font-ui font-black text-brand-blue">Hành động nhanh</h3>
                         <Zap size={24} className="text-brand-yellow fill-current" />
                       </div>
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -215,7 +215,7 @@ export default function TrangAdmin() {
                             <div className="p-4 bg-white rounded-2xl shadow-sm text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all">
                               {btn.icon}
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-brand-blue">{btn.label}</span>
+                            <span className="text-sm font-semibold text-slate-500 group-hover:text-brand-blue font-ui">{btn.label}</span>
                           </button>
                         ))}
                       </div>
@@ -243,6 +243,24 @@ export default function TrangAdmin() {
   );
 }
 
+// ─── TIMEZONE HELPERS (UTC+7 — Asia/Ho_Chi_Minh) ───
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+
+/** Format a UTC timestamp for display in Vietnam time */
+const fmtVN = (utcStr: string) =>
+  new Date(utcStr).toLocaleString('vi-VN', { timeZone: VN_TZ });
+
+/** Convert a UTC timestamp from DB into "YYYY-MM-DDTHH:mm" for datetime-local input */
+const toInputVN = (utcStr: string): string => {
+  const d = new Date(utcStr);
+  const offset = 7 * 60 * 60 * 1000;
+  const vnDate = new Date(d.getTime() + offset);
+  return vnDate.toISOString().slice(0, 16);
+};
+
+/** Convert datetime-local value (Vietnam time) to ISO string with +07:00 for DB */
+const fromInputVN = (local: string): string => local + ':00+07:00';
+
 // ─── PHỤ LỤC CÁC MANAGER COMPONENTS (Rút gọn cho Dashboard Tech) ───
 
 function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => void }) {
@@ -258,8 +276,8 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
     if (!form.ten || !form.bat_dau || !form.ket_thuc) return toast.error('Vui lòng nhập đủ thông tin.');
     await addChangThi({
       ten: form.ten,
-      bat_dau: form.bat_dau,
-      ket_thuc: form.ket_thuc,
+      bat_dau: fromInputVN(form.bat_dau),
+      ket_thuc: fromInputVN(form.ket_thuc),
       thoi_gian_phut: Number(form.thoi_gian_phut),
       so_cau: Number(form.so_cau),
     });
@@ -270,8 +288,8 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
     if (!editing) return;
     await updateChangThi(editing.id, {
       ten: form.ten,
-      bat_dau: form.bat_dau,
-      ket_thuc: form.ket_thuc,
+      bat_dau: fromInputVN(form.bat_dau),
+      ket_thuc: fromInputVN(form.ket_thuc),
       thoi_gian_phut: Number(form.thoi_gian_phut),
       so_cau: Number(form.so_cau),
     });
@@ -339,8 +357,8 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
             {changs.map(c => (
               <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-5 py-4 text-brand-blue font-bold">{c.ten}</td>
-                <td className="px-5 py-4 text-slate-500">{new Date(c.bat_dau).toLocaleString('vi-VN')}</td>
-                <td className="px-5 py-4 text-slate-500">{new Date(c.ket_thuc).toLocaleString('vi-VN')}</td>
+                <td className="px-5 py-4 text-slate-500">{fmtVN(c.bat_dau)}</td>
+                <td className="px-5 py-4 text-slate-500">{fmtVN(c.ket_thuc)}</td>
                 <td className="px-5 py-4 text-center">
                   <span className="px-3 py-1 bg-brand-blue/10 text-brand-blue text-xs font-bold rounded-lg">{c.so_cau} câu</span>
                 </td>
@@ -348,7 +366,7 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
                   <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">{c.thoi_gian_phut} phút</span>
                 </td>
                 <td className="px-5 py-4 space-x-1">
-                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: c.bat_dau.slice(0,16), ket_thuc: c.ket_thuc.slice(0,16), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15}/></button>
+                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: toInputVN(c.bat_dau), ket_thuc: toInputVN(c.ket_thuc), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15}/></button>
                   <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={15}/></button>
                 </td>
               </tr>
@@ -454,13 +472,20 @@ function CauHoiManager({ changId, cauHois, refresh }: { changId: number | null, 
   );
 }
 
+const LOAI_DON_VI = [
+  { value: 'phuong', label: 'Phường' },
+  { value: 'xa', label: 'Xã' },
+  { value: 'dac_khu', label: 'Đặc khu' },
+];
+
 function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => void }) {
   const [ten, setTen] = useState('');
+  const [loai, setLoai] = useState('phuong');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = async () => {
     if (!ten.trim()) return;
-    await addDonVi(ten.trim(), 'phuong');
+    await addDonVi(ten.trim(), loai);
     setTen(''); refresh();
     toast.success('Đã thêm đơn vị.');
   };
@@ -468,9 +493,9 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
   const downloadTemplate = () => {
     const sample = [
       { 'Tên đơn vị': 'Phường Hồng Bàng', 'Loại': 'phuong' },
+      { 'Tên đơn vị': 'Phường Lê Chân', 'Loại': 'phuong' },
       { 'Tên đơn vị': 'Xã Tân Dương', 'Loại': 'xa' },
       { 'Tên đơn vị': 'Đặc khu Đồ Sơn', 'Loại': 'dac_khu' },
-      { 'Tên đơn vị': 'Đoàn Trường THPT Lê Hồng Phong', 'Loại': 'doan_truc_thuoc' },
     ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
@@ -510,6 +535,13 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
             onChange={e => setTen(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
+          <select
+            className="input-admin-tech"
+            value={loai}
+            onChange={e => setLoai(e.target.value)}
+          >
+            {LOAI_DON_VI.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+          </select>
           <button onClick={handleAdd} className="bg-brand-blue text-white font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all whitespace-nowrap">
             Thêm
           </button>
@@ -528,7 +560,7 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
             <FileSpreadsheet size={15} /> Import Excel
           </button>
         </div>
-        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Loại</strong> (phuong / xa / dac_khu / doan_truc_thuoc)</p>
+        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Loại</strong> (phuong / xa / dac_khu)</p>
       </div>
 
       {/* Danh sách */}
@@ -560,7 +592,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
                 <td className="px-6 py-4 text-slate-500">{ts.sdt}</td>
                 <td className="px-6 py-4 font-black">{ts.don_vi?.ten}</td>
-                <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
               </tr>
             ))}
           </tbody>
@@ -580,7 +612,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
       'Điểm số': r.diem,
       'Câu đúng': r.so_cau_dung,
       'Thời gian (giây)': r.thoi_gian_giay,
-      'Ngày thi': new Date(r.created_at).toLocaleString()
+      'Ngày thi': new Date(r.created_at).toLocaleString('vi-VN', { timeZone: VN_TZ })
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -591,9 +623,9 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
   return (
     <div className="p-4 space-y-8">
       <div className="flex justify-between items-center bg-brand-blue/5 p-8 rounded-3xl">
-        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-blue font-tech">Bảng xếp hạng hệ thống</h4>
-        <button onClick={exportExcel} className="btn-cyber-gold px-10 py-3 rounded-2xl flex items-center gap-2 text-[9px] min-h-[52px]">
-           <FileSpreadsheet size={16} /> XUẤT FILE EXCEL_REPORT
+        <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng hệ thống</h4>
+        <button onClick={exportExcel} className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-ui font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-yellow/90 transition-all">
+          <FileSpreadsheet size={16} /> Xuất Excel
         </button>
       </div>
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
@@ -625,8 +657,8 @@ function GianLanManager({ logs }: { logs: any[] }) {
       <div className="flex items-center gap-4 bg-brand-red/5 p-8 rounded-3xl border border-brand-red/10 animate-pulse">
         <ShieldAlert className="text-brand-red w-10 h-10" />
         <div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-red font-tech">Hệ thống giám sát gian lận (Anti-Cheat)</h4>
-          <p className="text-xs text-brand-red/60 font-bold">Phát hiện các hoạt động bất thường: chuyển tab, thu nhỏ trình duyệt.</p>
+          <h4 className="text-sm font-bold text-brand-red font-ui">Giám sát gian lận</h4>
+          <p className="text-xs text-brand-red/60 font-ui">Phát hiện hoạt động bất thường: chuyển tab, thu nhỏ trình duyệt.</p>
         </div>
       </div>
       <div className="overflow-x-auto rounded-[2rem] border border-brand-red/10">
