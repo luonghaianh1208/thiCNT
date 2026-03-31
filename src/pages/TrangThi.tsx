@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  getChangDangMo,
+  getAllChangThiPublic,
   getDonViList,
   taoThiSinh,
   layCauHoiNgauNhien,
@@ -703,23 +703,21 @@ export default function TrangThi() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [changData, dvData] = await Promise.all([getChangDangMo(), getDonViList()]);
-        setChang(changData);
+        const [allChangs, dvData] = await Promise.all([getAllChangThiPublic(), getDonViList()]);
         setDonVis(dvData);
 
-        // Check if exam is pending, open, or closed
         const now = Date.now();
-        const startTime = changData ? new Date(changData.bat_dau).getTime() : 0;
-        const endTime = changData ? new Date(changData.ket_thuc).getTime() : 0;
 
-        // Check existing session
+        // Check existing session first
         const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (saved && changData) {
+        if (saved) {
           const state = JSON.parse(saved);
-          if (state.changId === changData.id) {
+          const sessionChang = allChangs.find(c => c.id === state.changId);
+          if (sessionChang) {
             const elapsed = Math.floor((Date.now() - state.examStartTime) / 1000);
-            const remaining = Math.max(0, (changData.thoi_gian_phut * 60) - elapsed);
+            const remaining = Math.max(0, (sessionChang.thoi_gian_phut * 60) - elapsed);
 
+            setChang(sessionChang);
             setQuestions(state.questions);
             setAnswers(state.answers || {});
             setThiSinhId(state.thiSinhId);
@@ -739,18 +737,28 @@ export default function TrangThi() {
           }
         }
 
-        // No session - determine stage based on time
-        if (!changData) {
-          setStage('loading'); // Will show "no exam" in loading check
-          return;
-        }
+        // No session - find exam by time
+        // 1. Find currently open exam (in time window)
+        const openChang = allChangs.find(c => {
+          const start = new Date(c.bat_dau).getTime();
+          const end = new Date(c.ket_thuc).getTime();
+          return now >= start && now <= end;
+        });
 
-        if (now < startTime) {
-          setStage('pending');
-        } else if (now >= startTime && now <= endTime) {
+        // 2. Find next upcoming exam
+        const upcomingChang = allChangs
+          .filter(c => new Date(c.bat_dau).getTime() > now)
+          .sort((a, b) => new Date(a.bat_dau).getTime() - new Date(b.bat_dau).getTime())[0];
+
+        if (openChang) {
+          setChang(openChang);
           setStage('register');
+        } else if (upcomingChang) {
+          setChang(upcomingChang);
+          setStage('pending');
         } else {
-          setStage('loading'); // Exam closed
+          setChang(null);
+          setStage('loading'); // No exam available
         }
       } catch (err) {
         console.error(err);
