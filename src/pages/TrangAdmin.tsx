@@ -553,86 +553,86 @@ function PreviewModal({
     onChange(data.filter((_, i) => i !== rowIdx));
   };
 
-  const loaiLabel = (val: string) => LOAI_DON_VI.find(l => l.value === val)?.label ?? val;
-
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-7xl h-[95vh] sm:h-[90vh] flex flex-col shadow-2xl border border-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 flex-shrink-0">
           <div>
-            <h3 className="text-lg font-black text-brand-blue font-ui">{title}</h3>
-            <p className="text-xs text-slate-400 font-ui mt-1">{data.length} dòng sẽ được import</p>
+            <h3 className="text-base sm:text-lg font-black text-brand-blue font-ui">{title}</h3>
+            <p className="text-[10px] sm:text-xs text-slate-400 font-ui mt-0.5">{data.length} dòng sẽ được import</p>
           </div>
           <button onClick={onCancel} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-            <X size={20} className="text-slate-400" />
+            <X size={18} className="text-slate-400" />
           </button>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto p-6">
-          <table className="w-full text-sm font-ui">
-            <thead>
-              <tr className="bg-slate-50">
-                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest rounded-l-xl w-10">#</th>
-                {columns.map(col => (
-                  <th key={col.key} className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{col.header}</th>
-                ))}
-                <th className="w-10 rounded-r-xl"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {data.map((row, rowIdx) => (
-                <tr key={rowIdx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-4 py-3 text-slate-400 font-bold text-xs">{rowIdx + 1}</td>
+        {/* Table wrapper - scrollable */}
+        <div className="flex-1 overflow-auto min-h-0 p-3 sm:p-4">
+          <div className="overflow-x-auto min-w-full">
+            <table className="w-full text-[11px] sm:text-sm font-ui border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-brand-blue text-white">
+                  <th className="px-2 py-2.5 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-l-lg w-8">#</th>
                   {columns.map(col => (
-                    <td key={col.key} className="px-4 py-3">
-                      {col.type === 'text' ? (
-                        <input
-                          type="text"
-                          value={row[col.key] ?? ''}
-                          onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                          className="w-full bg-transparent border-b border-dashed border-slate-200 focus:border-brand-blue outline-none py-1 text-slate-700 font-semibold"
-                        />
-                      ) : (
-                        <select
-                          value={row[col.key] ?? ''}
-                          onChange={e => updateCell(rowIdx, col.key, e.target.value)}
-                          className="w-full bg-transparent border-b border-dashed border-slate-200 focus:border-brand-blue outline-none py-1 text-slate-700 font-semibold"
-                        >
-                          {col.options.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
+                    <th key={col.key} className="px-2 py-2.5 text-left text-[9px] sm:text-[10px] font-black uppercase tracking-wider whitespace-nowrap min-w-[100px]">{col.header}</th>
                   ))}
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => removeRow(rowIdx)}
-                      className="p-1 text-slate-300 hover:text-brand-red transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </td>
+                  <th className="w-8 rounded-r-lg"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {data.length === 0 && (
-            <p className="text-center text-slate-400 py-12 font-ui">Không có dữ liệu nào.</p>
-          )}
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {data.map((row, rowIdx) => (
+                  <tr key={rowIdx} className="hover:bg-slate-50/80 transition-colors bg-white">
+                    <td className="px-2 py-2 text-slate-400 font-bold text-[10px] sm:text-xs">{rowIdx + 1}</td>
+                    {columns.map(col => (
+                      <td key={col.key} className="px-2 py-1.5 min-w-[100px]">
+                        {col.type === 'text' ? (
+                          <input
+                            type="text"
+                            value={row[col.key] ?? ''}
+                            onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                            className="w-full bg-transparent border border-slate-200 rounded-lg px-2 py-1.5 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm"
+                          />
+                        ) : (
+                          <select
+                            value={row[col.key] ?? ''}
+                            onChange={e => updateCell(rowIdx, col.key, e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm"
+                          >
+                            {col.options.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                    ))}
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        onClick={() => removeRow(rowIdx)}
+                        className="p-1.5 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.length === 0 && (
+              <p className="text-center text-slate-400 py-16 font-ui text-sm">Không có dữ liệu nào.</p>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 flex justify-end gap-3">
-          <button onClick={onCancel} className="px-6 py-3 rounded-xl bg-slate-100 text-slate-600 font-ui font-semibold text-sm hover:bg-slate-200 transition-all">
-            Hủy
+        <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end gap-3 flex-shrink-0">
+          <button onClick={onCancel} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-ui font-semibold text-sm hover:bg-slate-200 transition-all">
+            Hủy bỏ
           </button>
           <button
             onClick={onConfirm}
             disabled={data.length === 0}
-            className="px-6 py-3 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-blue/20"
           >
             Xác nhận import ({data.length})
           </button>
