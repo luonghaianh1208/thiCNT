@@ -239,7 +239,7 @@ export default function TrangAdmin() {
                     {activeTab === 'chang-thi' && <ChangManager changs={changs} refresh={refreshData} />}
                     {activeTab === 'cau-hoi' && <CauHoiManager changId={selectedChangId} cauHois={cauHois} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
-                    {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
+                    {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={giantLanLogs} />}
                   </div>
@@ -403,6 +403,14 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
 function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Search state
+  const [searchText, setSearchText] = useState('');
+
+  // Filtered data
+  const filteredCauHois = cauHois.filter(q =>
+    q.noi_dung.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   const downloadTemplate = () => {
     const sample = [
       { 'Câu hỏi': 'Chuyển đổi số là gì?', 'A': 'Ứng dụng công nghệ số', 'B': 'In tài liệu', 'C': 'Họp trực tiếp', 'D': 'Viết tay', 'Đáp án đúng': 'A', 'Giải thích': 'Chuyển đổi số là ứng dụng công nghệ số vào mọi mặt.' },
@@ -501,8 +509,28 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
               </button>
             </div>
           </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm câu hỏi..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+            />
+          </div>
+
+          {/* Summary */}
+          {searchText && (
+            <p className="text-xs text-slate-400 font-ui">
+              Tìm thấy {filteredCauHois.length} / {cauHois.length} câu hỏi
+            </p>
+          )}
+
           <div className="space-y-3">
-            {cauHois.map((q, idx) => (
+            {(searchText ? filteredCauHois : cauHois).map((q, idx) => (
               <div key={q.id} className="p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all">
                 <div className="flex gap-4">
                   <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx+1).padStart(2,'0')}</span>
@@ -522,6 +550,9 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
                 </div>
               </div>
             ))}
+            {searchText && filteredCauHois.length === 0 && (
+              <div className="text-center py-12 text-slate-400 font-ui">Không tìm thấy câu hỏi nào.</div>
+            )}
           </div>
         </>
       )}
@@ -672,6 +703,17 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
   const [loai, setLoai] = useState('phuong');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Search & Filter state
+  const [searchText, setSearchText] = useState('');
+  const [filterLoai, setFilterLoai] = useState('all');
+
+  // Filtered data
+  const filteredDonVis = donVis.filter(dv => {
+    const matchSearch = dv.ten.toLowerCase().includes(searchText.toLowerCase());
+    const matchLoai = filterLoai === 'all' || dv.loai === filterLoai;
+    return matchSearch && matchLoai;
+  });
+
   const handleAdd = async () => {
     if (!ten.trim()) return;
     await addDonVi(ten.trim(), loai);
@@ -771,31 +813,98 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
         <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Loại</strong> (phuong / xa / dac_khu)</p>
       </div>
 
-      {/* Danh sách */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {donVis.map(dv => (
-          <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
-            <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
-            <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
-              <Trash2 size={14}/>
-            </button>
-          </div>
-        ))}
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-2xl border border-slate-100">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm đơn vị..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+          />
+        </div>
+        <select
+          value={filterLoai}
+          onChange={e => setFilterLoai(e.target.value)}
+          className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+        >
+          <option value="all">Tất cả loại</option>
+          {LOAI_DON_VI.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+        </select>
       </div>
+
+      {/* Danh sách */}
+      {filteredDonVis.length === 0 ? (
+        <div className="text-center py-12 text-slate-400 font-ui">
+          {searchText || filterLoai !== 'all' ? 'Không tìm thấy đơn vị phù hợp.' : 'Chưa có đơn vị nào.'}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {filteredDonVis.map(dv => (
+            <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
+              <div>
+                <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
+                <span className="ml-2 text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg font-ui">
+                  {LOAI_DON_VI.find(l => l.value === dv.loai)?.label ?? dv.loai}
+                </span>
+              </div>
+              <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
+                <Trash2 size={14}/>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Summary */}
+      {(searchText || filterLoai !== 'all') && (
+        <p className="text-xs text-slate-400 font-ui">
+          Hiển thị {filteredDonVis.length} / {donVis.length} đơn vị
+        </p>
+      )}
     </div>
   );
 }
 
-function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () => void }) {
+function ThiSinhManager({ thiSinhs }: { thiSinhs: any[] }) {
+  const [searchText, setSearchText] = useState('');
+
+  const filteredThiSinhs = thiSinhs.filter(ts =>
+    ts.ho_ten.toLowerCase().includes(searchText.toLowerCase()) ||
+    ts.sdt.includes(searchText) ||
+    ts.don_vi?.ten.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-4">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Tìm theo tên, SĐT hoặc đơn vị..."
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+          className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+        />
+      </div>
+
+      {/* Summary */}
+      {searchText && (
+        <p className="text-xs text-slate-400 font-ui">
+          Tìm thấy {filteredThiSinhs.length} / {thiSinhs.length} thí sinh
+        </p>
+      )}
+
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Ngày tạo</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {thiSinhs.map(ts => (
+            {(searchText ? filteredThiSinhs : thiSinhs).map(ts => (
               <tr key={ts.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
                 <td className="px-6 py-4 text-slate-500">{ts.sdt}</td>
@@ -805,6 +914,9 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
             ))}
           </tbody>
         </table>
+        {searchText && filteredThiSinhs.length === 0 && (
+          <div className="text-center py-12 text-slate-400 font-ui">Không tìm thấy thí sinh nào.</div>
+        )}
       </div>
     </div>
   );
