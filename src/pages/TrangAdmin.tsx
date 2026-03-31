@@ -693,10 +693,14 @@ function PreviewModal({
 }
 
 const LOAI_DON_VI = [
-  { value: 'phuong', label: 'Phường' },
-  { value: 'xa', label: 'Xã' },
-  { value: 'dac_khu', label: 'Đặc khu' },
+  { value: 'phuong', label: 'Phường', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { value: 'xa', label: 'Xã', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  { value: 'dac_khu', label: 'Đặc khu', color: 'bg-amber-100 text-amber-700 border-amber-200' },
 ];
+
+// Helper to get badge color class
+const getLoaiBadgeClass = (loai: string) =>
+  LOAI_DON_VI.find(l => l.value === loai)?.color ?? 'bg-slate-100 text-slate-500 border-slate-200';
 
 function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: any }) {
   const [ten, setTen] = useState('');
@@ -846,7 +850,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
             <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
               <div>
                 <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
-                <span className="ml-2 text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg font-ui">
+                <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-lg font-ui border font-semibold ${getLoaiBadgeClass(dv.loai)}`}>
                   {LOAI_DON_VI.find(l => l.value === dv.loai)?.label ?? dv.loai}
                 </span>
               </div>
