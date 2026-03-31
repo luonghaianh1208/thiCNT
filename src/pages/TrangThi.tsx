@@ -119,7 +119,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
 
         {/* Countdown */}
         <div className="card-tech bg-brand-blue text-white p-10 mb-8 border-brand-blue/40">
-          <h3 className="text-center font-tech font-black text-sm uppercase tracking-widest mb-8 opacity-60">
+          <h3 className="text-center font-ui font-black text-sm uppercase tracking-widest mb-8 opacity-60">
             Thời gian đến khi bắt đầu
           </h3>
           <div className="grid grid-cols-4 gap-4 md:gap-8">
@@ -141,7 +141,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
 
         {/* Exam Info */}
         <div className="card-tech bg-white p-10 mb-8">
-          <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
+          <h3 className="font-ui font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
             <BookOpen size={18} /> Thông tin bài thi
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,15 +183,14 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
 
         {/* Instructions */}
         <div className="card-tech bg-white p-10 mb-8">
-          <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
+          <h3 className="font-ui font-black text-brand-blue uppercase tracking-widest text-sm mb-8 flex items-center gap-2">
             <Info size={18} /> Hướng dẫn thi
           </h3>
           <div className="space-y-6">
             {[
               { icon: <User size={18} />, title: 'Đăng ký thông tin', desc: 'Nhập đầy đủ họ tên, số điện thoại và chọn đơn vị của bạn trước khi bắt đầu.' },
-              { icon: <Timer size={18} />, title: 'Làm bài trong thời gian quy định', desc: `Bạn có ${chang.thoi_gian_phut} phút để hoàn thành ${chang.so_cau} câu hỏi. Không có thời gian bổ sung.` },
+              { icon: <Timer size={18} />, title: 'Thời gian làm bài', desc: `Bạn có ${chang.thoi_gian_phut} phút để hoàn thành ${chang.so_cau} câu hỏi.` },
               { icon: <Eye size={18} />, title: 'Cấm thoát màn hình', desc: 'Hệ thống giám sát sẽ phát hiện nếu bạn chuyển tab hoặc thu nhỏ trình duyệt. Vi phạm sẽ được ghi nhận.' },
-              { icon: <CheckCircle2 size={18} />, title: 'Đáp án đảo thứ tự', desc: 'Mỗi thí sinh sẽ thấy các đáp án hiển thị theo thứ tự khác nhau để đảm bảo công bằng.' },
               { icon: <MapPin size={18} />, title: 'Điều hướng nhanh', desc: 'Sử dụng bảng câu hỏi bên cạnh để nhảy nhanh giữa các câu hoặc xem câu nào đã làm.' },
               { icon: <StopCircle size={18} />, title: 'Nộp bài', desc: 'Bạn có thể nộp bài trước khi hết giờ. Hệ thống sẽ cảnh báo nếu có câu chưa trả lời.' },
             ].map((item, i) => (
@@ -208,7 +207,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
 
         {/* Anti-cheat Warning */}
         <div className="card-tech bg-brand-red/5 p-10 mb-8 border-brand-red/20">
-          <h3 className="font-tech font-black text-brand-red uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+          <h3 className="font-ui font-black text-brand-red uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
             <ShieldAlert size={18} /> Lưu ý quan trọng
           </h3>
           <div className="space-y-4">
