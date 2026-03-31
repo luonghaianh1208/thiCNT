@@ -100,22 +100,14 @@ export async function getDonViList(): Promise<DonVi[]> {
   return data || [];
 }
 
-/** Kiểm tra thí sinh (theo SĐT) đã thi chặng này chưa */
+/** Kiểm tra thí sinh (theo SĐT) đã thi chặng này chưa — dùng RPC 1 query */
 export async function kiemTraDaThi(soDienThoai: string, changId: number): Promise<boolean> {
-  const { data: thiSinhList } = await supabase
-    .from('thi_sinh')
-    .select('id')
-    .eq('so_dien_thoai', soDienThoai.trim());
-  if (!thiSinhList || thiSinhList.length === 0) return false;
-
-  const ids = thiSinhList.map((t: any) => t.id);
-  const { data: kq } = await supabase
-    .from('ket_qua')
-    .select('id')
-    .in('thi_sinh_id', ids)
-    .eq('chang_id', changId)
-    .limit(1);
-  return !!(kq && kq.length > 0);
+  const { data, error } = await supabase.rpc('kiem_tra_da_thi', {
+    p_sdt: soDienThoai.trim(),
+    p_chang_id: changId,
+  });
+  if (error) throw error;
+  return data as boolean;
 }
 
 /** Tạo thí sinh mới và trả về ID */
@@ -264,6 +256,12 @@ export async function addDonVi(ten: string, loai: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function bulkInsertDonVi(items: { ten: string; loai: string }[]): Promise<void> {
+  if (items.length === 0) return;
+  const { error } = await supabase.from('don_vi').insert(items);
+  if (error) throw error;
+}
+
 export async function updateDonVi(id: number, ten: string, loai: string): Promise<void> {
   const { error } = await supabase.from('don_vi').update({ ten, loai }).eq('id', id);
   if (error) throw error;
@@ -301,23 +299,21 @@ export async function getKetQuaAdmin(changId?: number): Promise<any[]> {
   return data || [];
 }
 
-// Thống kê tổng quan
-export async function getThongKe(): Promise<{
+// Thống kê tổng quan — DB tính avg, chỉ trả về kết quả
+export async function getThongKe(changId?: number): Promise<{
   tongThiSinh: number;
   tongLuotThi: number;
   diemTrungBinh: number;
 }> {
-  const [thiSinhRes, ketQuaRes] = await Promise.all([
-    supabase.from('thi_sinh').select('id', { count: 'exact', head: true }),
-    supabase.from('ket_qua').select('diem'),
-  ]);
-  const diems = (ketQuaRes.data || []).map((k: any) => k.diem);
-  const trungBinh = diems.length > 0
-    ? Math.round(diems.reduce((a: number, b: number) => a + b, 0) / diems.length)
-    : 0;
+  const { data, error } = await supabase.rpc('get_thong_ke', {
+    p_chang_id: changId ?? null,
+  });
+  if (error) throw error;
+  // RPC trả về array 1 row
+  const row = (data as any[])[0];
   return {
-    tongThiSinh: thiSinhRes.count || 0,
-    tongLuotThi: diems.length,
-    diemTrungBinh: trungBinh,
+    tongThiSinh: Number(row.tong_thi_sinh),
+    tongLuotThi: Number(row.tong_luot_thi),
+    diemTrungBinh: Number(row.diem_trung_binh),
   };
 }

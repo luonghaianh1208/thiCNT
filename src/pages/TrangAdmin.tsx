@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { 
   getThongKe, getAllChangThi, addChangThi, updateChangThi, deleteChangThi,
   getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
-  getDonViList, addDonVi, updateDonVi, deleteDonVi,
+  getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh,
   getKetQuaAdmin, getCanhBaoGianLan,
   type ChangThi, type CauHoi, type DonVi
@@ -513,9 +513,11 @@ function DonViManager({ donVis, refresh }: { donVis: DonVi[], refresh: () => voi
       const data: any[] = XLSX.utils.sheet_to_json(ws);
       const valid = data.filter(r => r['Tên đơn vị']);
       if (valid.length === 0) return toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
-      for (const r of valid) {
-        await addDonVi(String(r['Tên đơn vị']).trim(), String(r['Loại'] || 'phuong').trim());
-      }
+      const items = valid.map(r => ({
+        ten: String(r['Tên đơn vị']).trim(),
+        loai: String(r['Loại'] || 'phuong').trim(),
+      }));
+      await bulkInsertDonVi(items);
       if (fileInputRef.current) fileInputRef.current.value = '';
       refresh(); toast.success(`Đã import ${valid.length} đơn vị thành công.`);
     };
