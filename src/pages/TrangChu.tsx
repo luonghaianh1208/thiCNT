@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllChangThiPublic, type ChangThi } from '@/lib/db';
 import { Calendar, Clock, Award, Users, ChevronRight, BookOpen, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu, MousePointer2 } from 'lucide-react';
 
-const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
+const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
@@ -50,8 +50,8 @@ export default function TrangChu() {
                 <div className="absolute -inset-1 bg-brand-blue/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <div className="border-l-2 border-brand-blue/20 pl-4 whitespace-nowrap">
-                <p className="text-[12px] sm:text-[14px] font-black text-brand-blue uppercase tracking-[0.2em] leading-tight font-tech">Đoàn TNCS Hồ Chí Minh</p>
-                <p className="text-[11px] sm:text-[12px] font-bold text-slate-500 uppercase tracking-[0.3em] leading-tight">Thành Đoàn Hải Phòng</p>
+                <p className="text-[12px] sm:text-[14px] font-black text-brand-blue uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
+                <p className="text-[11px] sm:text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-tight font-ui">Thành Đoàn Hải Phòng</p>
               </div>
             </div>
             
@@ -108,10 +108,10 @@ export default function TrangChu() {
         <div className="section-container relative z-10 text-center">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-full mb-12 animate-pulse-soft">
             <div className="w-2.5 h-2.5 rounded-full bg-brand-yellow shadow-[0_0_15px_#FABD32]"></div>
-            <span className="text-[12px] font-black text-white uppercase tracking-[0.3em] font-tech text-grow-gold whitespace-nowrap">Kỷ nguyên số 2026 • Hải Phòng Smart City</span>
+            <span className="text-[12px] font-black text-white uppercase tracking-[0.2em] font-ui text-grow-gold whitespace-nowrap">Kỷ nguyên số 2026 • Hải Phòng Smart City</span>
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-black text-white mb-12 leading-[1.1] font-tech tracking-tighter uppercase drop-shadow-2xl">
+          <h1 className="text-5xl md:text-8xl font-black text-white mb-12 leading-[1.1] font-ui tracking-tighter uppercase drop-shadow-2xl">
             Thanh niên <br className="hidden md:block" />
             <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
               Phát triển số - Xanh
@@ -166,8 +166,8 @@ export default function TrangChu() {
         <div className="section-container">
           <div className="flex flex-col lg:flex-row gap-24 lg:items-center">
             <div className="flex-1 space-y-12">
-              <div className="inline-block px-6 py-2 bg-brand-red text-white text-xs font-black uppercase tracking-[0.3em] font-tech">Sứ mệnh số</div>
-              <h2 className="text-5xl md:text-7xl font-black text-brand-blue tracking-tighter leading-[0.9] uppercase font-tech">Tầm nhìn <br />& Chiến lược</h2>
+              <div className="inline-block px-6 py-2 bg-brand-red text-white text-xs font-black uppercase tracking-[0.2em] font-ui">Sứ mệnh số</div>
+              <h2 className="text-5xl md:text-7xl font-black text-brand-blue tracking-tighter leading-[0.9] uppercase font-ui">Tầm nhìn <br />& Chiến lược</h2>
               <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-medium font-ui">
                 "Thành phố Hải Phòng đang trong giai đoạn lịch sử chuyển mình mạnh mẽ. Thanh niên Hải Phòng là những chiến binh trên mặt trận công nghệ."
               </p>
@@ -280,8 +280,8 @@ export default function TrangChu() {
             <div className="flex flex-col items-center lg:items-start gap-10">
               <img src={LOGO_URL} alt="Logo" className="h-32 w-auto drop-shadow-xl" />
               <div>
-                <p className="text-3xl sm:text-4xl font-tech font-black text-brand-blue uppercase tracking-tighter">Thành Đoàn Hải Phòng</p>
-                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Đoàn TNCS Hồ Chí Minh TP. Hải Phòng</p>
+                <p className="text-3xl sm:text-4xl font-ui font-black text-brand-blue uppercase tracking-tighter">Thành Đoàn Hải Phòng</p>
+                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mt-3 font-ui">Đoàn TNCS Hồ Chí Minh TP. Hải Phòng</p>
               </div>
             </div>
             

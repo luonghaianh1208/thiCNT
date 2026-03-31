@@ -4,7 +4,7 @@ import { adminLogin } from '@/lib/db';
 import { Loader2, Lock, ChevronLeft, ShieldCheck, Mail, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
+const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();

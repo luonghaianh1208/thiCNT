@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
+const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
 type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan';
 
@@ -81,9 +81,9 @@ export default function TrangAdmin() {
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-blue text-white transition-all duration-500 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 flex flex-col shadow-2xl`}>
         <div className="p-8 flex items-center gap-4 bg-brand-blue/20">
           <img src={LOGO_URL} alt="Logo" className="h-14 w-auto drop-shadow-lg" />
-          <div className="border-l border-white/20 pl-4 whitespace-nowrap">
-            <h1 className="text-[12px] font-tech font-black uppercase leading-tight tracking-tighter">HỆ THỐNG</h1>
-            <p className="text-[11px] text-brand-yellow font-black uppercase tracking-[0.1em] leading-tight font-ui">QUẢN TRỊ VIÊN</p>
+          <div className="border-l-2 border-brand-blue/20 pl-4 whitespace-nowrap">
+            <p className="text-[14px] font-black text-brand-blue uppercase tracking-[0.1em] leading-tight font-ui">Đoàn TNCS Hồ Chí Minh</p>
+            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-tight font-ui">Thành Đoàn Hải Phòng</p>
           </div>
         </div>
 

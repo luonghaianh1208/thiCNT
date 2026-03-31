@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/0/06/Huy_hi%E1%BB%87u_%C4%90o%C3%A0n_TNCS_H%E1%BB%93_Ch%C3%AD_Minh.png";
+const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
 export default function TrangThi() {
   const navigate = useNavigate();
@@ -236,7 +236,7 @@ export default function TrangThi() {
     return (
       <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 gap-6 circuit-pattern">
         <Loader2 className="w-16 h-16 text-brand-yellow animate-spin" />
-        <p className="text-white/50 font-tech uppercase tracking-[0.4em] text-xs">Đang đồng bộ giao thức bảo mật...</p>
+        <p className="text-white/50 font-ui font-bold uppercase tracking-[0.2em] text-xs">Đang đồng bộ giao thức bảo mật...</p>
       </div>
     );
   }
@@ -246,8 +246,8 @@ export default function TrangThi() {
       <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 circuit-pattern">
         <div className="card-tech max-w-lg text-center bg-white p-12">
           <AlertTriangle className="w-20 h-20 text-brand-red mx-auto mb-8" />
-          <h2 className="text-3xl font-tech font-black text-brand-blue mb-4">HỆ THỐNG ĐANG ĐÓNG</h2>
-          <p className="text-slate-500 font-bold mb-10">Hiện tại không có chặng thi nào đang mở. Vui lòng quay lại sau theo lịch trình quy định.</p>
+          <h2 className="text-3xl font-ui font-black text-brand-blue mb-4 uppercase">HỆ THỐNG ĐANG ĐÓNG</h2>
+          <p className="text-slate-500 font-bold mb-10 font-ui">Hiện tại không có chặng thi nào đang mở. Vui lòng quay lại sau theo lịch trình quy định.</p>
           <button onClick={() => navigate('/')} className="btn-cyber w-full py-5">QUAY LẠI TRẠM CHỈ HUY</button>
         </div>
       </div>
@@ -261,10 +261,10 @@ export default function TrangThi() {
         <div className="card-tech w-full max-w-2xl bg-white p-12 border-brand-blue/20">
           <div className="text-center mb-12">
             <img src={LOGO_URL} alt="Logo" className="h-24 mx-auto mb-8 drop-shadow-xl" />
-            <h1 className="text-4xl font-tech font-black text-brand-blue uppercase tracking-tighter mb-4">{chang?.ten}</h1>
+            <h1 className="text-4xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-4">{chang?.ten}</h1>
             <div className="flex items-center justify-center gap-2">
               <div className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></div>
-              <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Hệ thống xác thực thí sinh 4.0</p>
+              <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] font-ui">Hệ thống xác thực thí sinh 4.0</p>
             </div>
           </div>
 
@@ -272,15 +272,15 @@ export default function TrangThi() {
             <div className="flex items-center gap-4">
               <Timer className="text-brand-blue w-8 h-8" />
               <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Thời gian</p>
-                <p className="text-lg font-tech font-black text-brand-blue">{chang?.thoi_gian_phut} PHÚT</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-ui">Thời gian</p>
+                <p className="text-lg font-ui font-black text-brand-blue">{chang?.thoi_gian_phut} PHÚT</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <BookOpen className="text-brand-blue w-8 h-8" />
               <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Số lượng</p>
-                <p className="text-lg font-tech font-black text-brand-blue">30 CÂU HỎI</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest font-ui">Số lượng</p>
+                <p className="text-lg font-ui font-black text-brand-blue">30 CÂU HỎI</p>
               </div>
             </div>
           </div>
@@ -357,13 +357,13 @@ export default function TrangThi() {
               <div className="w-24 h-24 bg-brand-red/10 text-brand-red rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
                 <ShieldAlert size={48} />
               </div>
-              <h2 className="text-3xl font-tech font-black text-brand-red mb-6 uppercase tracking-tighter">CẢNH BÁO VI PHẠM</h2>
+              <h1 className="text-3xl md:text-5xl font-black text-brand-red mb-4 tracking-tighter font-ui uppercase">MISSION CONTROL</h1>
               <p className="text-slate-600 font-bold text-lg mb-4">
                 Hệ thống phát hiện bạn vừa rời khỏi màn hình thi!
               </p>
               <div className="bg-brand-red/5 p-6 rounded-2xl mb-10">
                 <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mb-2">Số lần vi phạm</p>
-                <p className="text-5xl font-tech font-black text-brand-red">0{cheatCount}</p>
+                <p className="text-5xl font-ui font-black text-brand-red">0{cheatCount}</p>
               </div>
               <button 
                 onClick={() => setShowCheatOverlay(false)}
