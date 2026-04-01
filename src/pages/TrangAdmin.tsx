@@ -904,7 +904,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
 
   const filteredThiSinhs = thiSinhs.filter(ts =>
     ts.ho_ten.toLowerCase().includes(searchText.toLowerCase()) ||
-    ts.sdt.includes(searchText) ||
+    ts.so_dien_thoai.includes(searchText) ||
     ts.don_vi?.ten.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -945,7 +945,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
             {(searchText ? filteredThiSinhs : thiSinhs).map(ts => (
               <tr key={ts.id} className="hover:bg-slate-50 group">
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
-                <td className="px-6 py-4 text-slate-500">{ts.sdt}</td>
+                <td className="px-6 py-4 text-slate-500">{ts.so_dien_thoai}</td>
                 <td className="px-6 py-4 font-black">{ts.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
                 <td className="px-6 py-4">
@@ -981,7 +981,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
     const data = sortedKetQua.map((r, i) => ({
       'Hạng': i + 1,
       'Họ tên': r.thi_sinh?.ho_ten,
-      'SĐT': r.thi_sinh?.sdt,
+      'SĐT': r.thi_sinh?.so_dien_thoai,
       'Đơn vị': r.thi_sinh?.don_vi?.ten,
       'Chặng thi': r.chang_thi?.ten,
       'Điểm số': r.diem,
@@ -1031,7 +1031,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
             {sortedKetQua.map((r, i) => (
               <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4"><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${i<3 ? 'bg-brand-yellow text-brand-blue' : 'bg-slate-100 text-slate-400'}`}>{i+1}</span></td>
-                <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.sdt}</div></td>
+                <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.so_dien_thoai}</div></td>
                 <td className="px-6 py-4 font-black">{r.thi_sinh?.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{r.diem}</td>
                 <td className="px-6 py-4 text-slate-400 font-tech">{formatThoiGian(r.thoi_gian_lam)}</td>
@@ -1063,7 +1063,7 @@ function GianLanManager({ logs }: { logs: any[] }) {
           <tbody className="divide-y divide-brand-red/5">
             {logs.map(log => (
               <tr key={log.id} className="hover:bg-brand-red/5 transition-colors">
-                <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{log.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{log.thi_sinh?.sdt} • {log.thi_sinh?.don_vi?.ten}</div></td>
+                <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{log.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{log.thi_sinh?.so_dien_thoai} • {log.thi_sinh?.don_vi?.ten}</div></td>
                 <td className="px-6 py-4 text-brand-blue font-black">{log.chang_thi?.ten}</td>
                 <td className="px-6 py-4"><span className="px-4 py-1.5 bg-brand-red text-white text-lg font-tech font-black rounded-xl shadow-lg shadow-brand-red/20">{log.so_lan}</span></td>
                 <td className="px-6 py-4 text-slate-400 text-xs">{new Date(log.lan_cuoi).toLocaleString()}</td>

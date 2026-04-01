@@ -7,6 +7,7 @@ import {
   layCauHoiNgauNhien,
   nopBaiThi,
   ghiCanhBaoGianLan,
+  kiemTraDaThi,
   createExamSession,
   completeExamSession,
   type ChangThi,
@@ -154,7 +155,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Thời gian làm bài</span>
               </div>
-              <p className="text-3xl font-tech font-black text-brand-blue">{chang.thoi_gian_phut} <span className="text-base font-normal text-slate-500">phút</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{chang.thoi_gian_phut} <span className="text-base font-normal text-slate-500">phút</span></p>
             </div>
             <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
               <div className="flex items-center gap-3 mb-3">
@@ -163,7 +164,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Số câu hỏi</span>
               </div>
-              <p className="text-3xl font-tech font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">câu</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">câu</span></p>
             </div>
             <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
               <div className="flex items-center gap-3 mb-3">
@@ -172,7 +173,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Điểm đạt được</span>
               </div>
-              <p className="text-3xl font-tech font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">điểm</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">điểm</span></p>
             </div>
           </div>
           <div className="mt-6 bg-brand-yellow/10 p-6 rounded-2xl border border-brand-yellow/20">
@@ -256,8 +257,9 @@ function RegisterPage({
   const [hoTen, setHoTen] = useState('');
   const [sdt, setSdt] = useState('');
   const [donViId, setDonViId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!hoTen.trim() || !sdt || !donViId) {
       toast.error('Vui lòng điền đầy đủ thông tin.');
       return;
@@ -266,7 +268,20 @@ function RegisterPage({
       toast.error('Số điện thoại phải có đúng 10 chữ số.');
       return;
     }
-    onStart(hoTen.trim(), sdt, donViId);
+    setSubmitting(true);
+    try {
+      const daThi = await kiemTraDaThi(sdt, chang.id);
+      if (daThi) {
+        toast.error('Số điện thoại này đã thi chặng này rồi.');
+        setSubmitting(false);
+        return;
+      }
+      onStart(hoTen.trim(), sdt, donViId);
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi kiểm tra dữ liệu. Vui lòng thử lại.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -352,10 +367,10 @@ function RegisterPage({
           {/* Start Button */}
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || submitting}
             className="w-full mt-8 h-20 rounded-2xl bg-brand-blue text-white font-ui font-black text-lg uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-brand-blue/20"
           >
-            {loading ? (
+            {loading || submitting ? (
               <Loader2 size={24} className="animate-spin" />
             ) : (
               <>
@@ -542,12 +557,12 @@ function ExamPage({
                 {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map(key => {
                   const optionText = q[`dap_an_${key}` as keyof CauHoi] as string;
                   if (!optionText) return null;
-                  const isSelected = answers[q.id] === optionText;
+                  const isSelected = answers[q.id] === key.toUpperCase();
 
                   return (
                     <button
                       key={key}
-                      onClick={() => onAnswer(q.id, optionText)}
+                      onClick={() => onAnswer(q.id, key.toUpperCase())}
                       className={`group relative p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 sm:gap-5
                         ${isSelected
                           ? 'bg-brand-blue border-brand-blue text-white shadow-xl -translate-x-1'
@@ -574,13 +589,21 @@ function ExamPage({
               >
                 <ChevronLeft size={20} /> Câu trước
               </button>
-              <button
-                disabled={currentQuestionIdx === questions.length - 1}
-                onClick={onNext}
-                className="flex-1 h-14 rounded-2xl bg-brand-blue text-white font-ui font-bold hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2"
-              >
-                Câu tiếp <ChevronRight size={20} />
-              </button>
+              {currentQuestionIdx === questions.length - 1 ? (
+                <button
+                  onClick={onSubmit}
+                  className="flex-1 h-14 rounded-2xl bg-brand-red text-white font-ui font-bold hover:bg-brand-red/90 transition-all flex items-center justify-center gap-2"
+                >
+                  <Send size={20} /> Nộp bài
+                </button>
+              ) : (
+                <button
+                  onClick={onNext}
+                  className="flex-1 h-14 rounded-2xl bg-brand-blue text-white font-ui font-bold hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2"
+                >
+                  Câu tiếp <ChevronRight size={20} />
+                </button>
+              )}
             </div>
           </div>
 
