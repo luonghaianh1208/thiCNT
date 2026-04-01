@@ -1082,7 +1082,7 @@ export default function TrangThi() {
             <div className="absolute inset-0 bg-brand-yellow/20 rounded-full blur-3xl scale-125 animate-pulse-soft" />
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-ui font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO KẾT QUẢ</h2>
+          <h2 className="text-3xl md:text-5xl font-ui font-black text-brand-blue mb-4 uppercase">BÁO CÁO KẾT QUẢ</h2>
           <p className="text-slate-500 font-ui font-bold text-sm md:text-base mb-16">
             Chúc mừng đồng chí <span className="text-brand-blue font-black">{formHoTen}</span>{donViName ? ` - ${donViName}` : ''} đã hoàn thành chặng {chang?.ten}!
           </p>
