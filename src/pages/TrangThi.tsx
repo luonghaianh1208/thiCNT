@@ -826,15 +826,22 @@ export default function TrangThi() {
   }, [stage, thiSinhId, chang]);
 
   // ─── Timer ───────────────────────────────────────────────────────────────────
+  // Dùng ref để giữ giá trị mới nhất tránh stale closure khi auto-submit
+  const submitStateRef = React.useRef({ questions, answers, thiSinhId, chang });
   useEffect(() => {
-    if (stage !== 'exam' || timeLeft <= 0) return;
+    submitStateRef.current = { questions, answers, thiSinhId, chang };
+  });
+
+  useEffect(() => {
+    if (stage !== 'exam') return;  // Chỉ depend vào stage, không phải timeLeft
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         const next = prev - 1;
         if (next <= 0) {
           clearInterval(timer);
-          setTimeout(() => handleSubmit({ questions, answers, thiSinhId, chang }), 100);
+          // Dùng ref để lấy state mới nhất tránh stale closure
+          setTimeout(() => handleSubmit(submitStateRef.current), 100);
           return 0;
         }
         return next;
@@ -842,7 +849,7 @@ export default function TrangThi() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [stage, timeLeft]);
+  }, [stage]);  // ← Chỉ stage: interval tạo 1 lần, không unmount mỗi giây
 
   // ─── Session Persistence ────────────────────────────────────────────────────
   useEffect(() => {
