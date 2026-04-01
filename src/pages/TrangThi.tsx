@@ -1042,13 +1042,9 @@ export default function TrangThi() {
           <h2 className="text-3xl md:text-5xl font-tech font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO KẾT QUẢ</h2>
           <p className="text-slate-400 font-black text-xs md:text-sm uppercase tracking-[0.4em] mb-16">CHÚC MỪNG BẠN ĐÃ HOÀN THÀNH!</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-            <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white">
-              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">ĐIỂM SỐ</p>
-              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.diem}</div>
-            </div>
-            <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white">
-              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">CÂU ĐÚNG</p>
+          <div className="mb-16">
+            <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white text-center">
+              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">SỐ CÂU ĐÚNG</p>
               <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{questions.length}</div>
             </div>
           </div>
