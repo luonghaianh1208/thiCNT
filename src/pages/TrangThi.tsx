@@ -7,6 +7,8 @@ import {
   layCauHoiNgauNhien,
   nopBaiThi,
   ghiCanhBaoGianLan,
+  createExamSession,
+  completeExamSession,
   type ChangThi,
   type DonVi,
   type CauHoi,
@@ -170,7 +172,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Điểm đạt được</span>
               </div>
-              <p className="text-3xl font-tech font-black text-brand-blue">100 <span className="text-base font-normal text-slate-500">điểm</span></p>
+              <p className="text-3xl font-tech font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">điểm</span></p>
             </div>
           </div>
           <div className="mt-6 bg-brand-yellow/10 p-6 rounded-2xl border border-brand-yellow/20">
@@ -859,6 +861,9 @@ export default function TrangThi() {
       setFormHoTen(hoTen);
       setCurrentQuestionIdx(0);
       setStage('exam');
+
+      // Track exam session
+      await createExamSession(tsId, chang.id);
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khởi tạo bài thi.');
@@ -875,12 +880,12 @@ export default function TrangThi() {
     try {
       const thoi_gian_lam = (state.chang.thoi_gian_phut * 60) - timeLeft;
       const correctAnswers = state.questions.filter(q => state.answers[q.id] === q.dap_an_dung).length;
-      const diem = (correctAnswers / state.questions.length) * 100;
+      const diem = correctAnswers; // Mỗi câu đúng = 1 điểm
 
       await nopBaiThi({
         thi_sinh_id: state.thiSinhId,
         chang_id: state.chang.id,
-        diem: Math.round(diem),
+        diem: diem,
         so_cau_dung: correctAnswers,
         tong_cau: state.questions.length,
         thoi_gian_lam,
@@ -890,6 +895,9 @@ export default function TrangThi() {
           dung: state.answers[q.id] === q.dap_an_dung
         }))
       });
+
+      // Mark exam session as completed
+      await completeExamSession(state.thiSinhId, state.chang.id);
 
       setFinalResult({ diem: Math.round(diem), so_cau_dung: correctAnswers, thoi_gian_giay: thoi_gian_lam });
       sessionStorage.removeItem(STORAGE_KEY);

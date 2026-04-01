@@ -6,18 +6,18 @@ import {
   getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
   getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
-  getKetQuaAdmin, getCanhBaoGianLan,
+  getKetQuaAdmin, getCanhBaoGianLan, getThiSinhDangThi,
   type ChangThi, type CauHoi, type DonVi
 } from '@/lib/db';
 import { 
-  BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2, 
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award
+  BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2,
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award, Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
-type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan';
+type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'dang-thi';
 
 export default function TrangAdmin() {
   const navigate = useNavigate();
@@ -31,7 +31,8 @@ export default function TrangAdmin() {
   const [donVis, setDonVis] = useState<DonVi[]>([]);
   const [thiSinhs, setThiSinhs] = useState<any[]>([]);
   const [ketQuas, setKetQuas] = useState<any[]>([]);
-  const [giantLanLogs, setGianLanLogs] = useState<any[]>([]);
+  const [gianLanLogs, setGianLanLogs] = useState<any[]>([]);
+  const [thiSinhDangThis, setThiSinhDangThi] = useState<any[]>([]);
   
   // Selection
   const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
@@ -53,7 +54,7 @@ export default function TrangAdmin() {
 
   // Load changs when entering tabs that need it
   useEffect(() => {
-    if (['cau-hoi', 'ket-qua', 'gian-lan'].includes(activeTab)) {
+    if (['cau-hoi', 'ket-qua', 'gian-lan', 'dang-thi'].includes(activeTab)) {
       getAllChangThi().then(data => {
         setChangs(data);
         // Auto-select first chang if none selected
@@ -64,6 +65,15 @@ export default function TrangAdmin() {
     }
   }, [activeTab]);
 
+  // Auto-poll dang-thi tab every 5s
+  useEffect(() => {
+    if (activeTab !== 'dang-thi') return;
+    const interval = setInterval(() => {
+      getThiSinhDangThi(selectedChangId || undefined).then(setThiSinhDangThi).catch(console.error);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [activeTab, selectedChangId]);
+
   const refreshData = async () => {
     setLoading(true);
     try {
@@ -73,6 +83,7 @@ export default function TrangAdmin() {
       if (activeTab === 'thi-sinh') setThiSinhs(await getAllThiSinh());
       if (activeTab === 'ket-qua') setKetQuas(await getKetQuaAdmin(selectedChangId || undefined));
       if (activeTab === 'gian-lan') setGianLanLogs(await getCanhBaoGianLan(selectedChangId || undefined));
+      if (activeTab === 'dang-thi') setThiSinhDangThi(await getThiSinhDangThi(selectedChangId || undefined));
       if (activeTab === 'cau-hoi' && selectedChangId) setCauHois(await getCauHoiByChang(selectedChangId));
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -91,6 +102,7 @@ export default function TrangAdmin() {
     { id: 'thi-sinh', label: 'Thí sinh', icon: <Users className="w-5 h-5" /> },
     { id: 'ket-qua', label: 'Kết quả', icon: <Trophy className="w-5 h-5" /> },
     { id: 'gian-lan', label: 'Gian lận', icon: <ShieldAlert className="w-5 h-5" /> },
+    { id: 'dang-thi', label: 'Đang thi', icon: <Activity className="w-5 h-5" /> },
   ];
 
   return (
@@ -254,7 +266,8 @@ export default function TrangAdmin() {
                     {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
-                    {activeTab === 'gian-lan' && <GianLanManager logs={giantLanLogs} />}
+                    {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} />}
+                    {activeTab === 'dang-thi' && <DangThiManager sessions={thiSinhDangThis} changs={changs} selectedChangId={selectedChangId} />}
                   </div>
                 )}
               </>
@@ -953,8 +966,20 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
 }
 
 function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
+  const [sortBy, setSortBy] = useState<'diem' | 'time'>('diem');
+
+  // Sort: by diem DESC, if tied sort by time ASC (faster = better)
+  const sortedKetQua = [...ketQuas].sort((a, b) => {
+    if (sortBy === 'diem') {
+      if (b.diem !== a.diem) return b.diem - a.diem;
+      return a.thoi_gian_lam - b.thoi_gian_lam; // Less time = better
+    }
+    return a.thoi_gian_lam - b.thoi_gian_lam;
+  });
+
   const exportExcel = () => {
-    const data = ketQuas.map(r => ({
+    const data = sortedKetQua.map((r, i) => ({
+      'Hạng': i + 1,
       'Họ tên': r.thi_sinh?.ho_ten,
       'SĐT': r.thi_sinh?.sdt,
       'Đơn vị': r.thi_sinh?.don_vi?.ten,
@@ -970,13 +995,32 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
     XLSX.writeFile(wb, "KetQua_Thi_ChuyenDoiSo.xlsx");
   };
 
+  const formatThoiGian = (seconds: number) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min}m ${sec}s`;
+  };
+
   return (
     <div className="p-4 space-y-8">
-      <div className="flex justify-between items-center bg-brand-blue/5 p-8 rounded-3xl">
-        <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng hệ thống</h4>
-        <button onClick={exportExcel} className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-ui font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-yellow/90 transition-all">
-          <FileSpreadsheet size={16} /> Xuất Excel
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-blue/5 p-8 rounded-3xl">
+        <div>
+          <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng hệ thống</h4>
+          <p className="text-xs text-slate-500 font-ui mt-1">Ưu tiên điểm cao nhất, nếu bằng điểm thì xét thời gian (ít hơn = tốt hơn)</p>
+        </div>
+        <div className="flex gap-3 items-center">
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as 'diem' | 'time')}
+            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-ui font-semibold text-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none"
+          >
+            <option value="diem">Theo điểm</option>
+            <option value="time">Theo thời gian</option>
+          </select>
+          <button onClick={exportExcel} className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-ui font-bold text-sm px-6 py-2 rounded-xl hover:bg-brand-yellow/90 transition-all">
+            <FileSpreadsheet size={16} /> Xuất Excel
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
         <table className="w-full text-left text-sm font-bold">
@@ -984,13 +1028,13 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
             <tr><th className="px-6 py-4">Hạng</th><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Điểm</th><th className="px-6 py-4">Thời gian</th><th className="px-6 py-4">Chặng</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {ketQuas.map((r, i) => (
+            {sortedKetQua.map((r, i) => (
               <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4"><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${i<3 ? 'bg-brand-yellow text-brand-blue' : 'bg-slate-100 text-slate-400'}`}>{i+1}</span></td>
                 <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.sdt}</div></td>
                 <td className="px-6 py-4 font-black">{r.thi_sinh?.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{r.diem}</td>
-                <td className="px-6 py-4 text-slate-400 font-tech">{r.thoi_gian_lam}s</td>
+                <td className="px-6 py-4 text-slate-400 font-tech">{formatThoiGian(r.thoi_gian_lam)}</td>
                 <td className="px-6 py-4"><span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] rounded-lg border border-brand-blue/10">{r.chang_thi?.ten}</span></td>
               </tr>
             ))}
@@ -1025,6 +1069,70 @@ function GianLanManager({ logs }: { logs: any[] }) {
                 <td className="px-6 py-4 text-slate-400 text-xs">{new Date(log.lan_cuoi).toLocaleString()}</td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DangThiManager({ sessions, changs, selectedChangId }: {
+  sessions: any[]; changs: any[]; selectedChangId: number | null;
+}) {
+  const [elapsedTimes, setElapsedTimes] = React.useState<Record<number, number>>({});
+
+  // Auto-update elapsed time every second
+  React.useEffect(() => {
+    if (sessions.length === 0) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const newTimes: Record<number, number> = {};
+      for (const s of sessions) {
+        newTimes[s.id] = Math.floor((now - new Date(s.start_time).getTime()) / 1000);
+      }
+      setElapsedTimes(newTimes);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sessions]);
+
+  const formatElapsed = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
+
+  const totalQuestions = changs.find(c => c.id === selectedChangId)?.so_cau || 0;
+
+  return (
+    <div className="p-4 space-y-8">
+      <div className="flex items-center gap-4 bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">
+        <Activity className="text-brand-blue w-10 h-10 animate-pulse" />
+        <div>
+          <h4 className="text-sm font-bold text-brand-blue font-ui">Thí sinh đang thi</h4>
+          <p className="text-xs text-brand-blue/60 font-ui">{sessions.length} thí sinh đang làm bài • Dữ liệu cập nhật tự động</p>
+        </div>
+      </div>
+      <div className="overflow-x-auto rounded-[2rem] border border-brand-blue/10">
+        <table className="w-full text-left text-sm font-bold">
+          <thead className="bg-brand-blue/5 text-[10px] font-black text-brand-blue uppercase tracking-widest">
+            <tr><th className="px-6 py-4">Thí sinh</th><th className="px-6 py-4">Chặng</th><th className="px-6 py-4">Đã thi</th><th className="px-6 py-4">Câu hiện tại</th><th className="px-6 py-4">Đơn vị</th></tr>
+          </thead>
+          <tbody className="divide-y divide-brand-blue/5">
+            {sessions.length === 0 ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">Không có thí sinh nào đang thi</td></tr>
+            ) : sessions.map(session => {
+              const elapsed = elapsedTimes[session.id] || Math.floor((Date.now() - new Date(session.start_time).getTime()) / 1000);
+              const answeredCount = Object.keys(session.answers || {}).length;
+              return (
+                <tr key={session.id} className="hover:bg-brand-blue/5 transition-colors">
+                  <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{session.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{session.thi_sinh?.so_dien_thoai}</div></td>
+                  <td className="px-6 py-4 text-brand-blue font-black">{session.chang_thi?.ten}</td>
+                  <td className="px-6 py-4"><span className="px-4 py-1.5 bg-brand-blue text-white text-lg font-tech font-black rounded-xl shadow-lg shadow-brand-blue/20">{formatElapsed(elapsed)}</span></td>
+                  <td className="px-6 py-4"><span className="text-slate-600">{answeredCount} / {totalQuestions}</span></td>
+                  <td className="px-6 py-4 text-slate-500 text-xs">{session.thi_sinh?.don_vi?.ten || session.thi_sinh?.ten_don_vi_nho}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

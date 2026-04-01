@@ -74,6 +74,19 @@ INSERT INTO admins (username, mat_khau)
 VALUES ('admin', 'Admin@2026')
 ON CONFLICT (username) DO NOTHING;
 
+-- 7. Exam Sessions (track active exams in real-time)
+CREATE TABLE IF NOT EXISTS exam_sessions (
+  id SERIAL PRIMARY KEY,
+  thi_sinh_id INTEGER REFERENCES thi_sinh(id) ON DELETE CASCADE,
+  chang_id INTEGER REFERENCES chang_thi(id) ON DELETE CASCADE,
+  start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_update TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  current_question INTEGER DEFAULT 0,
+  answers JSONB DEFAULT '{}', -- {cau_hoi_id: lua_chon}
+  completed BOOLEAN DEFAULT false,
+  UNIQUE(thi_sinh_id, chang_id)
+);
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
@@ -83,6 +96,7 @@ ALTER TABLE cau_hoi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE thi_sinh ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ket_qua ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exam_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Cho phép tất cả thao tác với anon key (public competition)
 CREATE POLICY "allow_all_don_vi" ON don_vi FOR ALL USING (true) WITH CHECK (true);
@@ -91,6 +105,7 @@ CREATE POLICY "allow_all_cau_hoi" ON cau_hoi FOR ALL USING (true) WITH CHECK (tr
 CREATE POLICY "allow_all_thi_sinh" ON thi_sinh FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all_ket_qua" ON ket_qua FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_read_admins" ON admins FOR SELECT USING (true);
+CREATE POLICY "allow_all_exam_sessions" ON exam_sessions FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- DỮ LIỆU MẪU - 3 chặng thi theo kế hoạch
