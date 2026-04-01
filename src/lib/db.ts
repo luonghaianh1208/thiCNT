@@ -15,6 +15,7 @@ export interface ChangThi {
   ket_thuc: string;
   so_cau: number;
   thoi_gian_phut: number;
+  gioi_han_gian_lan: number;
 }
 
 export interface CauHoi {

@@ -47,7 +47,8 @@
   }
 
   .card-tech:hover {
-    @apply border-brand-blue/40 -translate-y-1 shadow-2xl shadow-brand-blue/10;
+    @apply border-brand-blue/40 shadow-2xl shadow-brand-blue/10;
+    transform: translateY(-2px);
   }
 
   /* Cyber Glow Buttons */

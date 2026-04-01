@@ -7,6 +7,7 @@ import AdminLogin from '@/pages/AdminLogin';
 import TrangAdmin from '@/pages/TrangAdmin';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from 'sonner';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'denied'>('loading');
@@ -42,15 +43,17 @@ export default function App() {
   return (
     <>
       <Toaster position="top-center" richColors />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<PageWrapper><TrangChu /></PageWrapper>} />
-          <Route path="/thi" element={<PageWrapper><TrangThi /></PageWrapper>} />
-          <Route path="/admin/login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
-          <Route path="/admin" element={<AdminRoute><PageWrapper><TrangAdmin /></PageWrapper></AdminRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<PageWrapper><TrangChu /></PageWrapper>} />
+            <Route path="/thi" element={<PageWrapper><TrangThi /></PageWrapper>} />
+            <Route path="/admin/login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
+            <Route path="/admin" element={<AdminRoute><PageWrapper><TrangAdmin /></PageWrapper></AdminRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </>
   );
 }

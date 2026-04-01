@@ -8,6 +8,7 @@ import {
   nopBaiVaChamDiem,
   ghiCanhBaoGianLan,
   kiemTraDaThi,
+  deleteThiSinh,
   type ChangThi,
   type DonVi,
   type CauHoi,
@@ -624,7 +625,7 @@ function ExamPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-[40vh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[35vh] sm:max-h-[40vh] overflow-y-auto pr-1">
                 {questions.map((q, idx) => {
                   const isAnswered = !!answers[q.id];
                   const isCurrent = currentQuestionIdx === idx;
@@ -706,6 +707,7 @@ export default function TrangThi() {
   const [stage, setStage] = useState<ExamStage>('loading');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Chống race condition
   const [donVis, setDonVis] = useState<DonVi[]>([]);
   const [chang, setChang] = useState<ChangThi | null>(null);
 
@@ -800,16 +802,30 @@ export default function TrangThi() {
   }, []);
 
   // ─── Anti-cheat ──────────────────────────────────────────────────────────────
+  const lastViolationRef = React.useRef(0); // Cooldown để tránh đếm 2 lần khi quay về tab
+
   useEffect(() => {
     if (stage !== 'exam' || !thiSinhId || !chang) return;
 
+    const limit = chang.gioi_han_gian_lan ?? 3;
+
     const handleViolation = async () => {
-      setCheatCount(prev => {
-        const next = prev + 1;
-        ghiCanhBaoGianLan(thiSinhId, chang.id).catch(console.error);
+      const now = Date.now();
+      if (now - lastViolationRef.current < 1000) return; // Cooldown 1 giây
+      lastViolationRef.current = now;
+
+      const next = cheatCount + 1;
+      ghiCanhBaoGianLan(thiSinhId, chang.id).catch(console.error);
+
+      if (next >= limit) {
+        // Đạt giới hạn → auto submit
+        setCheatCount(next);
+        setShowCheatOverlay(false);
+        setTimeout(() => handleSubmit(submitStateRef.current), 100);
+      } else {
+        setCheatCount(next);
         setShowCheatOverlay(true);
-        return next;
-      });
+      }
     };
 
     const handleVisibility = () => {
@@ -823,13 +839,15 @@ export default function TrangThi() {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [stage, thiSinhId, chang]);
+  }, [stage, thiSinhId, chang, cheatCount]);
 
   // ─── Timer ───────────────────────────────────────────────────────────────────
   // Dùng ref để giữ giá trị mới nhất tránh stale closure khi auto-submit
   const submitStateRef = React.useRef({ questions, answers, thiSinhId, chang });
+  const isSubmittingRef = React.useRef(false);
   useEffect(() => {
     submitStateRef.current = { questions, answers, thiSinhId, chang };
+    isSubmittingRef.current = isSubmitting;
   });
 
   useEffect(() => {
@@ -840,8 +858,10 @@ export default function TrangThi() {
         const next = prev - 1;
         if (next <= 0) {
           clearInterval(timer);
-          // Dùng ref để lấy state mới nhất tránh stale closure
-          setTimeout(() => handleSubmit(submitStateRef.current), 100);
+          // Chỉ submit nếu chưa đang submit (tránh race condition)
+          if (!isSubmittingRef.current) {
+            setTimeout(() => handleSubmit(submitStateRef.current), 100);
+          }
           return 0;
         }
         return next;
@@ -872,14 +892,16 @@ export default function TrangThi() {
   const handleStart = async (hoTen: string, sdt: string, donViId: string) => {
     if (!chang) return;
     setLoading(true);
+    let tsId: number | null = null;
     try {
-      const tsId = await taoThiSinh({
+      tsId = await taoThiSinh({
         ho_ten: hoTen,
         so_dien_thoai: sdt,
         don_vi_id: parseInt(donViId),
         ten_don_vi_nho: ''
       });
       const qs = await layCauHoiNgauNhien(chang.id, chang.so_cau);
+      if (qs.length === 0) throw new Error('Không có câu hỏi');
       const startTime = Date.now();
       const totalDuration = chang.thoi_gian_phut * 60;
 
@@ -900,15 +922,22 @@ export default function TrangThi() {
 
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi khởi tạo bài thi.');
+      // Rollback: xóa thi_sinh đã tạo nếu bước tiếp theo fail
+      if (tsId) {
+        try { await deleteThiSinh(tsId); } catch { /* ignore rollback error */ }
+      }
+      toast.error('Lỗi khởi tạo bài thi. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async (stateOverride?: any) => {
+    if (isSubmitting) return; // Chống race condition
+    if (stage === 'result') return; // Đã nộp rồi
     const state = stateOverride || { questions, answers, thiSinhId, chang };
     if (!state.thiSinhId || !state.chang) return;
+    setIsSubmitting(true);
     setSubmitting(true);
     setShowSubmitConfirm(false);
     try {
@@ -925,14 +954,22 @@ export default function TrangThi() {
         })),
       });
 
-      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam });
+      // Clear exam state completely
+      setQuestions([]);
+      setAnswers({});
+      setThiSinhId(null);
+      setCheatCount(0);
+      setShowCheatOverlay(false);
       sessionStorage.removeItem(STORAGE_KEY);
+
+      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam });
       setStage('result');
       toast.success('Nộp bài thành công!');
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khi nộp bài.');
     } finally {
+      setIsSubmitting(false);
       setSubmitting(false);
     }
   };
@@ -1002,7 +1039,9 @@ export default function TrangThi() {
                 onClick={() => setShowCheatOverlay(false)}
                 className="btn-cyber w-full h-16 bg-brand-blue text-white"
               >
-                TÔI ĐÃ HIỂU VÀ CAM KẾT KHÔNG TÁI PHẠM
+                {cheatCount >= (chang.gioi_han_gian_lan ?? 3) - 1
+                  ? 'LƯU Ý: Lần cuối cùng!'
+                  : 'TÔI ĐÃ HIỂU VÀ CAM KẾT KHÔNG TÁI PHẠM'}
               </button>
             </div>
           </div>

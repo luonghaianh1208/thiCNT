@@ -253,7 +253,7 @@ export default function TrangAdmin() {
                     {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
-                    {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} />}
+                    {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} changs={changs} />}
                   </div>
                 )}
               </>
@@ -314,6 +314,7 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
       ket_thuc: fromInputVN(form.ket_thuc),
       thoi_gian_phut: Number(form.thoi_gian_phut),
       so_cau: Number(form.so_cau),
+      gioi_han_gian_lan: 3,
     });
     resetForm(); refresh(); toast.success('Đã thêm chặng thi.');
   };
@@ -577,7 +578,7 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
 // ─── SHARED PREVIEW MODAL ───────────────────────────────────────────────────────
 
 type ColText = { header: string; key: string; type: 'text' };
-type ColSelect = { header: string; key: string; type: 'select'; options: { value: string; label: string }[] };
+type ColSelect = { header: string; key: string; type: 'select'; options?: { value: string; label: string }[] };
 type ColType = ColText | ColSelect;
 
 function PreviewModal({
@@ -1035,23 +1036,90 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
   );
 }
 
-function GianLanManager({ logs }: { logs: any[] }) {
+function GianLanManager({ logs, changs }: { logs: any[]; changs: ChangThi[] }) {
+  const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
+  const [cheatLimit, setCheatLimit] = useState(3);
+  const [saving, setSaving] = useState(false);
+
+  // Load current limit when selecting a chang
+  useEffect(() => {
+    if (selectedChangId) {
+      const c = changs.find(x => x.id === selectedChangId);
+      if (c) setCheatLimit(c.gioi_han_gian_lan || 3);
+    }
+  }, [selectedChangId, changs]);
+
+  const handleSaveLimit = async () => {
+    if (!selectedChangId) return;
+    setSaving(true);
+    try {
+      await updateChangThi(selectedChangId, { gioi_han_gian_lan: cheatLimit });
+      toast.success('Đã lưu giới hạn gian lận');
+    } catch {
+      toast.error('Lưu thất bại');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="p-4 space-y-8">
-      <div className="flex items-center gap-4 bg-brand-red/5 p-8 rounded-3xl border border-brand-red/10 animate-pulse">
+      {/* Settings section */}
+      <div className="bg-brand-red/5 p-6 rounded-3xl border border-brand-red/10">
+        <h4 className="text-sm font-bold text-brand-red font-ui mb-4">Cài đặt giới hạn gian lận</h4>
+        <p className="text-xs text-brand-red/60 font-ui mb-4">Đặt số lần thoát màn hình cho phép cho từng chặng thi. Thí sinh đạt giới hạn sẽ tự động nộp bài.</p>
+        <div className="flex gap-4 items-end flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-xs font-bold text-slate-500 mb-2 block font-ui">Chặng thi</label>
+            <select
+              value={selectedChangId || ''}
+              onChange={e => setSelectedChangId(Number(e.target.value))}
+              className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold font-ui"
+            >
+              <option value="">-- Chọn chặng --</option>
+              {changs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
+            </select>
+          </div>
+          <div className="w-32">
+            <label className="text-xs font-bold text-slate-500 mb-2 block font-ui">Số lần cho phép</label>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={cheatLimit}
+              onChange={e => setCheatLimit(Number(e.target.value))}
+              className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold font-ui"
+            />
+          </div>
+          <button
+            onClick={handleSaveLimit}
+            disabled={!selectedChangId || saving}
+            className="btn-cyber bg-brand-red text-white h-12 px-8 font-ui font-bold"
+          >
+            {saving ? 'Đang lưu...' : 'Lưu'}
+          </button>
+        </div>
+      </div>
+
+      {/* Alert banner */}
+      <div className="flex items-center gap-4 bg-brand-red/5 p-8 rounded-3xl border border-brand-red/10">
         <ShieldAlert className="text-brand-red w-10 h-10" />
         <div>
           <h4 className="text-sm font-bold text-brand-red font-ui">Giám sát gian lận</h4>
           <p className="text-xs text-brand-red/60 font-ui">Phát hiện hoạt động bất thường: chuyển tab, thu nhỏ trình duyệt.</p>
         </div>
       </div>
+
+      {/* Logs table */}
       <div className="overflow-x-auto rounded-[2rem] border border-brand-red/10">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-brand-red/5 text-[10px] font-black text-brand-red uppercase tracking-widest">
             <tr><th className="px-6 py-4">Thí sinh</th><th className="px-6 py-4">Chặng</th><th className="px-6 py-4">Số lần vi phạm</th><th className="px-6 py-4">Lần cuối</th></tr>
           </thead>
           <tbody className="divide-y divide-brand-red/5">
-            {logs.map(log => (
+            {logs.length === 0 ? (
+              <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-ui">Chưa có cảnh báo gian lận nào.</td></tr>
+            ) : logs.map(log => (
               <tr key={log.id} className="hover:bg-brand-red/5 transition-colors">
                 <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{log.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{log.thi_sinh?.so_dien_thoai} • {log.thi_sinh?.don_vi?.ten}</div></td>
                 <td className="px-6 py-4 text-brand-blue font-black">{log.chang_thi?.ten}</td>
