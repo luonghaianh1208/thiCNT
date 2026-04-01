@@ -268,9 +268,14 @@ function RegisterPage({
     }
     setSubmitting(true);
     try {
-      const daThi = await kiemTraDaThi(sdt, chang.id);
-      if (daThi) {
+      const result = await kiemTraDaThi(sdt, chang.id, hoTen.trim(), parseInt(donViId));
+      if (result === 'sdt') {
         toast.error('Số điện thoại này đã thi chặng này rồi.');
+        setSubmitting(false);
+        return;
+      }
+      if (result === 'trung_lap') {
+        toast.error('Thông tin này đã được đăng ký thi chặng này (trùng họ tên và đơn vị).');
         setSubmitting(false);
         return;
       }

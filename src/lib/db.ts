@@ -101,13 +101,15 @@ export async function getDonViList(): Promise<DonVi[]> {
 }
 
 /** Kiểm tra thí sinh (theo SĐT) đã thi chặng này chưa — dùng RPC 1 query */
-export async function kiemTraDaThi(soDienThoai: string, changId: number): Promise<boolean> {
+export async function kiemTraDaThi(soDienThoai: string, changId: number, hoTen?: string, donViId?: number): Promise<'ok' | 'sdt' | 'trung_lap'> {
   const { data, error } = await supabase.rpc('kiem_tra_da_thi', {
     p_sdt: soDienThoai.trim(),
     p_chang_id: changId,
+    p_ho_ten: hoTen || null,
+    p_don_vi_id: donViId || null,
   });
   if (error) throw error;
-  return data as boolean;
+  return data as 'ok' | 'sdt' | 'trung_lap';
 }
 
 /** Tạo thí sinh mới và trả về ID */
