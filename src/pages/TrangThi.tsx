@@ -728,7 +728,7 @@ export default function TrangThi() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // Results
-  const [finalResult, setFinalResult] = useState<{ diem: number; so_cau_dung: number; thoi_gian_giay: number } | null>(null);
+  const [finalResult, setFinalResult] = useState<{ diem: number; so_cau_dung: number; thoi_gian_giay: number; tong_cau: number } | null>(null);
 
   // ─── Initial Load ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -962,7 +962,7 @@ export default function TrangThi() {
       setShowCheatOverlay(false);
       sessionStorage.removeItem(STORAGE_KEY);
 
-      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam });
+      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam, tong_cau: state.questions.length });
       setStage('result');
       toast.success('Nộp bài thành công!');
     } catch (err) {
@@ -1090,7 +1090,7 @@ export default function TrangThi() {
           <div className="mb-16">
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white text-center">
               <p className="text-[10px] font-ui font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">SỐ CÂU ĐÚNG</p>
-              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{questions.length}</div>
+              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{finalResult.tong_cau}</div>
             </div>
           </div>
 
