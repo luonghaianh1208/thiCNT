@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { 
+import {
   getThongKe, getAllChangThi, addChangThi, updateChangThi, deleteChangThi,
   getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
   getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
-  getKetQuaAdmin, getCanhBaoGianLan, getThiSinhDangThi,
+  getKetQuaAdmin, getCanhBaoGianLan,
   type ChangThi, type CauHoi, type DonVi
 } from '@/lib/db';
-import { 
+import {
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2,
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award, Activity
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,8 +32,7 @@ export default function TrangAdmin() {
   const [thiSinhs, setThiSinhs] = useState<any[]>([]);
   const [ketQuas, setKetQuas] = useState<any[]>([]);
   const [gianLanLogs, setGianLanLogs] = useState<any[]>([]);
-  const [thiSinhDangThis, setThiSinhDangThi] = useState<any[]>([]);
-  
+
   // Selection
   const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +45,7 @@ export default function TrangAdmin() {
     columns: PreviewCol[];
     data: Record<string, string>[];
     onConfirm: (data: Record<string, string>[]) => void;
-  }>({ open: false, title: '', columns: [], data: [], onConfirm: () => {} });
+  }>({ open: false, title: '', columns: [], data: [], onConfirm: () => { } });
 
   useEffect(() => {
     refreshData();
@@ -54,7 +53,7 @@ export default function TrangAdmin() {
 
   // Load changs when entering tabs that need it
   useEffect(() => {
-    if (['cau-hoi', 'ket-qua', 'gian-lan', 'dang-thi'].includes(activeTab)) {
+    if (['cau-hoi', 'ket-qua', 'gian-lan'].includes(activeTab)) {
       getAllChangThi().then(data => {
         setChangs(data);
         // Auto-select first chang if none selected
@@ -65,15 +64,6 @@ export default function TrangAdmin() {
     }
   }, [activeTab]);
 
-  // Auto-poll dang-thi tab every 5s
-  useEffect(() => {
-    if (activeTab !== 'dang-thi') return;
-    const interval = setInterval(() => {
-      getThiSinhDangThi(selectedChangId || undefined).then(setThiSinhDangThi).catch(console.error);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [activeTab, selectedChangId]);
-
   const refreshData = async () => {
     setLoading(true);
     try {
@@ -83,7 +73,6 @@ export default function TrangAdmin() {
       if (activeTab === 'thi-sinh') setThiSinhs(await getAllThiSinh());
       if (activeTab === 'ket-qua') setKetQuas(await getKetQuaAdmin(selectedChangId || undefined));
       if (activeTab === 'gian-lan') setGianLanLogs(await getCanhBaoGianLan(selectedChangId || undefined));
-      if (activeTab === 'dang-thi') setThiSinhDangThi(await getThiSinhDangThi(selectedChangId || undefined));
       if (activeTab === 'cau-hoi' && selectedChangId) setCauHois(await getCauHoiByChang(selectedChangId));
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -102,7 +91,6 @@ export default function TrangAdmin() {
     { id: 'thi-sinh', label: 'Thí sinh', icon: <Users className="w-5 h-5" /> },
     { id: 'ket-qua', label: 'Kết quả', icon: <Trophy className="w-5 h-5" /> },
     { id: 'gian-lan', label: 'Gian lận', icon: <ShieldAlert className="w-5 h-5" /> },
-    { id: 'dang-thi', label: 'Đang thi', icon: <Activity className="w-5 h-5" /> },
   ];
 
   return (
@@ -126,12 +114,11 @@ export default function TrangAdmin() {
           {TABS.map(t => (
             <button
               key={t.id}
-              onClick={() => { setActiveTab(t.id); if(window.innerWidth < 1024) setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-ui font-bold text-sm ${
-                activeTab === t.id 
-                  ? 'bg-brand-yellow text-brand-blue shadow-[0_10px_20px_rgba(250,189,50,0.2)] scale-105' 
+              onClick={() => { setActiveTab(t.id); if (window.innerWidth < 1024) setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-ui font-bold text-sm ${activeTab === t.id
+                  ? 'bg-brand-yellow text-brand-blue shadow-[0_10px_20px_rgba(250,189,50,0.2)] scale-105'
                   : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
+                }`}
             >
               {t.icon}
               {t.label}
@@ -141,7 +128,7 @@ export default function TrangAdmin() {
         </nav>
 
         <div className="p-6 border-t border-white/10 bg-brand-blue/30 backdrop-blur-md">
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-ui font-semibold hover:bg-brand-red hover:border-brand-red transition-all"
           >
@@ -165,7 +152,7 @@ export default function TrangAdmin() {
 
           <div className="flex items-center gap-4">
             {activeTab === 'cau-hoi' || activeTab === 'ket-qua' || activeTab === 'gian-lan' ? (
-              <select 
+              <select
                 className="bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-blue focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-ui"
                 value={selectedChangId || ''}
                 onChange={e => setSelectedChangId(e.target.value ? parseInt(e.target.value) : null)}
@@ -174,9 +161,9 @@ export default function TrangAdmin() {
                 {changs.map(c => <option key={c.id} value={c.id}>{c.ten.toUpperCase()}</option>)}
               </select>
             ) : null}
-            
+
             <div className="h-10 w-10 rounded-xl bg-brand-blue/5 border border-brand-blue/10 flex items-center justify-center text-brand-blue">
-               <Cpu size={20} className="animate-pulse" />
+              <Cpu size={20} className="animate-pulse" />
             </div>
           </div>
         </header>
@@ -242,7 +229,7 @@ export default function TrangAdmin() {
                           { label: 'Xem Kết quả', tab: 'ket-qua', icon: <Trophy /> },
                           { label: 'Cảnh báo Gian lận', tab: 'gian-lan', icon: <ShieldAlert /> },
                         ].map((btn, i) => (
-                          <button 
+                          <button
                             key={i}
                             onClick={() => setActiveTab(btn.tab as Tab)}
                             className="flex flex-col items-center gap-4 p-8 rounded-3xl bg-slate-50 border-2 border-slate-100 hover:border-brand-blue hover:bg-white transition-all group"
@@ -267,7 +254,6 @@ export default function TrangAdmin() {
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} />}
-                    {activeTab === 'dang-thi' && <DangThiManager sessions={thiSinhDangThis} changs={changs} selectedChangId={selectedChangId} />}
                   </div>
                 )}
               </>
@@ -358,23 +344,23 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Tên chặng</label>
-            <input className="input-admin-tech w-full" placeholder="Vd: Chặng 1" value={form.ten} onChange={e => setForm({...form, ten: e.target.value})} />
+            <input className="input-admin-tech w-full" placeholder="Vd: Chặng 1" value={form.ten} onChange={e => setForm({ ...form, ten: e.target.value })} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian bắt đầu</label>
-            <input className="input-admin-tech w-full" type="datetime-local" value={form.bat_dau} onChange={e => setForm({...form, bat_dau: e.target.value})} />
+            <input className="input-admin-tech w-full" type="datetime-local" value={form.bat_dau} onChange={e => setForm({ ...form, bat_dau: e.target.value })} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian kết thúc</label>
-            <input className="input-admin-tech w-full" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({...form, ket_thuc: e.target.value})} />
+            <input className="input-admin-tech w-full" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({ ...form, ket_thuc: e.target.value })} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số câu hỏi mỗi bài thi</label>
-            <input className="input-admin-tech w-full" type="number" min={1} max={100} placeholder="30" value={form.so_cau} onChange={e => setForm({...form, so_cau: parseInt(e.target.value) || 30})} />
+            <input className="input-admin-tech w-full" type="number" min={1} max={100} placeholder="30" value={form.so_cau} onChange={e => setForm({ ...form, so_cau: parseInt(e.target.value) || 30 })} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời lượng làm bài (phút)</label>
-            <input className="input-admin-tech w-full" type="number" min={1} max={180} placeholder="25" value={form.thoi_gian_phut} onChange={e => setForm({...form, thoi_gian_phut: parseInt(e.target.value) || 25})} />
+            <input className="input-admin-tech w-full" type="number" min={1} max={180} placeholder="25" value={form.thoi_gian_phut} onChange={e => setForm({ ...form, thoi_gian_phut: parseInt(e.target.value) || 25 })} />
           </div>
         </div>
         <div className="flex gap-3">
@@ -414,8 +400,8 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
                   <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">{c.thoi_gian_phut} phút</span>
                 </td>
                 <td className="px-5 py-4 space-x-1">
-                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: toInputVN(c.bat_dau), ket_thuc: toInputVN(c.ket_thuc), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15}/></button>
-                  <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={15}/></button>
+                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: toInputVN(c.bat_dau), ket_thuc: toInputVN(c.ket_thuc), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15} /></button>
+                  <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={15} /></button>
                 </td>
               </tr>
             ))}
@@ -482,12 +468,14 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
           { header: 'B', key: 'dap_an_b', type: 'text' },
           { header: 'C', key: 'dap_an_c', type: 'text' },
           { header: 'D', key: 'dap_an_d', type: 'text' },
-          { header: 'Đáp án', key: 'dap_an_dung', type: 'select', options: [
-            { value: 'A', label: 'A' },
-            { value: 'B', label: 'B' },
-            { value: 'C', label: 'C' },
-            { value: 'D', label: 'D' },
-          ]},
+          {
+            header: 'Đáp án', key: 'dap_an_dung', type: 'select', options: [
+              { value: 'A', label: 'A' },
+              { value: 'B', label: 'B' },
+              { value: 'C', label: 'C' },
+              { value: 'D', label: 'D' },
+            ]
+          },
         ],
         data: clean,
         onConfirm: async (editedData) => {
@@ -559,11 +547,11 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
             {(searchText ? filteredCauHois : cauHois).map((q, idx) => (
               <div key={q.id} className="p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all">
                 <div className="flex gap-4">
-                  <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx+1).padStart(2,'0')}</span>
+                  <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                   <div className="flex-1">
                     <p className="font-semibold text-slate-800 mb-3 font-ui">{q.noi_dung}</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-ui">
-                      {['a','b','c','d'].map(k => {
+                      {['a', 'b', 'c', 'd'].map(k => {
                         const isCorrect = q.dap_an_dung.toUpperCase() === k.toUpperCase();
                         return (
                           <div key={k} className={`px-3 py-2 rounded-xl border font-semibold ${isCorrect ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
@@ -722,6 +710,7 @@ const LOAI_DON_VI = [
   { value: 'phuong', label: 'Phường', color: 'bg-blue-100 text-blue-700 border-blue-200' },
   { value: 'xa', label: 'Xã', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   { value: 'dac_khu', label: 'Đặc khu', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  { value: 'khac', label: 'Khác', color: 'bg-purple-100 text-purple-700 border-purple-200' },
 ];
 
 // Helper to get badge color class
@@ -753,10 +742,11 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
 
   const downloadTemplate = () => {
     const sample = [
+      { 'Tên đơn vị': 'Phường Hải Dương', 'Loại': 'phuong' },
       { 'Tên đơn vị': 'Phường Hồng Bàng', 'Loại': 'phuong' },
-      { 'Tên đơn vị': 'Phường Lê Chân', 'Loại': 'phuong' },
-      { 'Tên đơn vị': 'Xã Tân Dương', 'Loại': 'xa' },
-      { 'Tên đơn vị': 'Đặc khu Đồ Sơn', 'Loại': 'dac_khu' },
+      { 'Tên đơn vị': 'Xã Kiến Thuỵ', 'Loại': 'xa' },
+      { 'Tên đơn vị': 'Đặc khu Cát Hải', 'Loại': 'dac_khu' },
+      { 'Tên đơn vị': 'Trường đại học Hải Phòng', 'Loại': 'khac' },
     ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
@@ -882,7 +872,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
                 </span>
               </div>
               <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
-                <Trash2 size={14}/>
+                <Trash2 size={14} />
               </button>
             </div>
           ))}
@@ -950,7 +940,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
                 <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
                 <td className="px-6 py-4">
                   <button onClick={() => handleDelete(ts.id)} className="p-2 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                    <Trash2 size={15}/>
+                    <Trash2 size={15} />
                   </button>
                 </td>
               </tr>
@@ -1030,7 +1020,7 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
           <tbody className="divide-y divide-slate-50">
             {sortedKetQua.map((r, i) => (
               <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4"><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${i<3 ? 'bg-brand-yellow text-brand-blue' : 'bg-slate-100 text-slate-400'}`}>{i+1}</span></td>
+                <td className="px-6 py-4"><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${i < 3 ? 'bg-brand-yellow text-brand-blue' : 'bg-slate-100 text-slate-400'}`}>{i + 1}</span></td>
                 <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.so_dien_thoai}</div></td>
                 <td className="px-6 py-4 font-black">{r.thi_sinh?.don_vi?.ten}</td>
                 <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{r.diem}</td>
@@ -1069,70 +1059,6 @@ function GianLanManager({ logs }: { logs: any[] }) {
                 <td className="px-6 py-4 text-slate-400 text-xs">{new Date(log.lan_cuoi).toLocaleString()}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function DangThiManager({ sessions, changs, selectedChangId }: {
-  sessions: any[]; changs: any[]; selectedChangId: number | null;
-}) {
-  const [elapsedTimes, setElapsedTimes] = React.useState<Record<number, number>>({});
-
-  // Auto-update elapsed time every second
-  React.useEffect(() => {
-    if (sessions.length === 0) return;
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const newTimes: Record<number, number> = {};
-      for (const s of sessions) {
-        newTimes[s.id] = Math.floor((now - new Date(s.start_time).getTime()) / 1000);
-      }
-      setElapsedTimes(newTimes);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [sessions]);
-
-  const formatElapsed = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}m ${s}s`;
-  };
-
-  const totalQuestions = changs.find(c => c.id === selectedChangId)?.so_cau || 0;
-
-  return (
-    <div className="p-4 space-y-8">
-      <div className="flex items-center gap-4 bg-brand-blue/5 p-8 rounded-3xl border border-brand-blue/10">
-        <Activity className="text-brand-blue w-10 h-10 animate-pulse" />
-        <div>
-          <h4 className="text-sm font-bold text-brand-blue font-ui">Thí sinh đang thi</h4>
-          <p className="text-xs text-brand-blue/60 font-ui">{sessions.length} thí sinh đang làm bài • Dữ liệu cập nhật tự động</p>
-        </div>
-      </div>
-      <div className="overflow-x-auto rounded-[2rem] border border-brand-blue/10">
-        <table className="w-full text-left text-sm font-bold">
-          <thead className="bg-brand-blue/5 text-[10px] font-black text-brand-blue uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Thí sinh</th><th className="px-6 py-4">Chặng</th><th className="px-6 py-4">Đã thi</th><th className="px-6 py-4">Câu hiện tại</th><th className="px-6 py-4">Đơn vị</th></tr>
-          </thead>
-          <tbody className="divide-y divide-brand-blue/5">
-            {sessions.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">Không có thí sinh nào đang thi</td></tr>
-            ) : sessions.map(session => {
-              const elapsed = elapsedTimes[session.id] || Math.floor((Date.now() - new Date(session.start_time).getTime()) / 1000);
-              const answeredCount = Object.keys(session.answers || {}).length;
-              return (
-                <tr key={session.id} className="hover:bg-brand-blue/5 transition-colors">
-                  <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{session.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{session.thi_sinh?.so_dien_thoai}</div></td>
-                  <td className="px-6 py-4 text-brand-blue font-black">{session.chang_thi?.ten}</td>
-                  <td className="px-6 py-4"><span className="px-4 py-1.5 bg-brand-blue text-white text-lg font-tech font-black rounded-xl shadow-lg shadow-brand-blue/20">{formatElapsed(elapsed)}</span></td>
-                  <td className="px-6 py-4"><span className="text-slate-600">{answeredCount} / {totalQuestions}</span></td>
-                  <td className="px-6 py-4 text-slate-500 text-xs">{session.thi_sinh?.don_vi?.ten || session.thi_sinh?.ten_don_vi_nho}</td>
-                </tr>
-              );
-            })}
           </tbody>
         </table>
       </div>

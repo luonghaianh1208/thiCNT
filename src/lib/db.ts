@@ -63,14 +63,6 @@ export interface CanhBaoGianLan {
   created_at: string;
 }
 
-export interface ExamSession {
-  id: number;
-  thi_sinh_id: number;
-  chang_id: number;
-  start_time: string;
-  completed: boolean;
-}
-
 // ─── Public (Contestant) functions ───────────────────────────────────────────
 
 /** Lấy chặng thi đang mở (hiện tại trong khoảng thời gian) */
@@ -187,50 +179,6 @@ export async function getCanhBaoGianLan(changId?: number): Promise<any[]> {
     .from('canh_bao_gian_lan')
     .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_don_vi_nho, don_vi(ten)), chang_thi(ten)')
     .order('so_lan', { ascending: false });
-  if (changId) query = query.eq('chang_id', changId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
-}
-
-// ─── Exam Session (Real-time tracking) ───────────────────────────────────────
-
-/** Tạo session khi thí sinh bắt đầu thi */
-export async function createExamSession(thiSinhId: number, changId: number): Promise<void> {
-  const { error } = await supabase.from('exam_sessions').insert({
-    thi_sinh_id: thiSinhId,
-    chang_id: changId,
-    start_time: new Date().toISOString(),
-    last_update: new Date().toISOString(),
-    current_question: 0,
-    answers: {},
-    completed: false,
-  });
-  if (error) throw error;
-}
-
-
-/** Đánh dấu session hoàn thành (khi nộp bài) */
-export async function completeExamSession(thiSinhId: number, changId: number): Promise<void> {
-  const { error } = await supabase
-    .from('exam_sessions')
-    .update({
-      completed: true,
-      last_update: new Date().toISOString(),
-    })
-    .eq('thi_sinh_id', thiSinhId)
-    .eq('chang_id', changId)
-    .eq('completed', false);
-  if (error) throw error;
-}
-
-/** Lấy danh sách thí sinh đang thi (kèm thông tin và thời gian đã thi) */
-export async function getThiSinhDangThi(changId?: number): Promise<any[]> {
-  let query = supabase
-    .from('exam_sessions')
-    .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_don_vi_nho, don_vi(ten)), chang_thi(ten)')
-    .eq('completed', false)
-    .order('start_time', { ascending: true });
   if (changId) query = query.eq('chang_id', changId);
   const { data, error } = await query;
   if (error) throw error;

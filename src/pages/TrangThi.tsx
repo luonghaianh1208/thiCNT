@@ -8,8 +8,6 @@ import {
   nopBaiThi,
   ghiCanhBaoGianLan,
   kiemTraDaThi,
-  createExamSession,
-  completeExamSession,
   type ChangThi,
   type DonVi,
   type CauHoi,
@@ -885,8 +883,6 @@ export default function TrangThi() {
       setCurrentQuestionIdx(0);
       setStage('exam');
 
-      // Track exam session
-      await createExamSession(tsId, chang.id);
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khởi tạo bài thi.');
@@ -918,9 +914,6 @@ export default function TrangThi() {
           dung: state.answers[q.id] === q.dap_an_dung
         }))
       });
-
-      // Mark exam session as completed
-      await completeExamSession(state.thiSinhId, state.chang.id);
 
       setFinalResult({ diem: Math.round(diem), so_cau_dung: correctAnswers, thoi_gian_giay: thoi_gian_lam });
       sessionStorage.removeItem(STORAGE_KEY);
