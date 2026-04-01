@@ -5,7 +5,7 @@ import {
   getDonViList,
   taoThiSinh,
   layCauHoiNgauNhien,
-  nopBaiThi,
+  nopBaiVaChamDiem,
   ghiCanhBaoGianLan,
   kiemTraDaThi,
   type ChangThi,
@@ -506,7 +506,7 @@ function ExamPage({
               <img src={LOGO_URL} alt="Logo" className="h-8 w-auto" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-tech font-black tracking-tight truncate max-w-[120px] sm:max-w-xs">
+              <h2 className="text-xs sm:text-sm font-ui font-black tracking-tight truncate max-w-[120px] sm:max-w-xs">
                 {chang.ten.toUpperCase()}
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -541,7 +541,7 @@ function ExamPage({
           <div className="flex-1 space-y-6">
             <div className="card-tech bg-white p-6 md:p-12 border-2 border-brand-blue/5 min-h-[350px] flex flex-col">
               <div className="flex items-center gap-4 mb-8">
-                <div className="px-4 py-2 bg-brand-blue text-white text-xs font-tech font-black rounded-xl">
+                <div className="px-4 py-2 bg-brand-blue text-white text-xs font-ui font-black rounded-xl">
                   CÂU {currentQuestionIdx + 1} / {questions.length}
                 </div>
                 <div className="h-0.5 flex-1 bg-slate-100" />
@@ -557,15 +557,16 @@ function ExamPage({
               </p>
 
               <div className="grid grid-cols-1 gap-4">
-                {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map(key => {
+                {(optionOrders[q.id] || ['a', 'b', 'c', 'd']).map((key, displayIdx) => {
+                  const displayLabel = ['A', 'B', 'C', 'D'][displayIdx];
                   const optionText = q[`dap_an_${key}` as keyof CauHoi] as string;
                   if (!optionText) return null;
-                  const isSelected = answers[q.id] === key.toUpperCase();
+                  const isSelected = answers[q.id] === key; // track by original key
 
                   return (
                     <button
                       key={key}
-                      onClick={() => onAnswer(q.id, key.toUpperCase())}
+                      onClick={() => onAnswer(q.id, key)} // store original key (lowercase)
                       className={`group relative p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 sm:gap-5
                         ${isSelected
                           ? 'bg-brand-blue border-brand-blue text-white shadow-xl -translate-x-1'
@@ -573,7 +574,7 @@ function ExamPage({
                     >
                       <span className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-sm sm:text-lg transition-colors
                         ${isSelected ? 'bg-white text-brand-blue' : 'bg-slate-100 text-slate-400 group-hover:bg-brand-blue/10 group-hover:text-brand-blue'}`}>
-                        {key.toUpperCase()}
+                        {displayLabel}  {/* Luôn hiển thị A, B, C, D theo vị trí */}
                       </span>
                       <span className="flex-1 font-bold text-sm sm:text-base pt-0.5">{optionText}</span>
                       {isSelected && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />}
@@ -615,7 +616,7 @@ function ExamPage({
             {/* Question Navigator */}
             <div className="card-tech bg-white p-6 border-brand-blue/10">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-tech font-black text-brand-blue uppercase tracking-widest text-xs flex items-center gap-2">
+                <h3 className="font-ui font-black text-brand-blue uppercase tracking-widest text-xs flex items-center gap-2">
                   <Cpu size={16} /> Câu hỏi
                 </h3>
                 <div className="px-3 py-1 bg-brand-blue/5 rounded-lg text-[10px] font-black text-brand-blue">
@@ -656,7 +657,7 @@ function ExamPage({
 
             {/* Progress */}
             <div className="card-tech bg-brand-blue text-white p-6">
-              <h3 className="font-tech font-black uppercase tracking-widest text-xs opacity-60 mb-4 flex items-center gap-2">
+              <h3 className="font-ui font-black uppercase tracking-widest text-xs opacity-60 mb-4 flex items-center gap-2">
                 <Activity size={14} /> Tiến độ
               </h3>
               <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden mb-3">
@@ -672,13 +673,13 @@ function ExamPage({
 
             {/* Security Status */}
             <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
-              <div className="flex items-center gap-2 font-tech font-black uppercase tracking-widest text-xs text-brand-blue mb-3">
+              <div className="flex items-center gap-2 font-ui font-black uppercase tracking-widest text-xs text-brand-blue mb-3">
                 <ShieldCheck size={14} /> Trạng thái bảo mật
               </div>
               <p className="text-xs text-slate-500 font-ui leading-relaxed">
                 Hệ thống đang giám sát phiên thi. Vui lòng không thoát trình duyệt.
               </p>
-              <div className="flex items-center gap-2 mt-3 text-brand-yellow text-[10px] font-black uppercase tracking-widest">
+              <div className="flex items-center gap-2 mt-3 text-brand-yellow text-[10px] font-black uppercase tracking-widest font-ui">
                 <Activity size={12} className="animate-pulse" /> Đang theo dõi
               </div>
             </div>
@@ -717,6 +718,7 @@ export default function TrangThi() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [optionOrders, setOptionOrders] = useState<Record<number, string[]>>({});
   const [formHoTen, setFormHoTen] = useState('');
+  const [formDonViId, setFormDonViId] = useState<number | null>(null);
 
   // Anti-cheat
   const [cheatCount, setCheatCount] = useState(0);
@@ -885,6 +887,7 @@ export default function TrangThi() {
       setExamStartTime(startTime);
       setTimeLeft(totalDuration);
       setFormHoTen(hoTen);
+      setFormDonViId(parseInt(donViId));
       setCurrentQuestionIdx(0);
       setStage('exam');
 
@@ -903,24 +906,19 @@ export default function TrangThi() {
     setShowSubmitConfirm(false);
     try {
       const thoi_gian_lam = (state.chang.thoi_gian_phut * 60) - timeLeft;
-      const correctAnswers = state.questions.filter(q => state.answers[q.id] === q.dap_an_dung).length;
-      const diem = correctAnswers; // Mỗi câu đúng = 1 điểm
 
-      await nopBaiThi({
+      // Server-side scoring — client không biết đáp án đúng
+      const result = await nopBaiVaChamDiem({
         thi_sinh_id: state.thiSinhId,
         chang_id: state.chang.id,
-        diem: diem,
-        so_cau_dung: correctAnswers,
-        tong_cau: state.questions.length,
         thoi_gian_lam,
-        answers: state.questions.map(q => ({
+        answers: state.questions.map((q: CauHoi) => ({
           cau_hoi_id: q.id,
           lua_chon: state.answers[q.id] || '',
-          dung: state.answers[q.id] === q.dap_an_dung
-        }))
+        })),
       });
 
-      setFinalResult({ diem: Math.round(diem), so_cau_dung: correctAnswers, thoi_gian_giay: thoi_gian_lam });
+      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam });
       sessionStorage.removeItem(STORAGE_KEY);
       setStage('result');
       toast.success('Nộp bài thành công!');
@@ -1027,6 +1025,7 @@ export default function TrangThi() {
 
   // Result
   if (stage === 'result' && finalResult) {
+    const donViName = donVis.find(d => d.id === formDonViId)?.ten || '';
     return (
       <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 relative overflow-hidden circuit-pattern">
         <div className="absolute inset-0 bg-brand-blue/5 bg-scanlines opacity-20" />
@@ -1037,22 +1036,24 @@ export default function TrangThi() {
             <div className="absolute inset-0 bg-brand-yellow/20 rounded-full blur-3xl scale-125 animate-pulse-soft" />
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-tech font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO KẾT QUẢ</h2>
-          <p className="text-slate-400 font-black text-xs md:text-sm uppercase tracking-[0.4em] mb-16">CHÚC MỪNG BẠN ĐÃ HOÀN THÀNH!</p>
+          <h2 className="text-3xl md:text-5xl font-ui font-black text-brand-blue mb-4 uppercase tracking-tighter">BÁO CÁO KẾT QUẢ</h2>
+          <p className="text-slate-500 font-ui font-bold text-sm md:text-base mb-16">
+            Chúc mừng đồng chí <span className="text-brand-blue font-black">{formHoTen}</span>{donViName ? ` - ${donViName}` : ''} đã hoàn thành chặng {chang?.ten}!
+          </p>
 
           <div className="mb-16">
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white text-center">
-              <p className="text-[10px] font-tech font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">SỐ CÂU ĐÚNG</p>
+              <p className="text-[10px] font-ui font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">SỐ CÂU ĐÚNG</p>
               <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{questions.length}</div>
             </div>
           </div>
 
-          <div className="bg-brand-beige/20 p-8 rounded-3xl mb-16 flex items-center justify-between font-bold text-slate-600">
+          <div className="bg-brand-beige/20 p-8 rounded-3xl mb-16 flex items-center justify-between font-bold text-slate-600 font-ui">
             <div className="flex gap-4 items-center">
               <Clock className="text-brand-blue" />
               <span>Thời gian hoàn thành:</span>
             </div>
-            <span className="text-xl text-brand-blue">
+            <span className="text-xl text-brand-blue font-ui font-black">
               {Math.floor(finalResult.thoi_gian_giay / 60)} phút {finalResult.thoi_gian_giay % 60} giây
             </span>
           </div>
@@ -1067,14 +1068,14 @@ export default function TrangThi() {
           {cheatCount > 0 && (
             <div className="mt-10 flex items-center justify-center gap-3 p-4 bg-brand-red/5 text-brand-red rounded-2xl border border-brand-red/10 animate-in fade-in duration-1000">
               <ShieldAlert size={16} />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] font-ui">
                 Cảnh báo: Đã ghi nhận {cheatCount} lần vi phạm gian lận.
               </span>
             </div>
           )}
         </div>
 
-        <div className="mt-12 flex items-center gap-6 text-white/20 font-tech font-black text-[10px] uppercase tracking-[0.4em]">
+        <div className="mt-12 flex items-center gap-6 text-white/20 font-ui font-bold text-[10px] uppercase tracking-[0.4em]">
           <span className="flex items-center gap-2"><Info size={14} /> Dữ liệu đã được mã hóa</span>
           <div className="w-1 h-1 bg-white/20 rounded-full" />
           <span>Thành Đoàn Hải Phòng</span>

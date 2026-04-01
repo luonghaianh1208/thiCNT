@@ -24,7 +24,7 @@ export interface CauHoi {
   dap_an_b: string;
   dap_an_c: string;
   dap_an_d: string;
-  dap_an_dung: string;
+  dap_an_dung?: string; // Chỉ trả về cho admin, KHÔNG trả về cho thí sinh
   chang_id: number;
   active: boolean;
 }
@@ -128,11 +128,13 @@ export async function taoThiSinh(data: {
   return result.id;
 }
 
-/** Lấy câu hỏi ngẫu nhiên cho chặng thi */
+/** Lấy câu hỏi ngẫu nhiên cho chặng thi
+ *  SECURITY: KHÔNG select dap_an_dung — đáp án đúng chỉ được chấm server-side
+ */
 export async function layCauHoiNgauNhien(changId: number, soCau: number): Promise<CauHoi[]> {
   const { data, error } = await supabase
     .from('cau_hoi')
-    .select('*')
+    .select('id, noi_dung, dap_an_a, dap_an_b, dap_an_c, dap_an_d, chang_id, active')
     .eq('chang_id', changId)
     .eq('active', true);
   if (error) throw error;
@@ -147,18 +149,24 @@ export async function layCauHoiNgauNhien(changId: number, soCau: number): Promis
   return shuffled.slice(0, Math.min(soCau, shuffled.length));
 }
 
-/** Nộp bài thi */
-export async function nopBaiThi(data: {
+/** Nộp bài và chấm điểm server-side (SECURITY: đáp án đúng không bao giờ lộ ra client)
+ *  answers: [{cau_hoi_id, lua_chon}] — lua_chon là key gốc lowercase (a/b/c/d)
+ *  Returns: {diem, so_cau_dung, tong_cau}
+ */
+export async function nopBaiVaChamDiem(params: {
   thi_sinh_id: number;
   chang_id: number;
-  diem: number;
-  so_cau_dung: number;
-  tong_cau: number;
   thoi_gian_lam: number;
-  answers: AnswerRecord[];
-}): Promise<void> {
-  const { error } = await supabase.from('ket_qua').insert(data);
+  answers: { cau_hoi_id: number; lua_chon: string }[];
+}): Promise<{ diem: number; so_cau_dung: number; tong_cau: number }> {
+  const { data, error } = await supabase.rpc('nop_bai_va_cham_diem', {
+    p_thi_sinh_id: params.thi_sinh_id,
+    p_chang_id: params.chang_id,
+    p_thoi_gian_lam: params.thoi_gian_lam,
+    p_answers: params.answers,
+  });
   if (error) throw error;
+  return data as { diem: number; so_cau_dung: number; tong_cau: number };
 }
 
 // ─── Gian lận ─────────────────────────────────────────────────────────────────
