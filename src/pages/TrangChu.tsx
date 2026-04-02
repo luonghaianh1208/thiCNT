@@ -134,38 +134,38 @@ export default function TrangChu() {
         </div>
 
         <div className="section-container relative z-10 text-center">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-full mb-12 animate-pulse-soft">
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-yellow shadow-[0_0_15px_#FABD32]"></div>
-            <span className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-ui whitespace-nowrap">Cuộc thi trực tuyến • Thành đoàn Hải Phòng • 2026</span>
-          </div>
+          <div className="relative bg-brand-dark/40 backdrop-blur-md border border-white/10 rounded-3xl px-8 md:px-16 py-12 md:py-16 max-w-4xl mx-auto shadow-[0_8px_60px_rgba(0,0,0,0.4)]">
+            {/* Subtle top accent line */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-brand-yellow/60 to-transparent" />
 
-          <h1 className="text-4xl md:text-7xl font-black text-white mb-8 leading-[1.2] font-ui drop-shadow-2xl">
-            Thanh niên Hải Phòng với<br className="hidden md:block" />
-            <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
-              {' '}Chuyển đổi số, Chuyển đổi xanh
-            </span>
-          </h1>
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 leading-[1.2] font-ui drop-shadow-2xl">
+              Thanh niên Hải Phòng với<br className="hidden md:block" />
+              <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
+                {' '}Chuyển đổi số, Chuyển đổi xanh
+              </span>
+            </h1>
 
-          <p className="text-lg md:text-2xl text-white/90 mb-16 max-w-3xl mx-auto font-semibold leading-relaxed px-6 font-ui italic">
-            "Hành động vì thành phố đáng sống"
-          </p>
+            <p className="text-base md:text-xl text-white/80 mb-10 max-w-2xl mx-auto font-semibold leading-relaxed font-ui italic">
+              "Hành động vì thành phố đáng sống"
+            </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 px-6">
-            <a
-              href="#lich-thi"
-              className={`w-full sm:w-auto relative font-black text-xl px-14 py-6 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveChang ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
-            >
-              <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
-              <PlayCircle className="w-7 h-7" />
-              {hasActiveChang ? 'Vào thi ngay' : 'Xem lịch thi'}
-              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a
-              href="#gioi-thieu"
-              className="w-full sm:w-auto border-2 border-white/40 text-white font-bold text-base px-10 py-5 rounded-2xl hover:bg-white/10 transition-all font-ui flex items-center justify-center"
-            >
-              Hướng dẫn chi tiết
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
+              <a
+                href="#lich-thi"
+                className={`w-full sm:w-auto relative font-black text-lg px-12 py-5 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveChang ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
+              >
+                <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
+                <PlayCircle className="w-6 h-6" />
+                {hasActiveChang ? 'Vào thi ngay' : 'Xem lịch thi'}
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+              <a
+                href="#gioi-thieu"
+                className="w-full sm:w-auto border-2 border-white/30 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/10 transition-all font-ui flex items-center justify-center"
+              >
+                Hướng dẫn chi tiết
+              </a>
+            </div>
           </div>
 
           {/* Stats */}
