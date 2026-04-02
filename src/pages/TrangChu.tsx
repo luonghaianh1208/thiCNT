@@ -134,11 +134,11 @@ export default function TrangChu() {
         </div>
 
         <div className="section-container relative z-10 text-center">
-          <div className="relative bg-brand-dark/40 backdrop-blur-md border border-white/10 rounded-3xl px-8 md:px-16 py-12 md:py-16 max-w-4xl mx-auto shadow-[0_8px_60px_rgba(0,0,0,0.4)]">
+          <div className="relative bg-brand-dark/40 backdrop-blur-md border border-white/10 rounded-3xl px-8 md:px-16 py-12 md:py-16 max-w-5xl mx-auto w-full shadow-[0_8px_60px_rgba(0,0,0,0.4)]">
             {/* Subtle top accent line */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-brand-yellow/60 to-transparent" />
 
-            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 leading-[1.2] font-ui drop-shadow-2xl">
+            <h1 className="font-black text-white mb-6 leading-[1.15] font-ui drop-shadow-2xl" style={{ fontSize: 'clamp(1.8rem, 4.5vw, 3.5rem)' }}>
               Thanh niên Hải Phòng với<br className="hidden md:block" />
               <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
                 {' '}Chuyển đổi số, Chuyển đổi xanh
