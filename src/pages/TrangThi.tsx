@@ -13,6 +13,7 @@ import {
   type DonVi,
   type CauHoi,
 } from '@/lib/db';
+import { SearchableSelect } from '@/components/SearchableSelect';
 import {
   Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft,
   ShieldCheck, Award, Cpu, Activity, Zap, ShieldAlert, Clock, BookOpen, User,
@@ -347,16 +348,13 @@ function RegisterPage({
             </div>
             <div className="space-y-3">
               <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest font-ui block">Đơn vị</label>
-              <select
+              <SearchableSelect
                 value={donViId}
-                onChange={e => setDonViId(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 text-base font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none appearance-none font-ui"
-              >
-                <option value="">CHỌN ĐƠN VỊ...</option>
-                {donVis.map(dv => (
-                  <option key={dv.id} value={dv.id}>{dv.ten}</option>
-                ))}
-              </select>
+                onChange={setDonViId}
+                options={donVis.map(dv => ({ value: dv.id.toString(), label: dv.ten }))}
+                placeholder="CHỌN ĐƠN VỊ..."
+                className="w-full"
+              />
             </div>
           </div>
 
