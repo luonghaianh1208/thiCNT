@@ -187,14 +187,7 @@ export default function TrangChu() {
       </section>
 
       {/* ─── Về Cuộc Thi ─── */}
-      <section id="gioi-thieu" className="py-28 bg-white relative overflow-hidden">
-        {/* Background image with overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2026/04/San-khau-1.jpg')" }}
-        >
-          <div className="absolute inset-0 bg-white/85"></div>
-        </div>
+      <section id="gioi-thieu" className="py-28 bg-white relative">
         <div className="section-container">
           <div className="flex flex-col lg:flex-row gap-20 lg:items-center">
             <div className="flex-1 space-y-10">
