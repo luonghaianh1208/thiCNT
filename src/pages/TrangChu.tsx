@@ -148,20 +148,15 @@ export default function TrangChu() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 px-6">
-            <button
-              onClick={() => navigate('/thi')}
-              className={`w-full sm:w-auto relative font-black text-xl px-14 py-6 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)]
-                ${hasActiveChang
-                  ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400'
-                  : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'
-                }`}
+            <a
+              href="#lich-thi"
+              className={`w-full sm:w-auto relative font-black text-xl px-14 py-6 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveChang ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
             >
               <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
               <PlayCircle className="w-7 h-7" />
-              Vào thi ngay
-              {!hasActiveChang && <span className="text-brand-yellow/80 font-normal text-sm ml-1">(chưa đến giờ)</span>}
+              {hasActiveChang ? 'Vào thi ngay' : 'Xem lịch thi'}
               <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </a>
             <a
               href="#gioi-thieu"
               className="w-full sm:w-auto border-2 border-white/40 text-white font-bold text-base px-10 py-5 rounded-2xl hover:bg-white/10 transition-all font-ui flex items-center justify-center"
@@ -356,21 +351,6 @@ export default function TrangChu() {
           </div>
         </div>
       </section>
-
-      {/* ─── Sticky Floating CTA (when active) ─── */}
-      {hasActiveChang && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom duration-500">
-          <button
-            onClick={() => navigate('/thi')}
-            className="flex items-center gap-3 bg-brand-yellow text-brand-blue font-black text-base px-10 py-4 rounded-full shadow-[0_8px_40px_rgba(250,189,50,0.5)] hover:bg-yellow-400 hover:shadow-[0_8px_50px_rgba(250,189,50,0.7)] transition-all group"
-          >
-            <span className="w-3 h-3 rounded-full bg-brand-blue/30 animate-ping absolute"></span>
-            <PlayCircle size={22} />
-            Vào thi ngay — {activeChang?.ten}
-            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-      )}
 
       {/* ─── Footer ─── */}
       <footer className="bg-white border-t border-brand-blue/10 py-20 relative overflow-hidden">

@@ -101,6 +101,17 @@ export async function getDonViList(): Promise<DonVi[]> {
   return data || [];
 }
 
+/** Kiểm tra thí sinh đã thi bất kỳ chặng nào chưa — trả về tên chặng đã thi, rỗng nếu chưa thi */
+export async function kiemTraDaThiChu(soDienThoai: string, hoTen: string, donViId: number): Promise<string> {
+  const { data, error } = await supabase.rpc('kiem_tra_da_thi_chu', {
+    p_sdt: soDienThoai.trim(),
+    p_ho_ten: hoTen.trim(),
+    p_don_vi_id: donViId,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
 /** Kiểm tra thí sinh (theo SĐT) đã thi chặng này chưa — dùng RPC 1 query */
 export async function kiemTraDaThi(soDienThoai: string, changId: number, hoTen?: string, donViId?: number): Promise<'ok' | 'sdt' | 'trung_lap'> {
   const { data, error } = await supabase.rpc('kiem_tra_da_thi', {

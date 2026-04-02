@@ -8,6 +8,7 @@ import {
   nopBaiVaChamDiem,
   ghiCanhBaoGianLan,
   kiemTraDaThi,
+  kiemTraDaThiChu,
   deleteThiSinh,
   type ChangThi,
   type DonVi,
@@ -278,6 +279,13 @@ function RegisterPage({
       }
       if (result === 'trung_lap') {
         toast.error('Thông tin này đã được đăng ký thi chặng này (trùng họ tên và đơn vị).');
+        setSubmitting(false);
+        return;
+      }
+      // Check đã thi chặng nào khác chưa
+      const daThiChu = await kiemTraDaThiChu(sdt, hoTen.trim(), parseInt(donViId));
+      if (daThiChu) {
+        toast.error(`Đồng chí ${hoTen.trim()} đã hoàn thành chặng thi "${daThiChu}".`);
         setSubmitting(false);
         return;
       }
