@@ -122,12 +122,15 @@ export default function TrangChu() {
       </nav>
 
       {/* ─── Hero Section ─── */}
-      <section className="relative min-h-[95vh] flex items-center pt-20 pb-32 overflow-hidden bg-hero-cyber">
+      <section className="relative min-h-[95vh] flex items-center pt-20 pb-32 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-blue/40 via-transparent to-brand-beige/5"></div>
+          <img
+            src="https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2026/04/San-khau-1.jpg"
+            alt=""
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/70 via-brand-dark/50 to-brand-dark/80"></div>
           <div className="absolute inset-0 bg-scanlines opacity-5 pointer-events-none"></div>
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-yellow/5 blur-[120px] rounded-full"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-blue/10 blur-[150px] rounded-full"></div>
         </div>
 
         <div className="section-container relative z-10 text-center">
