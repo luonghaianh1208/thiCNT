@@ -8,7 +8,7 @@
 
 - **Tên dự án:** Thi Trực tuyến Chuyển đổi số — Thành đoàn Hải Phòng 2026
 - **Mục đích:** Hệ thống thi trắc nghiệm trực tuyến cho thanh niên Hải Phòng
-- **URL Netlify:** https://thichuyendoisothanhdoanhaiphong.netlify.app (auto deploy từ `main`)
+- **URL Netlify:** https://thichuyendoiso-thanhdoanhaiphong.netlify.app (auto deploy từ `main`)
 - **Supabase Project:** `nloaugmnbqcvzqfiotyl`
 - **Repo:** https://github.com/luonghaianh1208/thichuyendoiso.thanhdoanhaiphong
 - **Stack:** React 18 + TypeScript + Vite + Tailwind CSS v4 + Supabase + Netlify

@@ -38,8 +38,6 @@ export default function TrangChu() {
 
   // Compute stats from actual chang data
   const statsChang = activeChang || nextChang || changs[0];
-  const totalSoCau = changs.reduce((sum, c) => sum + c.so_cau, 0);
-  const totalThoiGian = changs.reduce((sum, c) => sum + c.thoi_gian_phut, 0);
 
   return (
     <div className="min-h-screen bg-brand-beige/5 selection:bg-brand-yellow selection:text-brand-blue overflow-x-hidden circuit-pattern">
@@ -239,7 +237,7 @@ export default function TrangChu() {
             <h2 className="text-4xl md:text-6xl font-black text-white mb-6 font-ui">Lịch thi Vòng Sơ khảo</h2>
             <div className="w-24 h-1.5 bg-brand-yellow mx-auto mb-8 rounded-full shadow-[0_0_20px_#FABD32]"></div>
             <p className="text-white/60 font-medium text-base md:text-xl max-w-2xl mx-auto font-ui">
-              Thi trắc nghiệm trực tuyến • {totalSoCau} câu hỏi • {totalThoiGian} phút • Mỗi đội 3 thành viên
+              Thi trắc nghiệm trực tuyến – Mỗi đội 3 thành viên – Mỗi thành viên thi một chặng
             </p>
           </div>
 
