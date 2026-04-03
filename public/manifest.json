@@ -1,0 +1,17 @@
+{
+  "name": "Cuộc thi Chuyển đổi số - Thành đoàn Hải Phòng",
+  "short_name": "Thi Chuyển đổi số",
+  "description": "Hệ thống thi trắc nghiệm trực tuyến cho thanh niên Hải Phòng",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#004B87",
+  "icons": [
+    {
+      "src": "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
