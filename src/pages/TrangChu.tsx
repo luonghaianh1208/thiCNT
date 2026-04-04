@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllChangThiPublic, type ChangThi } from '@/lib/db';
 import { Calendar, Clock, Award, Users, ChevronRight, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu, PlayCircle } from 'lucide-react';
@@ -33,11 +33,8 @@ export default function TrangChu() {
   }, []);
 
   const hasActiveChang = changs.some(isActive);
-  const activeChang = changs.find(isActive);
   const nextChang = changs.find(c => new Date() < new Date(c.bat_dau));
 
-  // Compute stats from actual chang data
-  const statsChang = activeChang || nextChang || changs[0];
 
   return (
     <div className="min-h-screen bg-brand-beige/5 selection:bg-brand-yellow selection:text-brand-blue overflow-x-hidden circuit-pattern">
@@ -286,7 +283,7 @@ export default function TrangChu() {
 
                     {active && (
                       <button
-                        onClick={() => navigate('/thi')}
+                        onClick={() => navigate(`/thi?changId=${ct.id}`)}
                         className="w-full bg-brand-blue text-white font-bold text-base py-4 rounded-xl hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2 group font-ui"
                       >
                         Tham gia ngay

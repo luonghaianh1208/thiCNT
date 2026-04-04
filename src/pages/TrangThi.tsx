@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   getAllChangThiPublic,
   getDonViList,
@@ -710,6 +710,7 @@ function ExamPage({
 // ─── Main TrangThi Component ─────────────────────────────────────────────────
 export default function TrangThi() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [stage, setStage] = useState<ExamStage>('loading');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -774,8 +775,29 @@ export default function TrangThi() {
           }
         }
 
-        // No session - find exam by time
-        // 1. Find currently open exam (in time window)
+        // No session - find exam
+        // 1. If changId in URL, use that specific chang
+        const urlChangId = searchParams.get('changId');
+        if (urlChangId) {
+          const urlChang = allChangs.find(c => c.id === parseInt(urlChangId));
+          if (urlChang) {
+            const start = new Date(urlChang.bat_dau).getTime();
+            const end = new Date(urlChang.ket_thuc).getTime();
+            if (now >= start && now <= end) {
+              setChang(urlChang);
+              setStage('register');
+            } else if (now < start) {
+              setChang(urlChang);
+              setStage('pending');
+            } else {
+              setChang(urlChang);
+              setStage('loading');
+            }
+            return;
+          }
+        }
+
+        // 2. Find currently open exam (in time window)
         const openChang = allChangs.find(c => {
           const start = new Date(c.bat_dau).getTime();
           const end = new Date(c.ket_thuc).getTime();
