@@ -401,12 +401,14 @@ function SubmitConfirmModal({
   totalQuestions,
   answeredCount,
   onConfirm,
-  onCancel
+  onCancel,
+  submitting
 }: {
   totalQuestions: number;
   answeredCount: number;
   onConfirm: () => void;
   onCancel: () => void;
+  submitting: boolean;
 }) {
   const unanswered = totalQuestions - answeredCount;
 
@@ -447,9 +449,17 @@ function SubmitConfirmModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 h-14 rounded-2xl bg-brand-red text-white font-ui font-bold hover:bg-brand-red/90 transition-all"
+            disabled={submitting}
+            className="flex-1 h-14 rounded-2xl bg-brand-red text-white font-ui font-bold hover:bg-brand-red/90 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
           >
-            Nộp bài
+            {submitting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Đang chấm điểm...
+              </>
+            ) : (
+              'Nộp bài'
+            )}
           </button>
         </div>
       </div>
@@ -701,6 +711,7 @@ function ExamPage({
           answeredCount={answeredCount}
           onConfirm={onSubmit}
           onCancel={() => setShowSubmitConfirm(false)}
+          submitting={submitting}
         />
       )}
     </div>
@@ -715,6 +726,7 @@ export default function TrangThi() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Chống race condition
+  const isMountedRef = React.useRef(true); // Ngăn toast/state update sau unmount
   const [donVis, setDonVis] = useState<DonVi[]>([]);
   const [chang, setChang] = useState<ChangThi | null>(null);
 
@@ -827,6 +839,11 @@ export default function TrangThi() {
       }
     };
     init();
+  }, []);
+
+  // Cleanup: ngăn toast/state update sau unmount
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
   }, []);
 
   // ─── Anti-cheat ──────────────────────────────────────────────────────────────
@@ -950,12 +967,14 @@ export default function TrangThi() {
 
     } catch (err) {
       console.error(err);
+      if (!isMountedRef.current) return;
       // Rollback: xóa thi_sinh đã tạo nếu bước tiếp theo fail
       if (tsId) {
         try { await deleteThiSinh(tsId); } catch { /* ignore rollback error */ }
       }
       toast.error('Lỗi khởi tạo bài thi. Vui lòng thử lại.');
     } finally {
+      if (!isMountedRef.current) return;
       setLoading(false);
     }
   };
@@ -982,6 +1001,8 @@ export default function TrangThi() {
         })),
       });
 
+      if (!isMountedRef.current) return;
+
       // Clear exam state completely
       setQuestions([]);
       setAnswers({});
@@ -995,8 +1016,10 @@ export default function TrangThi() {
       toast.success('Nộp bài thành công!');
     } catch (err) {
       console.error(err);
+      if (!isMountedRef.current) return;
       toast.error('Lỗi khi nộp bài.');
     } finally {
+      if (!isMountedRef.current) return;
       setIsSubmitting(false);
       setSubmitting(false);
     }
