@@ -957,15 +957,25 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
 }
 
 function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
-  const [sortBy, setSortBy] = useState<'diem' | 'time'>('diem');
+  const [sortBy, setSortBy] = useState<'diem' | 'time' | 'subtime'>('diem');
+  const [searchText, setSearchText] = useState('');
 
-  // Sort: by diem DESC, if tied sort by time ASC (faster = better)
-  const sortedKetQua = [...ketQuas].sort((a, b) => {
+  // Filter + sort
+  const filtered = ketQuas.filter(r =>
+    !searchText ||
+    r.thi_sinh?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) ||
+    r.thi_sinh?.so_dien_thoai?.includes(searchText) ||
+    r.thi_sinh?.don_vi?.ten?.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const sortedKetQua = [...filtered].sort((a, b) => {
     if (sortBy === 'diem') {
       if (b.diem !== a.diem) return b.diem - a.diem;
-      return a.thoi_gian_lam - b.thoi_gian_lam; // Less time = better
+      return a.thoi_gian_lam - b.thoi_gian_lam;
     }
-    return a.thoi_gian_lam - b.thoi_gian_lam;
+    if (sortBy === 'time') return a.thoi_gian_lam - b.thoi_gian_lam;
+    // subtime: ai nộp trước xếp trước (created_at ASC)
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   });
 
   const exportExcel = () => {
@@ -997,16 +1007,30 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-blue/5 p-8 rounded-3xl">
         <div>
           <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng hệ thống</h4>
-          <p className="text-xs text-slate-500 font-ui mt-1">Ưu tiên điểm cao nhất, nếu bằng điểm thì xét thời gian (ít hơn = tốt hơn)</p>
+          <p className="text-xs text-slate-500 font-ui mt-1">
+            {searchText ? `Tìm thấy ${sortedKetQua.length} kết quả` : `Tổng ${ketQuas.length} thí sinh`}
+            {sortBy === 'diem' ? ' — Ưu tiên điểm cao, nếu bằng thì xét thời gian làm bài' : sortBy === 'time' ? ' — Ít thời gian làm bài hơn = xếp trên' : ' — Ai nộp trước xếp trước'}
+          </p>
         </div>
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full">
+          <div className="relative w-full sm:w-72">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên, SĐT, đơn vị..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-ui text-slate-700 focus:ring-2 focus:ring-brand-blue/10 outline-none"
+            />
+          </div>
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as 'diem' | 'time')}
+            onChange={e => setSortBy(e.target.value as 'diem' | 'time' | 'subtime')}
             className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-ui font-semibold text-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none"
           >
             <option value="diem">Theo điểm</option>
-            <option value="time">Theo thời gian</option>
+            <option value="time">Theo thời gian làm bài</option>
+            <option value="subtime">Theo thời gian nộp bài</option>
           </select>
           <button onClick={exportExcel} className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-ui font-bold text-sm px-6 py-2 rounded-xl hover:bg-brand-yellow/90 transition-all">
             <FileSpreadsheet size={16} /> Xuất Excel
