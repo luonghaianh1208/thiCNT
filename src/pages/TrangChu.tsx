@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllChangThiPublic, type ChangThi } from '@/lib/db';
+import { getAllCuocThiPublic, type CuocThi } from '@/lib/db';
 import { Calendar, Clock, Award, Users, ChevronRight, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu, PlayCircle } from 'lucide-react';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
@@ -14,26 +14,26 @@ const formatDateTime = (iso: string) => {
   });
 };
 
-function isActive(ct: ChangThi) {
+function isActive(ct: CuocThi) {
   const now = new Date();
   return now >= new Date(ct.bat_dau) && now <= new Date(ct.ket_thuc);
 }
 
 export default function TrangChu() {
   const navigate = useNavigate();
-  const [changs, setChangs] = useState<ChangThi[]>([]);
+  const [cuocs, setCuocs] = useState<CuocThi[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    getAllChangThiPublic()
-      .then(setChangs)
+    getAllCuocThiPublic()
+      .then(setCuocs)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const hasActiveChang = changs.some(isActive);
-  const nextChang = changs.find(c => new Date() < new Date(c.bat_dau));
+  const hasActiveCuoc = cuocs.some(isActive);
+  const nextCuoc = cuocs.find(c => new Date() < new Date(c.bat_dau));
 
 
   return (
@@ -58,7 +58,7 @@ export default function TrangChu() {
               <a href="#gioi-thieu" className="nav-link-tech">Giới thiệu</a>
               <a href="#lich-thi" className="nav-link-tech">Lịch thi</a>
               <a href="#giai-thuong" className="nav-link-tech">Giải thưởng</a>
-              {hasActiveChang ? (
+              {hasActiveCuoc ? (
                 <button
                   onClick={() => navigate('/thi')}
                   className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-black text-sm px-6 py-3 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-brand-yellow/30 font-ui animate-pulse-soft"
@@ -95,7 +95,7 @@ export default function TrangChu() {
             <a href="#lich-thi" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Lịch thi</a>
             <a href="#giai-thuong" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Giải thưởng</a>
             <div className="pt-2">
-              {hasActiveChang ? (
+              {hasActiveCuoc ? (
                 <button
                   onClick={() => { navigate('/thi'); setMobileMenuOpen(false); }}
                   className="w-full flex items-center justify-center gap-3 bg-brand-yellow text-brand-blue font-black text-base py-4 rounded-2xl hover:bg-yellow-400 transition-all shadow-lg font-ui"
@@ -108,7 +108,7 @@ export default function TrangChu() {
                   className="w-full flex items-center justify-center gap-3 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm py-4 rounded-2xl font-ui"
                 >
                   <Clock size={16} />
-                  {nextChang ? `Mở thi: ${formatDateTime(nextChang.bat_dau)}` : 'Xem lịch thi'}
+                  {nextCuoc ? `Mở thi: ${formatDateTime(nextCuoc.bat_dau)}` : 'Xem lịch thi'}
                 </button>
               )}
             </div>
@@ -147,11 +147,11 @@ export default function TrangChu() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
               <a
                 href="#lich-thi"
-                className={`w-full sm:w-auto relative font-black text-lg px-12 py-5 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveChang ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
+                className={`w-full sm:w-auto relative font-black text-lg px-12 py-5 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveCuoc ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
               >
                 <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
                 <PlayCircle className="w-6 h-6" />
-                {hasActiveChang ? 'Vào thi ngay' : 'Xem lịch thi'}
+                {hasActiveCuoc ? 'Vào thi ngay' : 'Xem lịch thi'}
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
               <a
@@ -244,7 +244,7 @@ export default function TrangChu() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              {changs.map((ct, idx) => {
+              {cuocs.map((ct, idx) => {
                 const active = isActive(ct);
                 const cardCls = active
                   ? 'border-brand-yellow bg-white shadow-[0_0_50px_rgba(250,189,50,0.15)] scale-105 z-20'
@@ -254,9 +254,24 @@ export default function TrangChu() {
 
                 return (
                   <div key={ct.id} className={`card-tech ${cardCls}`}>
-                    <div className="flex justify-between items-center mb-8">
+                    {/* Banner image */}
+                    {ct.anh_banner && (
+                      <div className="relative h-40 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-2xl">
+                        <img src={ct.anh_banner} alt={ct.ten} className="w-full h-full object-cover" />
+                        {active && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <div className="flex items-center gap-2 px-4 py-1.5 bg-brand-red rounded-full animate-pulse">
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                              <span className="text-white text-[11px] font-black uppercase tracking-[0.15em] font-ui">Phòng Thi Mở</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center mb-6">
                       <span className={`text-5xl font-tech font-black ${active ? 'text-brand-blue/10' : 'text-white/5'}`}>0{idx + 1}</span>
-                      {active && (
+                      {!ct.anh_banner && active && (
                         <div className="flex items-center gap-2 px-4 py-1.5 bg-brand-red rounded-full animate-pulse">
                           <div className="w-2 h-2 rounded-full bg-white"></div>
                           <span className="text-white text-[11px] font-black uppercase tracking-[0.15em] font-ui">Phòng Thi Mở</span>
@@ -264,20 +279,23 @@ export default function TrangChu() {
                       )}
                     </div>
 
-                    <h3 className={`text-2xl font-ui font-black mb-6 text-left ${titleCls}`}>{ct.ten}</h3>
+                    <h3 className={`text-2xl font-ui font-black mb-4 text-left ${titleCls}`}>{ct.ten}</h3>
+                    {ct.mo_ta && (
+                      <p className={`text-sm font-medium text-left mb-6 font-ui line-clamp-2 ${subCls}`}>{ct.mo_ta}</p>
+                    )}
 
-                    <div className={`space-y-4 text-left mb-10 font-medium text-base font-ui ${subCls}`}>
+                    <div className={`space-y-4 text-left mb-8 font-medium text-base font-ui ${subCls}`}>
                       <div className="flex items-center gap-3">
                         <Calendar className="w-5 h-5 text-brand-yellow flex-shrink-0" />
                         <span>{formatDateTime(ct.bat_dau)}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Clock className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                        <span>{ct.thoi_gian_phut} phút làm bài</span>
+                        <span>{ct.thoi_gian_lam_phut} phút làm bài</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Cpu className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                        <span>{ct.so_cau} câu hỏi trắc nghiệm</span>
+                        <span>{ct.so_cau_hoi} câu hỏi trắc nghiệm</span>
                       </div>
                     </div>
 

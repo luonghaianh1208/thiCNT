@@ -2,12 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import {
-  getThongKe, getAllChangThi, addChangThi, updateChangThi, deleteChangThi,
-  getCauHoiByChang, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
+  getThongKe, getAllCuocThi, addCuocThi, updateCuocThi, deleteCuocThi,
+  getCauHoiByCuocThi, addCauHoi, updateCauHoi, deleteCauHoi, bulkInsertCauHoi,
   getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
   getKetQuaAdmin, getCanhBaoGianLan,
-  type ChangThi, type CauHoi, type DonVi
+  type CuocThi, type CauHoi, type DonVi
 } from '@/lib/db';
 import {
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2,
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
-type Tab = 'dashboard' | 'chang-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'dang-thi';
+type Tab = 'dashboard' | 'cuoc-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'dang-thi';
 
 export default function TrangAdmin() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function TrangAdmin() {
 
   // Data states
   const [thongKe, setThongKe] = useState({ tongThiSinh: 0, tongLuotThi: 0, diemTrungBinh: 0 });
-  const [changs, setChangs] = useState<ChangThi[]>([]);
+  const [cuocs, setCuocs] = useState<CuocThi[]>([]);
   const [cauHois, setCauHois] = useState<CauHoi[]>([]);
   const [donVis, setDonVis] = useState<DonVi[]>([]);
   const [thiSinhs, setThiSinhs] = useState<any[]>([]);
@@ -34,7 +34,7 @@ export default function TrangAdmin() {
   const [gianLanLogs, setGianLanLogs] = useState<any[]>([]);
 
   // Selection
-  const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
+  const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Shared Preview Modal state (lifted to root to avoid overflow clipping)
@@ -49,16 +49,16 @@ export default function TrangAdmin() {
 
   useEffect(() => {
     refreshData();
-  }, [activeTab, selectedChangId]);
+  }, [activeTab, selectedCuocThiId]);
 
-  // Load changs when entering tabs that need it
+  // Load cuoc_thi when entering tabs that need it
   useEffect(() => {
     if (['cau-hoi', 'ket-qua', 'gian-lan'].includes(activeTab)) {
-      getAllChangThi().then(data => {
-        setChangs(data);
-        // Auto-select first chang if none selected
-        if (!selectedChangId && data.length > 0) {
-          setSelectedChangId(data[0].id);
+      getAllCuocThi().then(data => {
+        setCuocs(data);
+        // Auto-select first cuoc_thi if none selected
+        if (!selectedCuocThiId && data.length > 0) {
+          setSelectedCuocThiId(data[0].id);
         }
       });
     }
@@ -68,12 +68,12 @@ export default function TrangAdmin() {
     setLoading(true);
     try {
       if (activeTab === 'dashboard') setThongKe(await getThongKe());
-      if (activeTab === 'chang-thi') setChangs(await getAllChangThi());
+      if (activeTab === 'cuoc-thi') setCuocs(await getAllCuocThi());
       if (activeTab === 'don-vi') setDonVis(await getDonViList());
       if (activeTab === 'thi-sinh') setThiSinhs(await getAllThiSinh());
-      if (activeTab === 'ket-qua') setKetQuas(await getKetQuaAdmin(selectedChangId || undefined));
-      if (activeTab === 'gian-lan') setGianLanLogs(await getCanhBaoGianLan(selectedChangId || undefined));
-      if (activeTab === 'cau-hoi' && selectedChangId) setCauHois(await getCauHoiByChang(selectedChangId));
+      if (activeTab === 'ket-qua') setKetQuas(await getKetQuaAdmin(selectedCuocThiId || undefined));
+      if (activeTab === 'gian-lan') setGianLanLogs(await getCanhBaoGianLan(selectedCuocThiId || undefined));
+      if (activeTab === 'cau-hoi' && selectedCuocThiId) setCauHois(await getCauHoiByCuocThi(selectedCuocThiId));
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -85,7 +85,7 @@ export default function TrangAdmin() {
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { id: 'chang-thi', label: 'Chặng thi', icon: <BarChart3 className="w-5 h-5" /> },
+    { id: 'cuoc-thi', label: 'Cuộc thi', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'cau-hoi', label: 'Câu hỏi', icon: <HelpCircle className="w-5 h-5" /> },
     { id: 'don-vi', label: 'Đơn vị', icon: <Building2 className="w-5 h-5" /> },
     { id: 'thi-sinh', label: 'Thí sinh', icon: <Users className="w-5 h-5" /> },
@@ -154,11 +154,11 @@ export default function TrangAdmin() {
             {activeTab === 'cau-hoi' || activeTab === 'ket-qua' || activeTab === 'gian-lan' ? (
               <select
                 className="bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-blue focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-ui"
-                value={selectedChangId || ''}
-                onChange={e => setSelectedChangId(e.target.value ? parseInt(e.target.value) : null)}
+                value={selectedCuocThiId || ''}
+                onChange={e => setSelectedCuocThiId(e.target.value ? parseInt(e.target.value) : null)}
               >
-                <option value="">Tất cả chặng thi</option>
-                {changs.map(c => <option key={c.id} value={c.id}>{c.ten.toUpperCase()}</option>)}
+                <option value="">Tất cả cuộc thi</option>
+                {cuocs.map(c => <option key={c.id} value={c.id}>{c.ten.toUpperCase()}</option>)}
               </select>
             ) : null}
 
@@ -224,7 +224,7 @@ export default function TrangAdmin() {
                       </div>
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
-                          { label: 'Thêm Chặng', tab: 'chang-thi', icon: <BarChart3 /> },
+                          { label: 'Thêm Cuộc thi', tab: 'cuoc-thi', icon: <BarChart3 /> },
                           { label: 'Quản lý Thí sinh', tab: 'thi-sinh', icon: <Users /> },
                           { label: 'Xem Kết quả', tab: 'ket-qua', icon: <Trophy /> },
                           { label: 'Cảnh báo Gian lận', tab: 'gian-lan', icon: <ShieldAlert /> },
@@ -248,12 +248,12 @@ export default function TrangAdmin() {
                 {/* Các Tab khác hiển thị bảng dữ liệu */}
                 {activeTab !== 'dashboard' && (
                   <div className="card-tech bg-white p-2 md:p-6 overflow-hidden animate-in slide-in-from-bottom duration-500">
-                    {activeTab === 'chang-thi' && <ChangManager changs={changs} refresh={refreshData} />}
-                    {activeTab === 'cau-hoi' && <CauHoiManager changId={selectedChangId} cauHois={cauHois} refresh={refreshData} setPreviewState={setPreviewState} />}
+                    {activeTab === 'cuoc-thi' && <CuocThiManager cuocs={cuocs} refresh={refreshData} />}
+                    {activeTab === 'cau-hoi' && <CauHoiManager cuocThiId={selectedCuocThiId} cauHois={cauHois} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'don-vi' && <DonViManager donVis={donVis} refresh={refreshData} setPreviewState={setPreviewState} />}
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
-                    {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} />}
-                    {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} changs={changs} />}
+                    {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} cuocs={cuocs} />}
+                    {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} cuocs={cuocs} />}
                   </div>
                 )}
               </>
@@ -295,78 +295,110 @@ const toInputVN = (utcStr: string): string => {
 /** Convert datetime-local value (Vietnam time) to ISO string with +07:00 for DB */
 const fromInputVN = (local: string): string => local + ':00+07:00';
 
-// ─── PHỤ LỤC CÁC MANAGER COMPONENTS (Rút gọn cho Dashboard Tech) ───
+// ─── PHỤ LỤC CÁC MANAGER COMPONENTS ───
 
-function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => void }) {
-  const [editing, setEditing] = useState<ChangThi | null>(null);
-  const [form, setForm] = useState({ ten: '', bat_dau: '', ket_thuc: '', thoi_gian_phut: 25, so_cau: 30 });
+function CuocThiManager({ cuocs, refresh }: { cuocs: CuocThi[], refresh: () => void }) {
+  const [editing, setEditing] = useState<CuocThi | null>(null);
+  const [form, setForm] = useState({
+    ten: '', mo_ta: '', anh_banner: '',
+    bat_dau: '', ket_thuc: '',
+    so_cau_hoi: 10, thoi_gian_lam_phut: 15,
+    gioi_han_luot: 3, gioi_han_gian_lan: 3,
+  });
 
   const resetForm = () => {
     setEditing(null);
-    setForm({ ten: '', bat_dau: '', ket_thuc: '', thoi_gian_phut: 25, so_cau: 30 });
+    setForm({ ten: '', mo_ta: '', anh_banner: '', bat_dau: '', ket_thuc: '', so_cau_hoi: 10, thoi_gian_lam_phut: 15, gioi_han_luot: 3, gioi_han_gian_lan: 3 });
   };
 
   const handleAdd = async () => {
     if (!form.ten || !form.bat_dau || !form.ket_thuc) return toast.error('Vui lòng nhập đủ thông tin.');
-    await addChangThi({
+    await addCuocThi({
       ten: form.ten,
+      mo_ta: form.mo_ta,
+      anh_banner: form.anh_banner,
       bat_dau: fromInputVN(form.bat_dau),
       ket_thuc: fromInputVN(form.ket_thuc),
-      thoi_gian_phut: Number(form.thoi_gian_phut),
-      so_cau: Number(form.so_cau),
-      gioi_han_gian_lan: 3,
+      so_cau_hoi: Number(form.so_cau_hoi),
+      thoi_gian_lam_phut: Number(form.thoi_gian_lam_phut),
+      gioi_han_luot: Number(form.gioi_han_luot),
+      gioi_han_gian_lan: Number(form.gioi_han_gian_lan),
     });
-    resetForm(); refresh(); toast.success('Đã thêm chặng thi.');
+    resetForm(); refresh(); toast.success('Đã thêm cuộc thi.');
   };
 
   const handleUpdate = async () => {
     if (!editing) return;
-    await updateChangThi(editing.id, {
+    await updateCuocThi(editing.id, {
       ten: form.ten,
+      mo_ta: form.mo_ta,
+      anh_banner: form.anh_banner,
       bat_dau: fromInputVN(form.bat_dau),
       ket_thuc: fromInputVN(form.ket_thuc),
-      thoi_gian_phut: Number(form.thoi_gian_phut),
-      so_cau: Number(form.so_cau),
+      so_cau_hoi: Number(form.so_cau_hoi),
+      thoi_gian_lam_phut: Number(form.thoi_gian_lam_phut),
+      gioi_han_luot: Number(form.gioi_han_luot),
+      gioi_han_gian_lan: Number(form.gioi_han_gian_lan),
     });
     resetForm(); refresh(); toast.success('Cập nhật thành công.');
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Xóa chặng thi này sẽ xóa toàn bộ câu hỏi và kết quả liên quan. Bạn chắc chắn?')) return;
-    await deleteChangThi(id); refresh();
+    if (!confirm('Xóa cuộc thi này sẽ xóa toàn bộ câu hỏi và kết quả liên quan. Bạn chắc chắn?')) return;
+    await deleteCuocThi(id); refresh();
   };
 
   return (
     <div className="space-y-8 p-4">
       <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
         <h4 className="text-sm font-bold text-brand-blue mb-5 font-ui">
-          {editing ? `Đang chỉnh sửa: ${editing.ten}` : 'Thêm chặng thi mới'}
+          {editing ? `Đang chỉnh sửa: ${editing.ten}` : 'Thêm cuộc thi mới'}
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Tên chặng</label>
-            <input className="input-admin-tech w-full" placeholder="Vd: Chặng 1" value={form.ten} onChange={e => setForm({ ...form, ten: e.target.value })} />
+        <div className="space-y-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Tên cuộc thi</label>
+              <input className="input-admin-tech w-full" placeholder="Vd: Cuộc thi Chuyển đổi số lần 1" value={form.ten} onChange={e => setForm({ ...form, ten: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Ảnh bìa (URL)</label>
+              <input className="input-admin-tech w-full" placeholder="https://..." value={form.anh_banner} onChange={e => setForm({ ...form, anh_banner: e.target.value })} />
+            </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian bắt đầu</label>
-            <input className="input-admin-tech w-full" type="datetime-local" value={form.bat_dau} onChange={e => setForm({ ...form, bat_dau: e.target.value })} />
+            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Mô tả</label>
+            <textarea className="input-admin-tech w-full" rows={2} placeholder="Mô tả cuộc thi..." value={form.mo_ta} onChange={e => setForm({ ...form, mo_ta: e.target.value })} />
           </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian kết thúc</label>
-            <input className="input-admin-tech w-full" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({ ...form, ket_thuc: e.target.value })} />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số câu hỏi mỗi bài thi</label>
-            <input className="input-admin-tech w-full" type="number" min={1} max={100} placeholder="30" value={form.so_cau} onChange={e => setForm({ ...form, so_cau: parseInt(e.target.value) || 30 })} />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời lượng làm bài (phút)</label>
-            <input className="input-admin-tech w-full" type="number" min={1} max={180} placeholder="25" value={form.thoi_gian_phut} onChange={e => setForm({ ...form, thoi_gian_phut: parseInt(e.target.value) || 25 })} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Bắt đầu</label>
+              <input className="input-admin-tech w-full" type="datetime-local" value={form.bat_dau} onChange={e => setForm({ ...form, bat_dau: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Kết thúc</label>
+              <input className="input-admin-tech w-full" type="datetime-local" value={form.ket_thuc} onChange={e => setForm({ ...form, ket_thuc: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số câu hỏi</label>
+              <input className="input-admin-tech w-full" type="number" min={1} max={100} value={form.so_cau_hoi} onChange={e => setForm({ ...form, so_cau_hoi: parseInt(e.target.value) || 10 })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Thời gian làm (phút)</label>
+              <input className="input-admin-tech w-full" type="number" min={1} max={180} value={form.thoi_gian_lam_phut} onChange={e => setForm({ ...form, thoi_gian_lam_phut: parseInt(e.target.value) || 15 })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số lượt thi tối đa</label>
+              <input className="input-admin-tech w-full" type="number" min={1} max={20} value={form.gioi_han_luot} onChange={e => setForm({ ...form, gioi_han_luot: parseInt(e.target.value) || 3 })} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 font-ui mb-1 block">Số lần thoát màn hình</label>
+              <input className="input-admin-tech w-full" type="number" min={1} max={10} value={form.gioi_han_gian_lan} onChange={e => setForm({ ...form, gioi_han_gian_lan: parseInt(e.target.value) || 3 })} />
+            </div>
           </div>
         </div>
         <div className="flex gap-3">
           <button onClick={editing ? handleUpdate : handleAdd} className="bg-brand-blue text-white font-ui font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all">
-            {editing ? 'Cập nhật chặng' : 'Thêm chặng thi'}
+            {editing ? 'Cập nhật cuộc thi' : 'Thêm cuộc thi'}
           </button>
           {editing && (
             <button onClick={resetForm} className="bg-slate-100 text-slate-600 font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-slate-200 transition-all">
@@ -380,28 +412,36 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
         <table className="w-full text-left text-sm font-ui">
           <thead className="bg-slate-50 text-xs font-bold text-slate-500">
             <tr>
-              <th className="px-5 py-4">Tên chặng</th>
+              <th className="px-5 py-4">Tên cuộc thi</th>
               <th className="px-5 py-4">Bắt đầu</th>
               <th className="px-5 py-4">Kết thúc</th>
-              <th className="px-5 py-4 text-center">Số câu</th>
+              <th className="px-5 py-4 text-center">Câu/Lượt</th>
               <th className="px-5 py-4 text-center">Thời gian</th>
+              <th className="px-5 py-4 text-center">Lần thoát</th>
               <th className="px-5 py-4">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {changs.map(c => (
+            {cuocs.map(c => (
               <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-5 py-4 text-brand-blue font-bold">{c.ten}</td>
+                <td className="px-5 py-4">
+                  <div className="text-brand-blue font-bold">{c.ten}</div>
+                  {c.mo_ta && <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[200px]">{c.mo_ta}</div>}
+                </td>
                 <td className="px-5 py-4 text-slate-500">{fmtVN(c.bat_dau)}</td>
                 <td className="px-5 py-4 text-slate-500">{fmtVN(c.ket_thuc)}</td>
                 <td className="px-5 py-4 text-center">
-                  <span className="px-3 py-1 bg-brand-blue/10 text-brand-blue text-xs font-bold rounded-lg">{c.so_cau} câu</span>
+                  <span className="px-3 py-1 bg-brand-blue/10 text-brand-blue text-xs font-bold rounded-lg">{c.so_cau_hoi} câu</span>
+                  <span className="ml-1 px-2 py-1 bg-brand-yellow/20 text-brand-yellow text-xs font-bold rounded-lg">{c.gioi_han_luot} lượt</span>
                 </td>
                 <td className="px-5 py-4 text-center">
-                  <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">{c.thoi_gian_phut} phút</span>
+                  <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg">{c.thoi_gian_lam_phut} phút</span>
+                </td>
+                <td className="px-5 py-4 text-center">
+                  <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg">{c.gioi_han_gian_lan} lần</span>
                 </td>
                 <td className="px-5 py-4 space-x-1">
-                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, bat_dau: toInputVN(c.bat_dau), ket_thuc: toInputVN(c.ket_thuc), thoi_gian_phut: c.thoi_gian_phut, so_cau: c.so_cau }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15} /></button>
+                  <button onClick={() => { setEditing(c); setForm({ ten: c.ten, mo_ta: c.mo_ta || '', anh_banner: c.anh_banner || '', bat_dau: toInputVN(c.bat_dau), ket_thuc: toInputVN(c.ket_thuc), so_cau_hoi: c.so_cau_hoi, thoi_gian_lam_phut: c.thoi_gian_lam_phut, gioi_han_luot: c.gioi_han_luot, gioi_han_gian_lan: c.gioi_han_gian_lan }); }} className="p-2 text-brand-blue hover:bg-blue-50 rounded-lg"><Pencil size={15} /></button>
                   <button onClick={() => handleDelete(c.id)} className="p-2 text-brand-red hover:bg-red-50 rounded-lg"><Trash2 size={15} /></button>
                 </td>
               </tr>
@@ -413,7 +453,7 @@ function ChangManager({ changs, refresh }: { changs: ChangThi[], refresh: () => 
   );
 }
 
-function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
+function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocThiId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Search state
@@ -436,7 +476,7 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!changId) return toast.error('Chọn chặng thi để import.');
+    if (!cuocThiId) return toast.error('Chọn cuộc thi để import.');
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
@@ -447,7 +487,7 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
       const clean = data
         .filter(r => r['Câu hỏi'] && r['A'] && r['B'] && r['C'] && r['D'] && r['Đáp án đúng'])
         .map(r => ({
-          chang_id: String(changId),
+          cuoc_thi_id: String(cuocThiId),
           noi_dung: String(r['Câu hỏi']),
           dap_an_a: String(r['A']),
           dap_an_b: String(r['B']),
@@ -481,7 +521,7 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
         data: clean,
         onConfirm: async (editedData) => {
           const toInsert = editedData.map(r => ({
-            chang_id: Number(r.chang_id),
+            cuoc_thi_id: Number(r.cuoc_thi_id),
             noi_dung: r.noi_dung,
             dap_an_a: r.dap_an_a,
             dap_an_b: r.dap_an_b,
@@ -503,9 +543,9 @@ function CauHoiManager({ changId, cauHois, refresh, setPreviewState }: { changId
 
   return (
     <div className="p-4 space-y-6">
-      {!changId ? (
+      {!cuocThiId ? (
         <div className="py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-          <p className="text-slate-400 font-ui font-semibold">Vui lòng chọn chặng thi ở trên để quản lý câu hỏi.</p>
+          <p className="text-slate-400 font-ui font-semibold">Vui lòng chọn cuộc thi ở trên để quản lý câu hỏi.</p>
         </div>
       ) : (
         <>
@@ -707,47 +747,33 @@ function PreviewModal({
   return modalContent;
 }
 
-const LOAI_DON_VI = [
-  { value: 'phuong', label: 'Phường', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { value: 'xa', label: 'Xã', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  { value: 'dac_khu', label: 'Đặc khu', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  { value: 'khac', label: 'Khác', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-];
-
-// Helper to get badge color class
-const getLoaiBadgeClass = (loai: string) =>
-  LOAI_DON_VI.find(l => l.value === loai)?.color ?? 'bg-slate-100 text-slate-500 border-slate-200';
-
 function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: any }) {
   const [ten, setTen] = useState('');
-  const [loai, setLoai] = useState('phuong');
+  const [lop, setLop] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Search & Filter state
+  // Search state
   const [searchText, setSearchText] = useState('');
-  const [filterLoai, setFilterLoai] = useState('all');
 
-  // Filtered data
+  // Filtered data — search by ten or lop
   const filteredDonVis = donVis.filter(dv => {
-    const matchSearch = dv.ten.toLowerCase().includes(searchText.toLowerCase());
-    const matchLoai = filterLoai === 'all' || dv.loai === filterLoai;
-    return matchSearch && matchLoai;
+    const matchSearch = dv.ten.toLowerCase().includes(searchText.toLowerCase()) ||
+      dv.lop.toLowerCase().includes(searchText.toLowerCase());
+    return matchSearch;
   });
 
   const handleAdd = async () => {
-    if (!ten.trim()) return;
-    await addDonVi(ten.trim(), loai);
-    setTen(''); refresh();
-    toast.success('Đã thêm đơn vị.');
+    if (!ten.trim() || !lop.trim()) return;
+    await addDonVi(ten.trim(), lop.trim());
+    setTen(''); setLop(''); refresh();
+    toast.success('Đã thêm lớp.');
   };
 
   const downloadTemplate = () => {
     const sample = [
-      { 'Tên đơn vị': 'Phường Hải Dương', 'Loại': 'phuong' },
-      { 'Tên đơn vị': 'Phường Hồng Bàng', 'Loại': 'phuong' },
-      { 'Tên đơn vị': 'Xã Kiến Thuỵ', 'Loại': 'xa' },
-      { 'Tên đơn vị': 'Đặc khu Cát Hải', 'Loại': 'dac_khu' },
-      { 'Tên đơn vị': 'Trường đại học Hải Phòng', 'Loại': 'khac' },
+      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '10A1' },
+      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '10A2' },
+      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '11A1' },
     ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
@@ -763,25 +789,25 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data: any[] = XLSX.utils.sheet_to_json(ws);
-      const valid = data.filter(r => r['Tên đơn vị']);
+      const valid = data.filter(r => r['Tên đơn vị'] && r['Lớp']);
       if (valid.length === 0) {
         toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
         return;
       }
       const items = valid.map(r => ({
         ten: String(r['Tên đơn vị']).trim(),
-        loai: String(r['Loại'] || 'phuong').trim(),
+        lop: String(r['Lớp']).trim(),
       }));
       setPreviewState({
         open: true,
         title: 'Xem trước import đơn vị',
         columns: [
           { header: 'Tên đơn vị', key: 'ten', type: 'text' },
-          { header: 'Loại', key: 'loai', type: 'select', options: LOAI_DON_VI.map(l => ({ value: l.value, label: l.label })) },
+          { header: 'Lớp', key: 'lop', type: 'text' },
         ],
         data: items,
         onConfirm: async (editedData) => {
-          const finalItems = editedData.map(r => ({ ten: r.ten, loai: r.loai }));
+          const finalItems = editedData.map(r => ({ ten: r.ten, lop: r.lop }));
           await bulkInsertDonVi(finalItems);
           setPreviewState(prev => ({ ...prev, open: false }));
           refresh();
@@ -796,24 +822,24 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
   return (
     <div className="p-4 space-y-6">
 
-      {/* Thêm 1 đơn vị */}
+      {/* Thêm 1 lớp */}
       <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
-        <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm đơn vị</h4>
+        <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm lớp</h4>
         <div className="flex gap-3">
           <input
             className="input-admin-tech flex-1"
-            placeholder="Nhập tên đơn vị mới..."
+            placeholder="Nhập tên đơn vị (trường/đơn vị)..."
             value={ten}
             onChange={e => setTen(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
-          <select
-            className="input-admin-tech"
-            value={loai}
-            onChange={e => setLoai(e.target.value)}
-          >
-            {LOAI_DON_VI.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-          </select>
+          <input
+            className="input-admin-tech w-32"
+            placeholder="Lớp (VD: 10A1)"
+            value={lop}
+            onChange={e => setLop(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
           <button onClick={handleAdd} className="bg-brand-blue text-white font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all whitespace-nowrap">
             Thêm
           </button>
@@ -832,35 +858,27 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
             <FileSpreadsheet size={15} /> Import Excel
           </button>
         </div>
-        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Loại</strong> (phuong / xa / dac_khu)</p>
+        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Lớp</strong></p>
       </div>
 
-      {/* Search & Filter Bar */}
+      {/* Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-2xl border border-slate-100">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm đơn vị..."
+            placeholder="Tìm kiếm theo tên đơn vị hoặc lớp..."
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
           />
         </div>
-        <select
-          value={filterLoai}
-          onChange={e => setFilterLoai(e.target.value)}
-          className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
-        >
-          <option value="all">Tất cả loại</option>
-          {LOAI_DON_VI.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-        </select>
       </div>
 
       {/* Danh sách */}
       {filteredDonVis.length === 0 ? (
         <div className="text-center py-12 text-slate-400 font-ui">
-          {searchText || filterLoai !== 'all' ? 'Không tìm thấy đơn vị phù hợp.' : 'Chưa có đơn vị nào.'}
+          {searchText ? 'Không tìm thấy lớp phù hợp.' : 'Chưa có lớp nào.'}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -868,8 +886,8 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
             <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
               <div>
                 <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
-                <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-lg font-ui border font-semibold ${getLoaiBadgeClass(dv.loai)}`}>
-                  {LOAI_DON_VI.find(l => l.value === dv.loai)?.label ?? dv.loai}
+                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-lg font-ui border font-semibold bg-slate-100 text-slate-600 border-slate-200">
+                  {dv.lop}
                 </span>
               </div>
               <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
@@ -881,9 +899,9 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
       )}
 
       {/* Summary */}
-      {(searchText || filterLoai !== 'all') && (
+      {searchText && (
         <p className="text-xs text-slate-400 font-ui">
-          Hiển thị {filteredDonVis.length} / {donVis.length} đơn vị
+          Hiển thị {filteredDonVis.length} / {donVis.length} lớp
         </p>
       )}
     </div>
@@ -896,7 +914,8 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
   const filteredThiSinhs = thiSinhs.filter(ts =>
     ts.ho_ten.toLowerCase().includes(searchText.toLowerCase()) ||
     ts.so_dien_thoai.includes(searchText) ||
-    ts.don_vi?.ten.toLowerCase().includes(searchText.toLowerCase())
+    ts.don_vi?.ten.toLowerCase().includes(searchText.toLowerCase()) ||
+    (ts.ten_lop && ts.ten_lop.toLowerCase().includes(searchText.toLowerCase()))
   );
 
   const handleDelete = async (id: number) => {
@@ -930,7 +949,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Ngày tạo</th><th className="px-6 py-4"></th></tr>
+            <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Lớp</th><th className="px-6 py-4">Ngày tạo</th><th className="px-6 py-4"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {(searchText ? filteredThiSinhs : thiSinhs).map(ts => (
@@ -938,6 +957,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
                 <td className="px-6 py-4 text-slate-500">{ts.so_dien_thoai}</td>
                 <td className="px-6 py-4 font-black">{ts.don_vi?.ten}</td>
+                <td className="px-6 py-4 text-slate-600 font-ui">{ts.ten_lop || '-'}</td>
                 <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
                 <td className="px-6 py-4">
                   <button onClick={() => handleDelete(ts.id)} className="p-2 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
@@ -948,47 +968,64 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
             ))}
           </tbody>
         </table>
-        {searchText && filteredThiSinhs.length === 0 && (
-          <div className="text-center py-12 text-slate-400 font-ui">Không tìm thấy thí sinh nào.</div>
+        {(searchText ? filteredThiSinhs : thiSinhs).length === 0 && (
+          <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-ui">Không tìm thấy thí sinh nào.</td></tr>
         )}
       </div>
     </div>
   );
 }
 
-function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
-  const [sortBy, setSortBy] = useState<'diem' | 'time' | 'subtime'>('diem');
+function KetQuaManager({ ketQuas, cuocs }: { ketQuas: any[]; cuocs: CuocThi[] }) {
+  const [sortBy, setSortBy] = useState<'diem' | 'time'>('diem');
   const [searchText, setSearchText] = useState('');
+  const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
 
-  // Filter + sort
-  const filtered = ketQuas.filter(r =>
-    !searchText ||
-    r.thi_sinh?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) ||
-    r.thi_sinh?.so_dien_thoai?.includes(searchText) ||
-    r.thi_sinh?.don_vi?.ten?.toLowerCase().includes(searchText.toLowerCase())
-  );
-
-  const sortedKetQua = [...filtered].sort((a, b) => {
-    if (sortBy === 'diem') {
-      if (b.diem !== a.diem) return b.diem - a.diem;
-      return a.thoi_gian_lam - b.thoi_gian_lam;
+  // Group by thi_sinh_id, keep highest score + count attempts
+  const groupedMap = new Map<number, { best: any; attempts: number; cuoc_thi_id: number }>();
+  for (const r of ketQuas) {
+    const key = r.thi_sinh_id;
+    const existing = groupedMap.get(key);
+    if (!existing || r.diem > existing.best.diem) {
+      groupedMap.set(key, { best: r, attempts: existing ? existing.attempts + 1 : 1, cuoc_thi_id: r.cuoc_thi_id });
+    } else {
+      existing.attempts++;
     }
-    if (sortBy === 'time') return a.thoi_gian_lam - b.thoi_gian_lam;
-    // subtime: ai nộp trước xếp trước (created_at ASC)
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  }
+
+  const allRows = Array.from(groupedMap.values());
+
+  // Filter
+  const filtered = allRows.filter(({ best }) => {
+    const matchSearch = !searchText ||
+      best.thi_sinh?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) ||
+      best.thi_sinh?.so_dien_thoai?.includes(searchText) ||
+      best.thi_sinh?.don_vi?.ten?.toLowerCase().includes(searchText.toLowerCase());
+    const matchCuoc = !selectedCuocThiId || best.cuoc_thi_id === selectedCuocThiId;
+    return matchSearch && matchCuoc;
+  });
+
+  // Sort
+  const sortedRows = [...filtered].sort((a, b) => {
+    if (sortBy === 'diem') {
+      if (b.best.diem !== a.best.diem) return b.best.diem - a.best.diem;
+      return a.best.thoi_gian_lam - b.best.thoi_gian_lam;
+    }
+    return a.best.thoi_gian_lam - b.best.thoi_gian_lam;
   });
 
   const exportExcel = () => {
-    const data = sortedKetQua.map((r, i) => ({
+    const data = sortedRows.map((row, i) => ({
       'Hạng': i + 1,
-      'Họ tên': r.thi_sinh?.ho_ten,
-      'SĐT': r.thi_sinh?.so_dien_thoai,
-      'Đơn vị': r.thi_sinh?.don_vi?.ten,
-      'Chặng thi': r.chang_thi?.ten,
-      'Điểm số': r.diem,
-      'Câu đúng': r.so_cau_dung,
-      'Thời gian (giây)': r.thoi_gian_lam,
-      'Ngày thi': new Date(r.created_at).toLocaleString('vi-VN', { timeZone: VN_TZ })
+      'Họ tên': row.best.thi_sinh?.ho_ten,
+      'SĐT': row.best.thi_sinh?.so_dien_thoai,
+      'Đơn vị': row.best.thi_sinh?.don_vi?.ten,
+      'Lớp': row.best.thi_sinh?.ten_lop,
+      'Cuộc thi': row.best.cuoc_thi?.ten,
+      'Điểm cao nhất': row.best.diem,
+      'Số lượt': row.attempts,
+      'Thời gian (giây)': row.best.thoi_gian_lam,
+      'Ngày thi': new Date(row.best.created_at).toLocaleString('vi-VN', { timeZone: VN_TZ })
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -1006,10 +1043,10 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
     <div className="p-4 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-blue/5 p-8 rounded-3xl">
         <div>
-          <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng hệ thống</h4>
+          <h4 className="text-sm font-bold text-brand-blue font-ui">Bảng xếp hạng</h4>
           <p className="text-xs text-slate-500 font-ui mt-1">
-            {searchText ? `Tìm thấy ${sortedKetQua.length} kết quả` : `Tổng ${ketQuas.length} thí sinh`}
-            {sortBy === 'diem' ? ' — Ưu tiên điểm cao, nếu bằng thì xét thời gian làm bài' : sortBy === 'time' ? ' — Ít thời gian làm bài hơn = xếp trên' : ' — Ai nộp trước xếp trước'}
+            {searchText || selectedCuocThiId ? `Tìm thấy ${sortedRows.length} kết quả` : `Tổng ${allRows.length} thí sinh`}
+            {sortBy === 'diem' ? ' — Ưu tiên điểm cao nhất, nếu bằng thì xét thời gian' : ' — Ít thời gian hơn = xếp trên'}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full">
@@ -1024,13 +1061,20 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
             />
           </div>
           <select
+            value={selectedCuocThiId ?? ''}
+            onChange={e => setSelectedCuocThiId(e.target.value ? Number(e.target.value) : null)}
+            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-ui font-semibold text-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none"
+          >
+            <option value="">Tất cả cuộc thi</option>
+            {cuocs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
+          </select>
+          <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as 'diem' | 'time' | 'subtime')}
+            onChange={e => setSortBy(e.target.value as 'diem' | 'time')}
             className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-ui font-semibold text-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none"
           >
             <option value="diem">Theo điểm</option>
-            <option value="time">Theo thời gian làm bài</option>
-            <option value="subtime">Theo thời gian nộp bài</option>
+            <option value="time">Theo thời gian</option>
           </select>
           <button onClick={exportExcel} className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-ui font-bold text-sm px-6 py-2 rounded-xl hover:bg-brand-yellow/90 transition-all">
             <FileSpreadsheet size={16} /> Xuất Excel
@@ -1040,17 +1084,21 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
       <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Hạng</th><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Điểm</th><th className="px-6 py-4">Thời gian</th><th className="px-6 py-4">Chặng</th></tr>
+            <tr><th className="px-6 py-4">Hạng</th><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Lớp</th><th className="px-6 py-4">Điểm cao nhất</th><th className="px-6 py-4">Số lượt</th><th className="px-6 py-4">Thời gian</th><th className="px-6 py-4">Cuộc thi</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {sortedKetQua.map((r, i) => (
-              <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+            {sortedRows.length === 0 ? (
+              <tr><td colSpan={8} className="px-6 py-8 text-center text-slate-400 font-ui">Chưa có kết quả thi nào.</td></tr>
+            ) : sortedRows.map((row, i) => (
+              <tr key={row.best.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4"><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${i < 3 ? 'bg-brand-yellow text-brand-blue' : 'bg-slate-100 text-slate-400'}`}>{i + 1}</span></td>
-                <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{r.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{r.thi_sinh?.so_dien_thoai}</div></td>
-                <td className="px-6 py-4 font-black">{r.thi_sinh?.don_vi?.ten}</td>
-                <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{r.diem}</td>
-                <td className="px-6 py-4 text-slate-400 font-tech">{formatThoiGian(r.thoi_gian_lam)}</td>
-                <td className="px-6 py-4"><span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] rounded-lg border border-brand-blue/10">{r.chang_thi?.ten}</span></td>
+                <td className="px-6 py-4"><div className="text-brand-blue font-black uppercase">{row.best.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{row.best.thi_sinh?.so_dien_thoai}</div></td>
+                <td className="px-6 py-4 font-black">{row.best.thi_sinh?.don_vi?.ten}</td>
+                <td className="px-6 py-4 text-slate-600 font-ui">{row.best.thi_sinh?.ten_lop || '-'}</td>
+                <td className="px-6 py-4 text-xl font-tech font-black text-brand-blue">{row.best.diem}</td>
+                <td className="px-6 py-4"><span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] rounded-lg border border-brand-blue/10 font-bold">{row.attempts}</span></td>
+                <td className="px-6 py-4 text-slate-400 font-tech">{formatThoiGian(row.best.thoi_gian_lam)}</td>
+                <td className="px-6 py-4"><span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] rounded-lg border border-brand-blue/10">{row.best.cuoc_thi?.ten}</span></td>
               </tr>
             ))}
           </tbody>
@@ -1060,93 +1108,45 @@ function KetQuaManager({ ketQuas }: { ketQuas: any[] }) {
   );
 }
 
-function GianLanManager({ logs, changs }: { logs: any[]; changs: ChangThi[] }) {
-  const [selectedChangId, setSelectedChangId] = useState<number | null>(null);
-  const [cheatLimit, setCheatLimit] = useState(3);
-  const [saving, setSaving] = useState(false);
+function GianLanManager({ logs, cuocs }: { logs: any[]; cuocs: CuocThi[] }) {
+  const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
 
-  // Load current limit when selecting a chang
-  useEffect(() => {
-    if (selectedChangId) {
-      const c = changs.find(x => x.id === selectedChangId);
-      if (c) setCheatLimit(c.gioi_han_gian_lan || 3);
-    }
-  }, [selectedChangId, changs]);
-
-  const handleSaveLimit = async () => {
-    if (!selectedChangId) return;
-    setSaving(true);
-    try {
-      await updateChangThi(selectedChangId, { gioi_han_gian_lan: cheatLimit });
-      toast.success('Đã lưu giới hạn gian lận');
-    } catch {
-      toast.error('Lưu thất bại');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const filteredLogs = selectedCuocThiId
+    ? logs.filter(l => l.cuoc_thi_id === selectedCuocThiId)
+    : logs;
 
   return (
     <div className="p-4 space-y-8">
-      {/* Settings section */}
-      <div className="bg-brand-red/5 p-6 rounded-3xl border border-brand-red/10">
-        <h4 className="text-sm font-bold text-brand-red font-ui mb-4">Cài đặt giới hạn gian lận</h4>
-        <p className="text-xs text-brand-red/60 font-ui mb-4">Đặt số lần thoát màn hình cho phép cho từng chặng thi. Thí sinh đạt giới hạn sẽ tự động nộp bài.</p>
-        <div className="flex gap-4 items-end flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-xs font-bold text-slate-500 mb-2 block font-ui">Chặng thi</label>
-            <select
-              value={selectedChangId || ''}
-              onChange={e => setSelectedChangId(Number(e.target.value))}
-              className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold font-ui"
-            >
-              <option value="">-- Chọn chặng --</option>
-              {changs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
-            </select>
-          </div>
-          <div className="w-32">
-            <label className="text-xs font-bold text-slate-500 mb-2 block font-ui">Số lần cho phép</label>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={cheatLimit}
-              onChange={e => setCheatLimit(Number(e.target.value))}
-              className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold font-ui"
-            />
-          </div>
-          <button
-            onClick={handleSaveLimit}
-            disabled={!selectedChangId || saving}
-            className="btn-cyber bg-brand-red text-white h-12 px-8 font-ui font-bold"
-          >
-            {saving ? 'Đang lưu...' : 'Lưu'}
-          </button>
-        </div>
-      </div>
-
-      {/* Alert banner */}
-      <div className="flex items-center gap-4 bg-brand-red/5 p-8 rounded-3xl border border-brand-red/10">
-        <ShieldAlert className="text-brand-red w-10 h-10" />
-        <div>
+      {/* Filter bar */}
+      <div className="flex items-center gap-4 bg-brand-red/5 p-6 rounded-3xl border border-brand-red/10">
+        <ShieldAlert className="text-brand-red w-8 h-8 flex-shrink-0" />
+        <div className="flex-1">
           <h4 className="text-sm font-bold text-brand-red font-ui">Giám sát gian lận</h4>
-          <p className="text-xs text-brand-red/60 font-ui">Phát hiện hoạt động bất thường: chuyển tab, thu nhỏ trình duyệt.</p>
+          <p className="text-xs text-brand-red/60 font-ui mt-0.5">Phát hiện hoạt động bất thường: chuyển tab, thu nhỏ trình duyệt. Giới hạn thoát màn hình được cấu hình trong từng cuộc thi.</p>
         </div>
+        <select
+          value={selectedCuocThiId ?? ""}
+          onChange={e => setSelectedCuocThiId(e.target.value ? Number(e.target.value) : null)}
+          className="bg-white border-2 border-brand-red/20 rounded-xl px-4 py-2.5 text-sm font-semibold font-ui text-brand-red focus:ring-2 focus:ring-brand-red/10 outline-none min-w-[200px]"
+        >
+          <option value="">Tất cả cuộc thi</option>
+          {cuocs.map(c => <option key={c.id} value={c.id}>{c.ten}</option>)}
+        </select>
       </div>
 
-      {/* Logs table */}
+      {/* logs table */}
       <div className="overflow-x-auto rounded-[2rem] border border-brand-red/10">
         <table className="w-full text-left text-sm font-bold">
           <thead className="bg-brand-red/5 text-[10px] font-black text-brand-red uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Thí sinh</th><th className="px-6 py-4">Chặng</th><th className="px-6 py-4">Số lần vi phạm</th><th className="px-6 py-4">Lần cuối</th></tr>
+            <tr><th className="px-6 py-4">Thí sinh</th><th className="px-6 py-4">Cuộc thi</th><th className="px-6 py-4">Số lần vi phạm</th><th className="px-6 py-4">Lần cuối</th></tr>
           </thead>
           <tbody className="divide-y divide-brand-red/5">
-            {logs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-ui">Chưa có cảnh báo gian lận nào.</td></tr>
-            ) : logs.map(log => (
+            ) : filteredLogs.map(log => (
               <tr key={log.id} className="hover:bg-brand-red/5 transition-colors">
-                <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{log.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{log.thi_sinh?.so_dien_thoai} • {log.thi_sinh?.don_vi?.ten}</div></td>
-                <td className="px-6 py-4 text-brand-blue font-black">{log.chang_thi?.ten}</td>
+                <td className="px-6 py-4"><div className="font-black text-slate-800 uppercase">{log.thi_sinh?.ho_ten}</div><div className="text-[10px] text-slate-400">{log.thi_sinh?.so_dien_thoai} • {log.thi_sinh?.don_vi?.ten} • {log.thi_sinh?.ten_lop}</div></td>
+                <td className="px-6 py-4 text-brand-blue font-black">{log.cuoc_thi?.ten}</td>
                 <td className="px-6 py-4"><span className="px-4 py-1.5 bg-brand-red text-white text-lg font-tech font-black rounded-xl shadow-lg shadow-brand-red/20">{log.so_lan}</span></td>
                 <td className="px-6 py-4 text-slate-400 text-xs">{new Date(log.lan_cuoi).toLocaleString()}</td>
               </tr>

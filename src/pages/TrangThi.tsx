@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  getAllChangThiPublic,
+  getAllCuocThiPublic,
   getDonViList,
   taoThiSinh,
   layCauHoiNgauNhien,
   nopBaiVaChamDiem,
   ghiCanhBaoGianLan,
-  kiemTraDaThi,
+  kiemTraLuotThi,
   kiemTraDaThiChu,
   deleteThiSinh,
-  type ChangThi,
+  type CuocThi,
   type DonVi,
   type CauHoi,
 } from '@/lib/db';
@@ -18,7 +18,7 @@ import { SearchableSelect } from '@/components/SearchableSelect';
 import {
   Loader2, Send, Timer, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft,
   ShieldCheck, Award, Cpu, Activity, Zap, ShieldAlert, Clock, BookOpen, User,
-  Info, MapPin, Eye, EyeOff, StopCircle, HelpCircle, BadgeCheck, ArrowRight
+  Info, MapPin, Eye, EyeOff, StopCircle, HelpCircle, BadgeCheck, ArrowRight, RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -87,9 +87,9 @@ function ExamSkeleton() {
 }
 
 // ─── Pending Page (Before Exam Time) ─────────────────────────────────────────
-function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void }) {
+function PendingPage({ cuocThi, onStart }: { cuocThi: CuocThi; onStart: () => void }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
-  const startTime = new Date(chang.bat_dau).getTime();
+  const startTime = new Date(cuocThi.bat_dau).getTime();
 
   useEffect(() => {
     const update = () => {
@@ -116,7 +116,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
             <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Sắp diễn ra</span>
           </div>
           <h1 className="text-3xl md:text-5xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-4">
-            {chang.ten}
+            {cuocThi.ten}
           </h1>
           <p className="text-slate-500 font-ui text-lg">Hãy sẵn sàng để bước vào thử thách!</p>
         </div>
@@ -156,7 +156,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Thời gian làm bài</span>
               </div>
-              <p className="text-3xl font-ui font-black text-brand-blue">{chang.thoi_gian_phut} <span className="text-base font-normal text-slate-500">phút</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{cuocThi.thoi_gian_lam_phut} <span className="text-base font-normal text-slate-500">phút</span></p>
             </div>
             <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
               <div className="flex items-center gap-3 mb-3">
@@ -165,7 +165,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Số câu hỏi</span>
               </div>
-              <p className="text-3xl font-ui font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">câu</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{cuocThi.so_cau_hoi} <span className="text-base font-normal text-slate-500">câu</span></p>
             </div>
             <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
               <div className="flex items-center gap-3 mb-3">
@@ -174,13 +174,13 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
                 </div>
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Điểm đạt được</span>
               </div>
-              <p className="text-3xl font-ui font-black text-brand-blue">{chang.so_cau} <span className="text-base font-normal text-slate-500">điểm</span></p>
+              <p className="text-3xl font-ui font-black text-brand-blue">{cuocThi.so_cau_hoi} <span className="text-base font-normal text-slate-500">điểm</span></p>
             </div>
           </div>
           <div className="mt-6 bg-brand-yellow/10 p-6 rounded-2xl border border-brand-yellow/20">
             <div className="flex items-center gap-3">
               <Clock size={18} className="text-brand-yellow" />
-              <span className="font-ui font-bold text-brand-blue">Mở cửa: {formatDateTime(chang.bat_dau)}</span>
+              <span className="font-ui font-bold text-brand-blue">Mở cửa: {formatDateTime(cuocThi.bat_dau)}</span>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
           <div className="space-y-6">
             {[
               { icon: <User size={18} />, title: 'Đăng ký thông tin', desc: 'Nhập đầy đủ họ tên, số điện thoại và chọn đơn vị của bạn trước khi bắt đầu.' },
-              { icon: <Timer size={18} />, title: 'Thời gian làm bài', desc: `Bạn có ${chang.thoi_gian_phut} phút để hoàn thành ${chang.so_cau} câu hỏi.` },
+              { icon: <Timer size={18} />, title: 'Thời gian làm bài', desc: `Bạn có ${cuocThi.thoi_gian_lam_phut} phút để hoàn thành ${cuocThi.so_cau_hoi} câu hỏi.` },
               { icon: <Eye size={18} />, title: 'Cấm thoát màn hình', desc: 'Hệ thống giám sát sẽ phát hiện nếu bạn chuyển tab hoặc thu nhỏ trình duyệt. Vi phạm sẽ được ghi nhận.' },
               { icon: <MapPin size={18} />, title: 'Điều hướng nhanh', desc: 'Sử dụng bảng câu hỏi bên cạnh để nhảy nhanh giữa các câu hoặc xem câu nào đã làm.' },
               { icon: <StopCircle size={18} />, title: 'Nộp bài', desc: 'Bạn có thể nộp bài trước khi hết giờ. Hệ thống sẽ cảnh báo nếu có câu chưa trả lời.' },
@@ -236,7 +236,7 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
           className="w-full h-20 rounded-2xl bg-slate-200 text-slate-400 font-ui font-black text-lg uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
         >
           <Clock size={24} />
-          Chưa đến giờ thi — Vui lòng chờ đến {formatDateTime(chang.bat_dau)}
+          Chưa đến giờ thi — Vui lòng chờ đến {formatDateTime(cuocThi.bat_dau)}
         </button>
       </div>
     </div>
@@ -245,12 +245,12 @@ function PendingPage({ chang, onStart }: { chang: ChangThi; onStart: () => void 
 
 // ─── Register Page ────────────────────────────────────────────────────────────
 function RegisterPage({
-  chang,
+  cuocThi,
   donVis,
   onStart,
   loading
 }: {
-  chang: ChangThi;
+  cuocThi: CuocThi;
   donVis: DonVi[];
   onStart: (hoTen: string, sdt: string, donViId: string) => void;
   loading: boolean;
@@ -271,21 +271,17 @@ function RegisterPage({
     }
     setSubmitting(true);
     try {
-      const result = await kiemTraDaThi(sdt, chang.id, hoTen.trim(), parseInt(donViId));
-      if (result === 'sdt') {
-        toast.error('Số điện thoại này đã thi chặng này rồi.');
-        setSubmitting(false);
-        return;
-      }
-      if (result === 'trung_lap') {
-        toast.error('Thông tin này đã được đăng ký thi chặng này (trùng họ tên và đơn vị).');
-        setSubmitting(false);
-        return;
-      }
-      // Check đã thi chặng nào khác chưa
-      const daThiChu = await kiemTraDaThiChu(sdt, hoTen.trim(), parseInt(donViId));
+      // Kiểm tra đã thi cuộc thi nào chưa
+      const daThiChu = await kiemTraDaThiChu(sdt.trim());
       if (daThiChu) {
-        toast.error(`Đồng chí ${hoTen.trim()} đã hoàn thành chặng thi "${daThiChu}".`);
+        toast.error(`Số điện thoại này đã hoàn thành cuộc thi "${daThiChu}". Mỗi thí sinh chỉ thi một lần.`);
+        setSubmitting(false);
+        return;
+      }
+      // Kiểm tra còn lượt thi không
+      const luotStatus = await kiemTraLuotThi(sdt.trim(), cuocThi.id);
+      if (luotStatus === 'het_luot') {
+        toast.error('Bạn đã hết lượt thi cho cuộc thi này.');
         setSubmitting(false);
         return;
       }
@@ -309,7 +305,7 @@ function RegisterPage({
               <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Đang mở</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-ui font-black text-brand-blue uppercase tracking-tighter mb-2">
-              {chang.ten}
+              {cuocThi.ten}
             </h1>
             <p className="text-slate-500 font-ui">Điền thông tin để bắt đầu bài thi</p>
           </div>
@@ -320,14 +316,14 @@ function RegisterPage({
               <Timer size={20} className="text-brand-blue" />
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Thời gian</p>
-                <p className="font-bold text-brand-blue font-ui">{chang.thoi_gian_phut} phút</p>
+                <p className="font-bold text-brand-blue font-ui">{cuocThi.thoi_gian_lam_phut} phút</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <HelpCircle size={20} className="text-brand-blue" />
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Câu hỏi</p>
-                <p className="font-bold text-brand-blue font-ui">{chang.so_cau} câu</p>
+                <p className="font-bold text-brand-blue font-ui">{cuocThi.so_cau_hoi} câu</p>
               </div>
             </div>
           </div>
@@ -477,7 +473,7 @@ function ExamPage({
   setCurrentQuestionIdx,
   optionOrders,
   formHoTen,
-  chang,
+  cuocThi,
   onSubmit,
   submitting,
   showSubmitConfirm,
@@ -494,7 +490,7 @@ function ExamPage({
   setCurrentQuestionIdx: React.Dispatch<React.SetStateAction<number>>;
   optionOrders: Record<number, string[]>;
   formHoTen: string;
-  chang: ChangThi;
+  cuocThi: CuocThi;
   onSubmit: () => void;
   submitting: boolean;
   showSubmitConfirm: boolean;
@@ -524,7 +520,7 @@ function ExamPage({
             </div>
             <div>
               <h2 className="text-xs sm:text-sm font-ui font-black tracking-tight truncate max-w-[120px] sm:max-w-xs">
-                {chang.ten.toUpperCase()}
+                {cuocThi.ten.toUpperCase()}
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -728,7 +724,7 @@ export default function TrangThi() {
   const [isSubmitting, setIsSubmitting] = useState(false); // Chống race condition
   const isMountedRef = React.useRef(true); // Ngăn toast/state update sau unmount
   const [donVis, setDonVis] = useState<DonVi[]>([]);
-  const [chang, setChang] = useState<ChangThi | null>(null);
+  const [cuocThi, setCuocThi] = useState<CuocThi | null>(null);
 
   // Exam state
   const [questions, setQuestions] = useState<CauHoi[]>([]);
@@ -747,13 +743,14 @@ export default function TrangThi() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // Results
-  const [finalResult, setFinalResult] = useState<{ diem: number; so_cau_dung: number; thoi_gian_giay: number; tong_cau: number } | null>(null);
+  const [finalResult, setFinalResult] = useState<{ diem: number; so_cau_dung: number; thoi_gian_giay: number; tong_cau: number; luot_thi: number } | null>(null);
+  const [formSdt, setFormSdt] = useState('');
 
   // ─── Initial Load ────────────────────────────────────────────────────────────
   useEffect(() => {
     const init = async () => {
       try {
-        const [allChangs, dvData] = await Promise.all([getAllChangThiPublic(), getDonViList()]);
+        const [allCuocs, dvData] = await Promise.all([getAllCuocThiPublic(), getDonViList()]);
         setDonVis(dvData);
 
         const now = Date.now();
@@ -762,12 +759,12 @@ export default function TrangThi() {
         const saved = sessionStorage.getItem(STORAGE_KEY);
         if (saved) {
           const state = JSON.parse(saved);
-          const sessionChang = allChangs.find(c => c.id === state.changId);
-          if (sessionChang) {
+          const sessionCuoc = allCuocs.find(c => c.id === state.changId);
+          if (sessionCuoc) {
             const elapsed = Math.floor((Date.now() - state.examStartTime) / 1000);
-            const remaining = Math.max(0, (sessionChang.thoi_gian_phut * 60) - elapsed);
+            const remaining = Math.max(0, (sessionCuoc.thoi_gian_lam_phut * 60) - elapsed);
 
-            setChang(sessionChang);
+            setCuocThi(sessionCuoc);
             setQuestions(state.questions);
             setAnswers(state.answers || {});
             setThiSinhId(state.thiSinhId);
@@ -788,21 +785,21 @@ export default function TrangThi() {
         }
 
         // No session - find exam
-        // 1. If changId in URL, use that specific chang
+        // 1. If changId in URL, use that specific cuocThi
         const urlChangId = searchParams.get('changId');
         if (urlChangId) {
-          const urlChang = allChangs.find(c => c.id === parseInt(urlChangId));
+          const urlChang = allCuocs.find(c => c.id === parseInt(urlChangId));
           if (urlChang) {
             const start = new Date(urlChang.bat_dau).getTime();
             const end = new Date(urlChang.ket_thuc).getTime();
             if (now >= start && now <= end) {
-              setChang(urlChang);
+              setCuocThi(urlChang);
               setStage('register');
             } else if (now < start) {
-              setChang(urlChang);
+              setCuocThi(urlChang);
               setStage('pending');
             } else {
-              setChang(urlChang);
+              setCuocThi(urlChang);
               setStage('loading');
             }
             return;
@@ -810,25 +807,25 @@ export default function TrangThi() {
         }
 
         // 2. Find currently open exam (in time window)
-        const openChang = allChangs.find(c => {
+        const openCuoc = allCuocs.find(c => {
           const start = new Date(c.bat_dau).getTime();
           const end = new Date(c.ket_thuc).getTime();
           return now >= start && now <= end;
         });
 
         // 2. Find next upcoming exam
-        const upcomingChang = allChangs
+        const upcomingCuoc = allCuocs
           .filter(c => new Date(c.bat_dau).getTime() > now)
           .sort((a, b) => new Date(a.bat_dau).getTime() - new Date(b.bat_dau).getTime())[0];
 
-        if (openChang) {
-          setChang(openChang);
+        if (openCuoc) {
+          setCuocThi(openCuoc);
           setStage('register');
-        } else if (upcomingChang) {
-          setChang(upcomingChang);
+        } else if (upcomingCuoc) {
+          setCuocThi(upcomingCuoc);
           setStage('pending');
         } else {
-          setChang(null);
+          setCuocThi(null);
           setStage('loading'); // No exam available
         }
       } catch (err) {
@@ -850,9 +847,9 @@ export default function TrangThi() {
   const lastViolationRef = React.useRef(0); // Cooldown để tránh đếm 2 lần khi quay về tab
 
   useEffect(() => {
-    if (stage !== 'exam' || !thiSinhId || !chang) return;
+    if (stage !== 'exam' || !thiSinhId || !cuocThi) return;
 
-    const limit = chang.gioi_han_gian_lan ?? 3;
+    const limit = cuocThi.gioi_han_gian_lan ?? 3;
 
     const handleViolation = async () => {
       const now = Date.now();
@@ -860,7 +857,7 @@ export default function TrangThi() {
       lastViolationRef.current = now;
 
       const next = cheatCount + 1;
-      ghiCanhBaoGianLan(thiSinhId, chang.id).catch(console.error);
+      ghiCanhBaoGianLan(thiSinhId, cuocThi.id).catch(console.error);
 
       if (next >= limit) {
         // Đạt giới hạn → auto submit
@@ -884,14 +881,14 @@ export default function TrangThi() {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [stage, thiSinhId, chang, cheatCount]);
+  }, [stage, thiSinhId, cuocThi, cheatCount]);
 
   // ─── Timer ───────────────────────────────────────────────────────────────────
   // Dùng ref để giữ giá trị mới nhất tránh stale closure khi auto-submit
-  const submitStateRef = React.useRef({ questions, answers, thiSinhId, chang });
+  const submitStateRef = React.useRef({ questions, answers, thiSinhId, cuocThi });
   const isSubmittingRef = React.useRef(false);
   useEffect(() => {
-    submitStateRef.current = { questions, answers, thiSinhId, chang };
+    submitStateRef.current = { questions, answers, thiSinhId, cuocThi };
     isSubmittingRef.current = isSubmitting;
   });
 
@@ -918,24 +915,24 @@ export default function TrangThi() {
 
   // ─── Session Persistence ────────────────────────────────────────────────────
   useEffect(() => {
-    if (stage === 'exam' && chang && examStartTime) {
+    if (stage === 'exam' && cuocThi && examStartTime) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        changId: chang.id,
+        changId: cuocThi.id,
         questions,
         answers,
         thiSinhId,
         examStartTime,
-        totalDuration: chang.thoi_gian_phut * 60,
+        totalDuration: cuocThi.thoi_gian_lam_phut * 60,
         optionOrders,
         formHoTen,
         cheatCount
       }));
     }
-  }, [questions, answers, cheatCount, stage, chang, examStartTime, optionOrders, formHoTen]);
+  }, [questions, answers, cheatCount, stage, cuocThi, examStartTime, optionOrders, formHoTen]);
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
   const handleStart = async (hoTen: string, sdt: string, donViId: string) => {
-    if (!chang) return;
+    if (!cuocThi) return;
     setLoading(true);
     let tsId: number | null = null;
     try {
@@ -943,12 +940,12 @@ export default function TrangThi() {
         ho_ten: hoTen,
         so_dien_thoai: sdt,
         don_vi_id: parseInt(donViId),
-        ten_don_vi_nho: ''
+        ten_lop: ''
       });
-      const qs = await layCauHoiNgauNhien(chang.id, chang.so_cau);
+      const qs = await layCauHoiNgauNhien(cuocThi.id, cuocThi.so_cau_hoi);
       if (qs.length === 0) throw new Error('Không có câu hỏi');
       const startTime = Date.now();
-      const totalDuration = chang.thoi_gian_phut * 60;
+      const totalDuration = cuocThi.thoi_gian_lam_phut * 60;
 
       // Shuffle options per question
       const orders: Record<number, string[]> = {};
@@ -962,6 +959,7 @@ export default function TrangThi() {
       setTimeLeft(totalDuration);
       setFormHoTen(hoTen);
       setFormDonViId(parseInt(donViId));
+      setFormSdt(sdt);
       setCurrentQuestionIdx(0);
       setStage('exam');
 
@@ -982,18 +980,18 @@ export default function TrangThi() {
   const handleSubmit = async (stateOverride?: any) => {
     if (isSubmitting) return; // Chống race condition
     if (stage === 'result') return; // Đã nộp rồi
-    const state = stateOverride || { questions, answers, thiSinhId, chang };
-    if (!state.thiSinhId || !state.chang) return;
+    const state = stateOverride || { questions, answers, thiSinhId, cuocThi };
+    if (!state.thiSinhId || !state.cuocThi) return;
     setIsSubmitting(true);
     setSubmitting(true);
     setShowSubmitConfirm(false);
     try {
-      const thoi_gian_lam = (state.chang.thoi_gian_phut * 60) - timeLeft;
+      const thoi_gian_lam = (state.cuocThi.thoi_gian_lam_phut * 60) - timeLeft;
 
       // Server-side scoring — client không biết đáp án đúng
       const result = await nopBaiVaChamDiem({
         thi_sinh_id: state.thiSinhId,
-        chang_id: state.chang.id,
+        cuoc_thi_id: state.cuocThi.id,
         thoi_gian_lam,
         answers: state.questions.map((q: CauHoi) => ({
           cau_hoi_id: q.id,
@@ -1011,7 +1009,7 @@ export default function TrangThi() {
       setShowCheatOverlay(false);
       sessionStorage.removeItem(STORAGE_KEY);
 
-      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam, tong_cau: state.questions.length });
+      setFinalResult({ diem: result.diem, so_cau_dung: result.so_cau_dung, thoi_gian_giay: thoi_gian_lam, tong_cau: state.questions.length, luot_thi: result.luot_thi });
       setStage('result');
       toast.success('Nộp bài thành công!');
     } catch (err) {
@@ -1035,7 +1033,7 @@ export default function TrangThi() {
   // ─── Render ──────────────────────────────────────────────────────────────────
   // Loading
   if (stage === 'loading' || (loading && stage !== 'exam')) {
-    if (!chang) {
+    if (!cuocThi) {
       return (
         <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 circuit-pattern">
           <div className="card-tech max-w-lg text-center bg-white p-12">
@@ -1051,15 +1049,15 @@ export default function TrangThi() {
   }
 
   // Pending (before exam time)
-  if (stage === 'pending' && chang) {
-    return <PendingPage chang={chang} onStart={() => {}} />;
+  if (stage === 'pending' && cuocThi) {
+    return <PendingPage cuocThi={cuocThi} onStart={() => {}} />;
   }
 
   // Register (during exam time, need to sign up)
-  if (stage === 'register' && chang) {
+  if (stage === 'register' && cuocThi) {
     return (
       <RegisterPage
-        chang={chang}
+        cuocThi={cuocThi}
         donVis={donVis}
         onStart={handleStart}
         loading={loading}
@@ -1068,7 +1066,7 @@ export default function TrangThi() {
   }
 
   // Exam
-  if (stage === 'exam' && chang) {
+  if (stage === 'exam' && cuocThi) {
     return (
       <>
         {/* Anti-cheat overlay */}
@@ -1090,7 +1088,7 @@ export default function TrangThi() {
                 onClick={() => setShowCheatOverlay(false)}
                 className="btn-cyber w-full h-16 bg-brand-blue text-white"
               >
-                {cheatCount >= (chang.gioi_han_gian_lan ?? 3) - 1
+                {cheatCount >= (cuocThi.gioi_han_gian_lan ?? 3) - 1
                   ? 'LƯU Ý: Lần cuối cùng!'
                   : 'TÔI ĐÃ HIỂU VÀ CAM KẾT KHÔNG TÁI PHẠM'}
               </button>
@@ -1107,8 +1105,8 @@ export default function TrangThi() {
           setCurrentQuestionIdx={setCurrentQuestionIdx}
           optionOrders={optionOrders}
           formHoTen={formHoTen}
-          chang={chang}
-          onSubmit={() => handleSubmit({ questions, answers, thiSinhId, chang })}
+          cuocThi={cuocThi}
+          onSubmit={() => handleSubmit({ questions, answers, thiSinhId, cuocThi })}
           submitting={submitting}
           showSubmitConfirm={showSubmitConfirm}
           setShowSubmitConfirm={setShowSubmitConfirm}
@@ -1123,6 +1121,7 @@ export default function TrangThi() {
   // Result
   if (stage === 'result' && finalResult) {
     const donViName = donVis.find(d => d.id === formDonViId)?.ten || '';
+    const isCuocThiActive = cuocThi ? new Date() < new Date(cuocThi.ket_thuc) : false;
     return (
       <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 relative overflow-hidden circuit-pattern">
         <div className="absolute inset-0 bg-brand-blue/5 bg-scanlines opacity-20" />
@@ -1135,13 +1134,13 @@ export default function TrangThi() {
 
           <h2 className="text-3xl md:text-5xl font-ui font-black text-brand-blue mb-4 uppercase">BÁO CÁO KẾT QUẢ</h2>
           <p className="text-slate-500 font-ui font-bold text-sm md:text-base mb-16">
-            Chúc mừng đồng chí <span className="text-brand-blue font-black">{formHoTen}</span>{donViName ? ` - ${donViName}` : ''} đã hoàn thành chặng {chang?.ten}!
+            Chúc mừng đồng chí <span className="text-brand-blue font-black">{formHoTen}</span>{donViName ? ` - ${donViName}` : ''} đã hoàn thành lượt thi thứ {finalResult.luot_thi} của cuộc thi {cuocThi?.ten}!
           </p>
 
           <div className="mb-16">
             <div className="bg-brand-blue/5 p-10 rounded-[2.5rem] border-2 border-brand-blue/10 group transition-all hover:bg-brand-blue hover:text-white text-center">
-              <p className="text-[10px] font-ui font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">SỐ CÂU ĐÚNG</p>
-              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.so_cau_dung}/{finalResult.tong_cau}</div>
+              <p className="text-[10px] font-ui font-black uppercase tracking-[0.3em] mb-4 opacity-50 group-hover:text-white">ĐIỂM SỐ</p>
+              <div className="text-6xl font-tech font-black text-brand-blue group-hover:text-brand-yellow">{finalResult.diem}/{finalResult.tong_cau}</div>
             </div>
           </div>
 
@@ -1155,12 +1154,35 @@ export default function TrangThi() {
             </span>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
-            className="w-full btn-cyber h-20 text-lg shadow-2xl"
-          >
-            QUAY LẠI TRANG CHỦ
-          </button>
+          <div className="space-y-4">
+            {isCuocThiActive && (
+              <button
+                onClick={async () => {
+                  if (!cuocThi) return;
+                  try {
+                    const status = await kiemTraLuotThi(formSdt, cuocThi.id);
+                    if (status === 'con_luot') {
+                      handleStart(formHoTen, formSdt, String(formDonViId));
+                    } else {
+                      toast.error('Bạn đã hết lượt thi.');
+                    }
+                  } catch {
+                    toast.error('Không thể bắt đầu lượt thi mới.');
+                  }
+                }}
+                className="w-full bg-brand-blue text-white font-bold text-base py-4 rounded-xl hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2 group font-ui"
+              >
+                <RotateCcw size={18} />
+                Thi lại lượt mới
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/')}
+              className="w-full btn-cyber h-20 text-lg shadow-2xl"
+            >
+              QUAY LẠI TRANG CHỦ
+            </button>
+          </div>
 
           {cheatCount > 0 && (
             <div className="mt-10 flex items-center justify-center gap-3 p-4 bg-brand-red/5 text-brand-red rounded-2xl border border-brand-red/10 animate-in fade-in duration-1000">
