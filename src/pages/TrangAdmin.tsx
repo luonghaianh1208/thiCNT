@@ -1352,7 +1352,7 @@ function TrangChuManager({ trangChu, onSaved }: { trangChu: TrangChu | null; onS
             className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
           />
           {anhNen && (
-            <div className="mt-3 rounded-xl overflow-hidden h-24">
+            <div className="mt-3 rounded-xl overflow-hidden aspect-video">
               <img src={anhNen} alt="Preview" className="w-full h-full object-cover" />
             </div>
           )}

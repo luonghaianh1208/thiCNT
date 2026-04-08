@@ -44,7 +44,7 @@ function CuocThiCard({ ct, onJoin }: { ct: CuocThi; onJoin: () => void }) {
     <div className="card-tech bg-white flex flex-col group">
       {/* Banner */}
       {ct.anh_banner && (
-        <div className="relative h-40 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-2xl">
+        <div className="relative aspect-video -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-2xl">
           <img src={ct.anh_banner} alt={ct.ten} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
