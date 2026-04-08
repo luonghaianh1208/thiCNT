@@ -43,7 +43,7 @@ export function SearchableSelect({ value, onChange, options, placeholder, classN
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-brand-blue/20 rounded-2xl shadow-2xl overflow-y-auto scrollbar-custom" style={{ maxHeight: '350px' }}>
+        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-brand-blue/20 rounded-2xl shadow-2xl overflow-y-auto scrollbar-custom" style={{ maxHeight: '450px' }}>
           <div className="p-3 border-b border-slate-100 sticky top-0 bg-white z-10">
             <input
               ref={inputRef}
