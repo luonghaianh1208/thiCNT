@@ -43,7 +43,7 @@ export function SearchableSelect({ value, onChange, options, placeholder, classN
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-brand-blue/20 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-brand-blue/20 rounded-2xl shadow-2xl overflow-y-auto scrollbar-custom" style={{ maxHeight: '350px' }}>
           <div className="p-3 border-b border-slate-100 sticky top-0 bg-white z-10">
             <input
               ref={inputRef}
@@ -54,23 +54,21 @@ export function SearchableSelect({ value, onChange, options, placeholder, classN
               className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold font-ui outline-none focus:border-brand-blue"
             />
           </div>
-          <div className="overflow-y-auto scrollbar-custom" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-            {filteredOptions.length === 0 ? (
-              <p className="p-4 text-center text-slate-400 text-sm font-ui">Không tìm thấy</p>
-            ) : (
-              filteredOptions.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                  className={`w-full px-6 py-4 text-left text-sm font-semibold font-ui transition-colors
-                             ${opt.value === value ? 'bg-brand-blue text-white' : 'hover:bg-brand-blue/5 text-slate-700'}`}
-                >
-                  {opt.label}
-                </button>
-              ))
-            )}
-          </div>
+          {filteredOptions.length === 0 ? (
+            <p className="p-4 text-center text-slate-400 text-sm font-ui">Không tìm thấy</p>
+          ) : (
+            filteredOptions.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`w-full px-6 py-4 text-left text-sm font-semibold font-ui transition-colors
+                           ${opt.value === value ? 'bg-brand-blue text-white' : 'hover:bg-brand-blue/5 text-slate-700'}`}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
