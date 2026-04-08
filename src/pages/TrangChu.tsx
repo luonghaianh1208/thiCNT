@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllCuocThiPublic, getTrangChu, type CuocThi, type TrangChu } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { Calendar, Clock, ChevronRight, Users, MapPin, Facebook, Menu, X, Loader2, PlayCircle } from 'lucide-react';
 
 const LOGO_DOAN = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
@@ -121,6 +122,18 @@ export default function TrangChu() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Realtime subscription — cập nhật ngay khi admin thay đổi hero
+    const channel = supabase
+      .channel('trang_chu_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trang_chu' }, (payload) => {
+        if (payload.new) {
+          setTrangChu(payload.new as TrangChu);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const heroTitle = trangChu?.tieu_de?.trim() || 'Hệ thống thi trực tuyến';

@@ -258,7 +258,7 @@ export default function TrangAdmin() {
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} cuocs={cuocs} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} cuocs={cuocs} />}
-                    {activeTab === 'trang-chu' && <TrangChuManager trangChu={trangChu} />}
+                    {activeTab === 'trang-chu' && <TrangChuManager trangChu={trangChu} onSaved={refreshData} />}
                   </div>
                 )}
               </>
@@ -1164,7 +1164,7 @@ function GianLanManager({ logs, cuocs }: { logs: any[]; cuocs: CuocThi[] }) {
 }
 
 // ─── TrangChu Manager ──────────────────────────────────────────────────────────
-function TrangChuManager({ trangChu }: { trangChu: TrangChu | null }) {
+function TrangChuManager({ trangChu, onSaved }: { trangChu: TrangChu | null; onSaved: () => void }) {
   const [tieuDe, setTieuDe] = useState(trangChu?.tieu_de ?? '');
   const [moTa, setMoTa] = useState(trangChu?.mo_ta ?? '');
   const [anhNen, setAnhNen] = useState(trangChu?.anh_nen ?? '');
@@ -1190,6 +1190,7 @@ function TrangChuManager({ trangChu }: { trangChu: TrangChu | null }) {
         duong_dan_fanpage: duongDanFanpage,
       });
       toast.success('Đã lưu cấu hình trang chủ!');
+      onSaved(); // Trigger parent to refetch so state stays in sync
     } catch (e) {
       console.error(e);
       toast.error('Lỗi khi lưu. Vui lòng thử lại.');
