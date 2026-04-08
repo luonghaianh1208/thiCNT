@@ -12,6 +12,7 @@
 -- DROP TABLE IF EXISTS cau_hoi CASCADE;
 -- DROP TABLE IF EXISTS cuoc_thi CASCADE;
 -- DROP TABLE IF EXISTS don_vi CASCADE;
+-- DROP TABLE IF EXISTS trang_chu CASCADE;
 -- DROP TABLE IF EXISTS admin_users CASCADE;
 -- DROP FUNCTION IF EXISTS kiem_tra_luot_thi(TEXT, INTEGER);
 -- DROP FUNCTION IF EXISTS dem_luot_da_thi(INTEGER, INTEGER);
@@ -100,6 +101,15 @@ CREATE TABLE IF NOT EXISTS admin_users (
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Cấu hình trang chủ (hero section)
+CREATE TABLE IF NOT EXISTS trang_chu (
+  id SERIAL PRIMARY KEY,
+  tieu_de TEXT NOT NULL DEFAULT '',
+  mo_ta TEXT NOT NULL DEFAULT '',
+  anh_nen TEXT NOT NULL DEFAULT '',
+  duong_dan_fanpage TEXT NOT NULL DEFAULT ''
 );
 
 -- ============================================================
@@ -338,6 +348,7 @@ ALTER TABLE thi_sinh ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ket_qua ENABLE ROW LEVEL SECURITY;
 ALTER TABLE canh_bao_gian_lan ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trang_chu ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "don_vi_public_read" ON don_vi FOR SELECT USING (true);
 CREATE POLICY "don_vi_admin_all" ON don_vi FOR ALL USING (
@@ -379,6 +390,11 @@ CREATE POLICY "admin_users_admin_read" ON admin_users FOR SELECT USING (
   EXISTS (SELECT 1 FROM admin_users WHERE username = current_setting('request.jwt.username', true))
 );
 
+CREATE POLICY "trang_chu_public_read" ON trang_chu FOR SELECT USING (true);
+CREATE POLICY "trang_chu_admin_all" ON trang_chu FOR ALL USING (
+  EXISTS (SELECT 1 FROM admin_users WHERE username = current_setting('request.jwt.username', true))
+);
+
 -- ============================================================
 -- 6. SEED — Tài khoản admin mặc định
 --    Password: Admin@1234 — đổi ngay sau khi chạy xong!
@@ -389,47 +405,9 @@ VALUES ('admin', 'Admin@1234')
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
--- 7. SEED DATA MẪU (xóa phần này trong production)
+-- 7. SEED — Cấu hình trang chủ mặc định
 -- ============================================================
 
--- Lớp mẫu
-INSERT INTO don_vi (ten, lop) VALUES
-  ('Trường THPT Chuyên Nguyễn Trãi', '10A1'),
-  ('Trường THPT Chuyên Nguyễn Trãi', '10A2'),
-  ('Trường THPT Chuyên Nguyễn Trãi', '10A3'),
-  ('Trường THPT Chuyên Nguyễn Trãi', '11A1'),
-  ('Trường THPT Chuyên Nguyễn Trãi', '11A2'),
-  ('Trường THPT Chuyên Nguyễn Trãi', '12A1')
+INSERT INTO trang_chu (id, tieu_de, mo_ta, anh_nen, duong_dan_fanpage)
+VALUES (1, 'Hệ thống thi trực tuyến', 'Nền tảng thi trực tuyến dành cho học sinh THPT Chuyên Nguyễn Trãi', '', 'https://www.facebook.com/doantruongthptchuyennguyentrai')
 ON CONFLICT DO NOTHING;
-
--- Cuộc thi mẫu
-INSERT INTO cuoc_thi (ten, mo_ta, anh_banner, bat_dau, ket_thuc, so_cau_hoi, thoi_gian_lam_phut, gioi_han_luot, gioi_han_gian_lan)
-VALUES (
-  'Cuộc thi Chuyển đổi số lần 1',
-  'Cuộc thi hưởng ứng ngày Chuyển đổi số quốc gia, dành cho học sinh toàn trường.',
-  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&h=400&fit=crop',
-  NOW(),
-  NOW() + INTERVAL '7 days',
-  10,
-  15,
-  3,
-  3
-) ON CONFLICT DO NOTHING;
-
--- Câu hỏi mẫu
-DO $$
-DECLARE
-  v_ct_id INTEGER;
-BEGIN
-  SELECT id INTO v_ct_id FROM cuoc_thi LIMIT 1;
-  IF v_ct_id IS NOT NULL THEN
-    INSERT INTO cau_hoi (cuoc_thi_id, noi_dung, dap_an_a, dap_an_b, dap_an_c, dap_an_d, dap_an_dung)
-    VALUES
-      (v_ct_id, 'Chuyển đổi số là gì?', 'Ứng dụng công nghệ số trong mọi lĩnh vực', 'Số hóa tài liệu giấy', 'Sử dụng máy tính', 'Sử dụng điện thoại thông minh', 'A'),
-      (v_ct_id, 'Cơ sở dữ liệu quốc gia về dân cư Việt Nam tên là gì?', 'CSDL Dân cư Quốc gia', 'CSDL Bộ Công an', 'CSDL Bộ Thông tin', 'CSDL Chính phủ', 'A'),
-      (v_ct_id, 'Nghị quyết số 13 của Bộ Chính trị về chuyển đổi số được ban hành năm nào?', '2020', '2019', '2021', '2022', 'C'),
-      (v_ct_id, 'Mục tiêu đến 2025, Việt Nam phấn đấu có bao nhiêu % dân số có tài khoản thanh toán điện tử?', '70%', '50%', '80%', '60%', 'B'),
-      (v_ct_id, 'Đề án phát triển hạ tầng số quốc gia giai đoạn 2021-2025 được phê duyệt bởi ai?', 'Thủ tướng Chính phủ', 'Bộ trưởng Bộ TT&TT', 'Chủ tịch nước', 'Quốc hội', 'A')
-    ON CONFLICT DO NOTHING;
-  END IF;
-END $$;

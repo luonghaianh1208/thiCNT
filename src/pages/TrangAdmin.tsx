@@ -7,17 +7,18 @@ import {
   getDonViList, addDonVi, bulkInsertDonVi, updateDonVi, deleteDonVi,
   getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
   getKetQuaAdmin, getCanhBaoGianLan,
-  type CuocThi, type CauHoi, type DonVi
+  getTrangChuAdmin, updateTrangChu,
+  type CuocThi, type CauHoi, type DonVi, type TrangChu
 } from '@/lib/db';
 import {
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2,
-  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award
+  Upload, Search, ChevronRight, FileSpreadsheet, ShieldAlert, AlertTriangle, Building2, Menu, X, CheckCircle, Zap, Loader2, Cpu, Award, Globe, Image, Facebook
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
 
-type Tab = 'dashboard' | 'cuoc-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'dang-thi';
+type Tab = 'dashboard' | 'cuoc-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'trang-chu';
 
 export default function TrangAdmin() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function TrangAdmin() {
   const [thiSinhs, setThiSinhs] = useState<any[]>([]);
   const [ketQuas, setKetQuas] = useState<any[]>([]);
   const [gianLanLogs, setGianLanLogs] = useState<any[]>([]);
+  const [trangChu, setTrangChu] = useState<TrangChu | null>(null);
 
   // Selection
   const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
@@ -74,6 +76,7 @@ export default function TrangAdmin() {
       if (activeTab === 'ket-qua') setKetQuas(await getKetQuaAdmin(selectedCuocThiId || undefined));
       if (activeTab === 'gian-lan') setGianLanLogs(await getCanhBaoGianLan(selectedCuocThiId || undefined));
       if (activeTab === 'cau-hoi' && selectedCuocThiId) setCauHois(await getCauHoiByCuocThi(selectedCuocThiId));
+      if (activeTab === 'trang-chu') setTrangChu(await getTrangChuAdmin());
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -91,6 +94,7 @@ export default function TrangAdmin() {
     { id: 'thi-sinh', label: 'Thí sinh', icon: <Users className="w-5 h-5" /> },
     { id: 'ket-qua', label: 'Kết quả', icon: <Trophy className="w-5 h-5" /> },
     { id: 'gian-lan', label: 'Gian lận', icon: <ShieldAlert className="w-5 h-5" /> },
+    { id: 'trang-chu', label: 'Trang chủ', icon: <Globe className="w-5 h-5" /> },
   ];
 
   return (
@@ -254,6 +258,7 @@ export default function TrangAdmin() {
                     {activeTab === 'thi-sinh' && <ThiSinhManager thiSinhs={thiSinhs} refresh={refreshData} />}
                     {activeTab === 'ket-qua' && <KetQuaManager ketQuas={ketQuas} cuocs={cuocs} />}
                     {activeTab === 'gian-lan' && <GianLanManager logs={gianLanLogs} cuocs={cuocs} />}
+                    {activeTab === 'trang-chu' && <TrangChuManager trangChu={trangChu} />}
                   </div>
                 )}
               </>
@@ -1153,6 +1158,132 @@ function GianLanManager({ logs, cuocs }: { logs: any[]; cuocs: CuocThi[] }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── TrangChu Manager ──────────────────────────────────────────────────────────
+function TrangChuManager({ trangChu }: { trangChu: TrangChu | null }) {
+  const [tieuDe, setTieuDe] = useState(trangChu?.tieu_de ?? '');
+  const [moTa, setMoTa] = useState(trangChu?.mo_ta ?? '');
+  const [anhNen, setAnhNen] = useState(trangChu?.anh_nen ?? '');
+  const [duongDanFanpage, setDuongDanFanpage] = useState(trangChu?.duong_dan_fanpage ?? '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (trangChu) {
+      setTieuDe(trangChu.tieu_de ?? '');
+      setMoTa(trangChu.mo_ta ?? '');
+      setAnhNen(trangChu.anh_nen ?? '');
+      setDuongDanFanpage(trangChu.duong_dan_fanpage ?? '');
+    }
+  }, [trangChu]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateTrangChu({
+        tieu_de: tieuDe,
+        mo_ta: moTa,
+        anh_nen: anhNen,
+        duong_dan_fanpage: duongDanFanpage,
+      });
+      toast.success('Đã lưu cấu hình trang chủ!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Lỗi khi lưu. Vui lòng thử lại.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-brand-blue font-ui">Cấu hình trang chủ</h2>
+          <p className="text-slate-400 text-sm font-ui mt-1">Nội dung này hiển thị ở phần Hero đầu trang.</p>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 bg-brand-blue text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all font-ui disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+          Lưu thay đổi
+        </button>
+      </div>
+
+      {anhNen && (
+        <div className="rounded-2xl overflow-hidden h-40 relative">
+          <img src={anhNen} alt="Banner preview" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
+          <p className="absolute bottom-3 left-4 text-white text-sm font-ui font-bold">Xem trước ảnh nền Hero</p>
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
+        <div className="p-6">
+          <label className="block text-sm font-black text-slate-700 uppercase tracking-widest mb-2 font-ui">
+            Tiêu đề Hero
+          </label>
+          <p className="text-slate-400 text-xs mb-3 font-ui">VD: "Hệ thống thi trực tuyến"</p>
+          <input
+            type="text"
+            value={tieuDe}
+            onChange={e => setTieuDe(e.target.value)}
+            placeholder="Nhập tiêu đề hiển thị trên Hero..."
+            className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
+          />
+        </div>
+
+        <div className="p-6">
+          <label className="block text-sm font-black text-slate-700 uppercase tracking-widest mb-2 font-ui">
+            Mô tả Hero
+          </label>
+          <p className="text-slate-400 text-xs mb-3 font-ui">VD: "Nền tảng thi trắc nghiệm dành cho học sinh THPT Chuyên Nguyễn Trãi"</p>
+          <textarea
+            value={moTa}
+            onChange={e => setMoTa(e.target.value)}
+            placeholder="Nhập mô tả ngắn hiển thị trên Hero..."
+            rows={3}
+            className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui resize-none"
+          />
+        </div>
+
+        <div className="p-6">
+          <label className="flex items-center gap-2 text-sm font-black text-slate-700 uppercase tracking-widest mb-2 font-ui">
+            <Image className="w-4 h-4" /> Ảnh nền Hero
+          </label>
+          <p className="text-slate-400 text-xs mb-3 font-ui">URL ảnh nền cho phần Hero. Để trống = dùng gradient xanh mặc định.</p>
+          <input
+            type="url"
+            value={anhNen}
+            onChange={e => setAnhNen(e.target.value)}
+            placeholder="https://..."
+            className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
+          />
+          {anhNen && (
+            <div className="mt-3 rounded-xl overflow-hidden h-24">
+              <img src={anhNen} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+
+        <div className="p-6">
+          <label className="flex items-center gap-2 text-sm font-black text-slate-700 uppercase tracking-widest mb-2 font-ui">
+            <Facebook className="w-4 h-4" /> Link Fanpage
+          </label>
+          <p className="text-slate-400 text-xs mb-3 font-ui">Link Facebook Fanpage của Đoàn trường.</p>
+          <input
+            type="url"
+            value={duongDanFanpage}
+            onChange={e => setDuongDanFanpage(e.target.value)}
+            placeholder="https://www.facebook.com/..."
+            className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui"
+          />
+        </div>
       </div>
     </div>
   );

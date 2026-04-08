@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 
 const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
+const LOGO_TRUONG_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2026/02/Logo-CNT.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ExamStage = 'loading' | 'pending' | 'register' | 'exam' | 'result';
@@ -110,7 +111,10 @@ function PendingPage({ cuocThi, onStart }: { cuocThi: CuocThi; onStart: () => vo
       <div className="max-w-4xl mx-auto">
         {/* Header Card */}
         <div className="card-tech bg-white p-10 md:p-14 text-center mb-8 border-brand-blue/20">
-          <img src={LOGO_URL} alt="Logo" className="h-20 mx-auto mb-6 drop-shadow-xl" />
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <img src={LOGO_URL} alt="Logo Đoàn" className="h-16 w-auto drop-shadow-xl" />
+            <img src={LOGO_TRUONG_URL} alt="Logo Trường" className="h-16 w-auto drop-shadow-xl" />
+          </div>
           <div className="inline-flex items-center gap-2 bg-brand-blue/10 px-4 py-2 rounded-full mb-6">
             <div className="w-2 h-2 rounded-full bg-brand-blue animate-pulse" />
             <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Sắp diễn ra</span>
@@ -299,7 +303,10 @@ function RegisterPage({
         <div className="card-tech bg-white p-10 md:p-14 border-brand-blue/20">
           {/* Header */}
           <div className="text-center mb-10">
-            <img src={LOGO_URL} alt="Logo" className="h-20 mx-auto mb-6 drop-shadow-xl" />
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <img src={LOGO_URL} alt="Logo Đoàn" className="h-16 w-auto drop-shadow-xl" />
+              <img src={LOGO_TRUONG_URL} alt="Logo Trường" className="h-16 w-auto drop-shadow-xl" />
+            </div>
             <div className="inline-flex items-center gap-2 bg-brand-yellow/20 px-4 py-2 rounded-full mb-4">
               <div className="w-2 h-2 rounded-full bg-brand-yellow animate-pulse" />
               <span className="text-brand-blue font-black text-xs uppercase tracking-widest">Đang mở</span>

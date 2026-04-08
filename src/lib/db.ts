@@ -2,6 +2,14 @@ import { supabase } from './supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface TrangChu {
+  id: number;
+  tieu_de: string;
+  mo_ta: string;
+  anh_nen: string;
+  duong_dan_fanpage: string;
+}
+
 export interface DonVi {
   id: number;
   ten: string;
@@ -103,6 +111,17 @@ export async function getDonViList(): Promise<DonVi[]> {
     .order('ten', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+/** Lấy cấu hình trang chủ */
+export async function getTrangChu(): Promise<TrangChu | null> {
+  const { data, error } = await supabase
+    .from('trang_chu')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 /** Kiểm tra thí sinh đã thi cuộc thi nào chưa — trả về tên cuộc thi đã thi, rỗng nếu chưa thi */
@@ -217,6 +236,25 @@ export async function adminLogin(username: string, matKhau: string): Promise<boo
   });
   if (error) throw error;
   return !!data;
+}
+
+// Trang chủ
+export async function getTrangChuAdmin(): Promise<TrangChu | null> {
+  const { data, error } = await supabase
+    .from('trang_chu')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTrangChu(ct: Partial<TrangChu>): Promise<void> {
+  const { error } = await supabase
+    .from('trang_chu')
+    .update(ct)
+    .eq('id', 1);
+  if (error) throw error;
 }
 
 // Cuộc thi

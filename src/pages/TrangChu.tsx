@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllCuocThiPublic, type CuocThi } from '@/lib/db';
-import { Calendar, Clock, Award, Users, ChevronRight, Trophy, Star, ShieldCheck, Zap, Globe, Menu, X, Cpu, PlayCircle } from 'lucide-react';
+import { getAllCuocThiPublic, getTrangChu, type CuocThi, type TrangChu } from '@/lib/db';
+import { Calendar, Clock, ChevronRight, Users, MapPin, Facebook, Menu, X, Loader2, PlayCircle } from 'lucide-react';
 
-const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
+const LOGO_DOAN = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2025/12/Huy_Hieu_Doan.png";
+const LOGO_TRUONG = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2026/02/Logo-CNT.png";
+const DEFAULT_BANNER = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1400&h=500&fit=crop";
+
+const SCHOOL_NAME = "Đoàn TNCS Hồ Chí Minh – THPT Chuyên Nguyễn Trãi";
+const SCHOOL_ADDRESS = "Đường Nguyễn Văn Linh, P. Lê Thanh Nghị, TP. Hải Phòng";
+const FANPAGE_URL = "https://www.facebook.com/doantruongthptchuyennguyentrai";
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
@@ -19,395 +25,363 @@ function isActive(ct: CuocThi) {
   return now >= new Date(ct.bat_dau) && now <= new Date(ct.ket_thuc);
 }
 
+function isUpcoming(ct: CuocThi) {
+  return new Date() < new Date(ct.bat_dau);
+}
+
+function getCuocThiStatus(ct: CuocThi) {
+  const now = new Date();
+  if (now < new Date(ct.bat_dau)) return 'upcoming';
+  if (now <= new Date(ct.ket_thuc)) return 'active';
+  return 'ended';
+}
+
+function CuocThiCard({ ct, onJoin }: { ct: CuocThi; onJoin: () => void }) {
+  const status = getCuocThiStatus(ct);
+
+  return (
+    <div className="card-tech bg-white flex flex-col group">
+      {/* Banner */}
+      {ct.anh_banner && (
+        <div className="relative h-40 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-2xl">
+          <img src={ct.anh_banner} alt={ct.ten} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        </div>
+      )}
+
+      {/* Status badge */}
+      <div className="flex justify-between items-start mb-4">
+        <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-full font-ui
+          ${status === 'active' ? 'bg-emerald-500 text-white' :
+            status === 'upcoming' ? 'bg-brand-blue text-white' :
+            'bg-slate-200 text-slate-500'}`}>
+          {status === 'active' ? 'Đang mở' : status === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'}
+        </span>
+        <span className="text-slate-300 text-xs font-ui font-bold">#{ct.id}</span>
+      </div>
+
+      {/* Title & Description */}
+      <h3 className="text-lg font-black text-brand-blue mb-2 font-ui leading-snug group-hover:text-brand-red transition-colors">
+        {ct.ten}
+      </h3>
+      {ct.mo_ta && (
+        <p className="text-slate-500 text-sm font-medium font-ui mb-5 line-clamp-2 flex-1">
+          {ct.mo_ta}
+        </p>
+      )}
+
+      {/* Info */}
+      <div className="space-y-2.5 mb-6">
+        <div className="flex items-center gap-2.5 text-slate-400 text-xs font-semibold font-ui">
+          <Calendar className="w-3.5 h-3.5 text-brand-yellow flex-shrink-0" />
+          <span>{formatDateTime(ct.bat_dau)}</span>
+        </div>
+        <div className="flex items-center gap-2.5 text-slate-400 text-xs font-semibold font-ui">
+          <Clock className="w-3.5 h-3.5 text-brand-yellow flex-shrink-0" />
+          <span>{ct.thoi_gian_lam_phut} phút · {ct.so_cau_hoi} câu</span>
+        </div>
+        <div className="flex items-center gap-2.5 text-slate-400 text-xs font-semibold font-ui">
+          <Users className="w-3.5 h-3.5 text-brand-yellow flex-shrink-0" />
+          <span>Tối đa {ct.gioi_han_luot} lượt thi</span>
+        </div>
+      </div>
+
+      {/* CTA */}
+      {status === 'active' && (
+        <button
+          onClick={onJoin}
+          className="w-full bg-brand-blue text-white font-bold text-sm py-3.5 rounded-xl hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2 group/btn font-ui mt-auto"
+        >
+          <PlayCircle className="w-4 h-4" />
+          Tham gia thi
+          <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+        </button>
+      )}
+      {status === 'upcoming' && (
+        <div className="w-full text-center text-slate-400 text-xs font-bold py-3.5 font-ui uppercase tracking-widest mt-auto">
+          Chưa mở đăng ký
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TrangChu() {
   const navigate = useNavigate();
+  const [trangChu, setTrangChu] = useState<TrangChu | null>(null);
   const [cuocs, setCuocs] = useState<CuocThi[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    getAllCuocThiPublic()
-      .then(setCuocs)
+    Promise.all([getTrangChu(), getAllCuocThiPublic()])
+      .then(([tc, cc]) => {
+        setTrangChu(tc);
+        setCuocs(cc);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const hasActiveCuoc = cuocs.some(isActive);
-  const nextCuoc = cuocs.find(c => new Date() < new Date(c.bat_dau));
+  const heroTitle = trangChu?.tieu_de?.trim() || 'Hệ thống thi trực tuyến';
+  const heroDesc = trangChu?.mo_ta?.trim() || 'Nền tảng thi trắc nghiệm dành cho học sinh THPT Chuyên Nguyễn Trãi';
+  const heroBg = trangChu?.anh_nen?.trim() || '';
+  const heroFanpage = trangChu?.duong_dan_fanpage?.trim() || FANPAGE_URL;
 
+  const activeCuocs = cuocs.filter(isActive);
+  const upcomingCuocs = cuocs.filter(isUpcoming);
+  const endedCuocs = cuocs.filter(c => getCuocThiStatus(c) === 'ended');
+
+  const displayCuocs = [...activeCuocs, ...upcomingCuocs];
 
   return (
-    <div className="min-h-screen bg-brand-beige/5 selection:bg-brand-yellow selection:text-brand-blue overflow-x-hidden circuit-pattern">
-      {/* ─── Navigation ─── */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-blue/10">
-        <div className="section-container">
-          <div className="flex justify-between h-24 items-center">
-            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate('/')}>
-              <div className="relative">
-                <img src={LOGO_URL} alt="Logo" className="h-16 w-auto drop-shadow-lg" />
-                <div className="absolute -inset-1 bg-brand-blue/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </div>
-              <div className="border-l-2 border-brand-blue/20 pl-3 lg:pl-4 min-w-0">
-                <p className="text-[11px] sm:text-[14px] font-black text-brand-blue uppercase tracking-[0.05em] leading-tight font-ui truncate">Đoàn TNCS Hồ Chí Minh</p>
-                <p className="text-[10px] sm:text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] leading-tight font-ui hidden sm:block">Thành Đoàn Hải Phòng</p>
+    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
+      {/* ─── Sticky Header ─── */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-blue/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex justify-between h-20 items-center">
+            {/* Dual Logos */}
+            <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
+              <img src={LOGO_DOAN} alt="Logo Đoàn" className="h-12 w-auto" />
+              <img src={LOGO_TRUONG} alt="Logo Trường" className="h-12 w-auto" />
+              <div className="border-l-2 border-brand-blue/20 pl-3">
+                <p className="text-xs font-black text-brand-blue uppercase tracking-wide leading-tight font-ui hidden sm:block">
+                  {SCHOOL_NAME}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight font-ui hidden md:block">
+                  Hải Phòng
+                </p>
               </div>
             </div>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#gioi-thieu" className="nav-link-tech">Giới thiệu</a>
-              <a href="#lich-thi" className="nav-link-tech">Lịch thi</a>
-              <a href="#giai-thuong" className="nav-link-tech">Giải thưởng</a>
-              {hasActiveCuoc ? (
+            <div className="hidden md:flex items-center gap-6">
+              <a
+                href={heroFanpage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-slate-500 hover:text-brand-blue text-sm font-bold font-ui transition-colors"
+              >
+                <Facebook className="w-4 h-4" />
+                <span>Fanpage</span>
+              </a>
+              {activeCuocs.length > 0 && (
                 <button
                   onClick={() => navigate('/thi')}
-                  className="flex items-center gap-2 bg-brand-yellow text-brand-blue font-black text-sm px-6 py-3 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-brand-yellow/30 font-ui animate-pulse-soft"
+                  className="flex items-center gap-2 bg-brand-blue text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-brand-blue/90 transition-all font-ui shadow-lg shadow-brand-blue/20"
                 >
-                  <PlayCircle size={18} />
+                  <PlayCircle className="w-4 h-4" />
                   Vào thi ngay
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate('/thi')}
-                  className="flex items-center gap-2 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/10 transition-all font-ui"
-                >
-                  <Clock size={16} />
-                  Xem lịch thi
                 </button>
               )}
             </div>
 
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-brand-blue p-3 bg-brand-blue/5 rounded-xl hover:bg-brand-blue/10 transition-colors"
-              >
-                {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
-            </div>
+            {/* Mobile Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-brand-blue p-2 hover:bg-brand-blue/5 rounded-lg transition-colors"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-brand-blue/10 p-6 space-y-4 animate-in slide-in-from-top duration-300">
-            <a href="#gioi-thieu" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Giới thiệu</a>
-            <a href="#lich-thi" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Lịch thi</a>
-            <a href="#giai-thuong" className="block nav-link-tech text-lg" onClick={() => setMobileMenuOpen(false)}>Giải thưởng</a>
-            <div className="pt-2">
-              {hasActiveCuoc ? (
+          <div className="md:hidden bg-white border-t border-brand-blue/10 px-4 py-6 space-y-4 animate-in slide-in-from-top duration-200">
+            <a
+              href={heroFanpage}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-slate-600 hover:text-brand-blue text-base font-bold font-ui transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Facebook className="w-5 h-5" />
+              Fanpage Đoàn trường
+            </a>
+            <div className="border-t border-slate-100 pt-4">
+              {activeCuocs.length > 0 && (
                 <button
                   onClick={() => { navigate('/thi'); setMobileMenuOpen(false); }}
-                  className="w-full flex items-center justify-center gap-3 bg-brand-yellow text-brand-blue font-black text-base py-4 rounded-2xl hover:bg-yellow-400 transition-all shadow-lg font-ui"
+                  className="w-full flex items-center justify-center gap-2 bg-brand-blue text-white font-bold text-base py-3.5 rounded-xl font-ui"
                 >
-                  <PlayCircle size={20} /> Vào thi ngay
-                </button>
-              ) : (
-                <button
-                  onClick={() => { navigate('/thi'); setMobileMenuOpen(false); }}
-                  className="w-full flex items-center justify-center gap-3 bg-brand-blue/5 border-2 border-brand-blue/20 text-brand-blue font-bold text-sm py-4 rounded-2xl font-ui"
-                >
-                  <Clock size={16} />
-                  {nextCuoc ? `Mở thi: ${formatDateTime(nextCuoc.bat_dau)}` : 'Xem lịch thi'}
+                  <PlayCircle className="w-5 h-5" />
+                  Vào thi ngay
                 </button>
               )}
             </div>
           </div>
         )}
-      </nav>
+      </header>
 
       {/* ─── Hero Section ─── */}
-      <section className="relative min-h-[95vh] flex items-center pt-20 pb-32 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/2026/04/San-khau-1.jpg"
-            alt=""
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/70 via-brand-dark/50 to-brand-dark/80"></div>
-          <div className="absolute inset-0 bg-scanlines opacity-5 pointer-events-none"></div>
+      <section
+        className="relative py-20 md:py-28 overflow-hidden"
+        style={
+          heroBg
+            ? { backgroundImage: `url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: 'linear-gradient(135deg, #1E459F 0%, #0F172A 60%, #1E459F 100%)' }
+        }
+      >
+        {/* Overlay when bg image is set */}
+        {heroBg && <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />}
+
+        {/* Circuit pattern overlay */}
+        <div className="absolute inset-0 circuit-pattern opacity-10 pointer-events-none" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          {/* Top decorative line */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="h-px w-12 bg-white/30" />
+            <img src={LOGO_DOAN} alt="" className="h-10 w-auto opacity-80" />
+            <div className="h-px w-12 bg-white/30" />
+          </div>
+
+          {/* Hero Title */}
+          <h1
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-[1.15] font-ui drop-shadow-2xl"
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+          >
+            {heroTitle}
+          </h1>
+
+          {/* Hero Description */}
+          {heroDesc && (
+            <p className="text-base sm:text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto font-medium leading-relaxed font-ui">
+              {heroDesc}
+            </p>
+          )}
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {activeCuocs.length > 0 ? (
+              <>
+                <button
+                  onClick={() => navigate('/thi')}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-yellow text-brand-dark font-black text-base px-10 py-4 rounded-2xl hover:bg-yellow-400 transition-all shadow-xl shadow-brand-yellow/30 font-ui"
+                >
+                  <PlayCircle className="w-5 h-5" />
+                  Vào thi ngay
+                </button>
+                <a
+                  href={heroFanpage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-white/30 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/10 transition-all font-ui"
+                >
+                  <Facebook className="w-5 h-5" />
+                  Fanpage
+                </a>
+              </>
+            ) : upcomingCuocs.length > 0 ? (
+              <>
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur text-white font-bold text-base px-8 py-4 rounded-2xl font-ui">
+                  <Clock className="w-5 h-5 text-brand-yellow" />
+                  {upcomingCuocs.length} cuộc thi sắp diễn ra
+                </div>
+                <a
+                  href={heroFanpage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-white/30 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/10 transition-all font-ui"
+                >
+                  <Facebook className="w-5 h-5" />
+                  Fanpage
+                </a>
+              </>
+            ) : (
+              <a
+                href={heroFanpage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-white/30 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/10 transition-all font-ui"
+              >
+                <Facebook className="w-5 h-5" />
+                Fanpage Đoàn trường
+              </a>
+            )}
+          </div>
         </div>
+      </section>
 
-        <div className="section-container relative z-10 text-center">
-          <div className="relative bg-brand-dark/40 backdrop-blur-md border border-white/10 rounded-3xl px-8 md:px-16 py-12 md:py-16 max-w-5xl mx-auto w-full shadow-[0_8px_60px_rgba(0,0,0,0.4)]">
-            {/* Subtle top accent line */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-brand-yellow/60 to-transparent" />
-
-            <h1 className="font-black text-white mb-6 leading-[1.15] font-ui drop-shadow-2xl" style={{ fontSize: 'clamp(1.8rem, 4.5vw, 3.5rem)' }}>
-              Thanh niên Hải Phòng với<br className="hidden md:block" />
-              <span className="text-brand-yellow drop-shadow-[0_0_30px_rgba(250,189,50,0.5)]">
-                {' '}Chuyển đổi số, Chuyển đổi xanh
+      {/* ─── Competitions Grid ─── */}
+      <section className="py-16 md:py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-brand-blue font-ui">Cuộc thi</h2>
+              <div className="w-12 h-1 bg-brand-yellow mt-2 rounded-full" />
+            </div>
+            {cuocs.length > 0 && (
+              <span className="text-slate-400 text-sm font-bold font-ui hidden sm:block">
+                {activeCuocs.length > 0 ? `${activeCuocs.length} đang mở · ` : ''}{upcomingCuocs.length > 0 ? `${upcomingCuocs.length} sắp diễn ra` : endedCuocs.length > 0 ? `${endedCuocs.length} đã kết thúc` : ''}
               </span>
-            </h1>
-
-            <p className="text-base md:text-xl text-white/80 mb-10 max-w-2xl mx-auto font-semibold leading-relaxed font-ui italic">
-              "Hành động vì thành phố đáng sống"
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
-              <a
-                href="#lich-thi"
-                className={`w-full sm:w-auto relative font-black text-lg px-12 py-5 rounded-2xl flex items-center justify-center gap-3 group overflow-hidden transition-all shadow-[0_0_40px_rgba(250,189,50,0.4)] ${hasActiveCuoc ? 'bg-brand-yellow text-brand-blue hover:bg-yellow-400' : 'bg-white/10 backdrop-blur-xl border-2 border-brand-yellow/60 text-white hover:bg-white/20'}`}
-              >
-                <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></span>
-                <PlayCircle className="w-6 h-6" />
-                {hasActiveCuoc ? 'Vào thi ngay' : 'Xem lịch thi'}
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <a
-                href="#gioi-thieu"
-                className="w-full sm:w-auto border-2 border-white/30 text-white font-bold text-base px-8 py-4 rounded-2xl hover:bg-white/10 transition-all font-ui flex items-center justify-center"
-              >
-                Hướng dẫn chi tiết
-              </a>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto border-t border-white/20 pt-16 px-6">
-            {[
-              { icon: <Users size={28} />, val: "100+", label: "Đơn vị tham gia", color: "text-brand-yellow" },
-              { icon: <Cpu size={28} />, val: "3", label: "Chặng thi Sơ khảo", color: "text-blue-400" },
-              { icon: <Globe size={28} />, val: "Miễn phí", label: "Đăng ký dự thi", color: "text-emerald-400" },
-              { icon: <Trophy size={28} />, val: "TOP 10", label: "Vào Vòng Chung kết", color: "text-brand-red" },
-            ].map((s, i) => (
-              <div key={i} className="text-center group transition-transform hover:scale-105">
-                <div className={`${s.color} mb-3 flex justify-center`}>{s.icon}</div>
-                <div className="text-2xl md:text-4xl font-ui font-black text-white mb-2">{s.val}</div>
-                <div className="text-[11px] text-white/50 font-semibold uppercase tracking-[0.2em] font-ui">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Về Cuộc Thi ─── */}
-      <section id="gioi-thieu" className="py-28 bg-white relative">
-        <div className="section-container">
-          <div className="flex flex-col lg:flex-row gap-20 lg:items-center">
-            <div className="flex-1 space-y-10">
-              <div className="inline-block px-5 py-2 bg-brand-red text-white text-xs font-black uppercase tracking-[0.2em] font-ui rounded">Về Cuộc Thi</div>
-              <h2 className="text-4xl md:text-5xl font-black text-brand-blue leading-tight font-ui">Mục đích & Ý nghĩa</h2>
-              <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-medium font-ui">
-                Cuộc thi hướng tới nâng cao nhận thức và hành động của đoàn viên, thanh niên Hải Phòng về chuyển đổi số, chuyển đổi xanh và đổi mới sáng tạo.
-              </p>
-              <div className="space-y-6 pt-2">
-                {[
-                  "Nâng cao nhận thức về chuyển đổi số, chuyển đổi xanh và đổi mới sáng tạo.",
-                  "Phát huy vai trò xung kích, sáng tạo của thanh niên Hải Phòng.",
-                  "Đề xuất ý tưởng, sáng kiến ứng dụng công nghệ số gắn với bảo vệ môi trường, phát triển bền vững.",
-                ].map((text, i) => (
-                  <div key={i} className="flex gap-5 items-start">
-                    <div className="mt-1 flex-shrink-0 w-10 h-10 bg-brand-blue text-white rounded-xl flex items-center justify-center shadow-md">
-                      <Zap className="w-5 h-5 fill-current" />
-                    </div>
-                    <span className="text-slate-700 font-semibold text-base md:text-lg pt-1.5 font-ui">{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 pt-8 lg:pt-0">
-              {/* Card màu xanh — không cần hover mới thấy */}
-              <div className="card-tech bg-brand-blue text-white">
-                <Users className="w-12 h-12 text-white/80 mb-6" />
-                <h3 className="font-ui font-black text-xl mb-4 text-white">Đối tượng dự thi</h3>
-                <p className="font-medium text-white/80 text-base leading-relaxed font-ui">Thanh niên sinh sống tại Hải Phòng, độ tuổi 16–35. Tối thiểu 02 đội/đơn vị (3 thành viên/đội).</p>
-              </div>
-              {/* Card màu đỏ */}
-              <div className="card-tech sm:mt-12 bg-brand-red text-white border-brand-red/20">
-                <Trophy className="w-12 h-12 text-white/80 mb-6" />
-                <h3 className="font-ui font-black text-xl mb-4 text-white">Giải thưởng</h3>
-                <p className="font-medium text-white/80 text-base leading-relaxed font-ui">Giải Nhất, Nhì, Ba kèm Bằng khen và tiền mặt. Top 10 đội xuất sắc vào Chung kết ngày 25/4/2026.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Lịch Thi ─── */}
-      <section id="lich-thi" className="py-28 bg-brand-dark relative overflow-hidden">
-        <div className="absolute inset-0 bg-brand-blue/5 opacity-20 circuit-pattern"></div>
-
-        <div className="section-container text-center relative z-10">
-          <div className="mb-20">
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-6 font-ui">Lịch thi Vòng Sơ khảo</h2>
-            <div className="w-24 h-1.5 bg-brand-yellow mx-auto mb-8 rounded-full shadow-[0_0_20px_#FABD32]"></div>
-            <p className="text-white/60 font-medium text-base md:text-xl max-w-2xl mx-auto font-ui">
-              Thi trắc nghiệm trực tuyến – Mỗi đội 3 thành viên – Mỗi thành viên thi một chặng
-            </p>
+            )}
           </div>
 
           {loading ? (
             <div className="flex justify-center py-20">
-              <div className="w-14 h-14 border-4 border-brand-yellow border-t-transparent rounded-full animate-spin"></div>
+              <Loader2 className="w-10 h-10 text-brand-blue animate-spin" />
+            </div>
+          ) : displayCuocs.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-slate-300" />
+              </div>
+              <p className="text-slate-400 font-bold text-base font-ui">Chưa có cuộc thi nào.</p>
+              <p className="text-slate-300 text-sm font-ui mt-1">Hãy quay lại sau!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              {cuocs.map((ct, idx) => {
-                const active = isActive(ct);
-                const cardCls = active
-                  ? 'border-brand-yellow bg-white shadow-[0_0_50px_rgba(250,189,50,0.15)] scale-105 z-20'
-                  : 'border-white/10 bg-white/5 opacity-75';
-                const titleCls = active ? 'text-brand-blue' : 'text-white';
-                const subCls = active ? 'text-slate-500' : 'text-white/50';
-
-                return (
-                  <div key={ct.id} className={`card-tech ${cardCls}`}>
-                    {/* Banner image */}
-                    {ct.anh_banner && (
-                      <div className="relative h-40 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-2xl">
-                        <img src={ct.anh_banner} alt={ct.ten} className="w-full h-full object-cover" />
-                        {active && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <div className="flex items-center gap-2 px-4 py-1.5 bg-brand-red rounded-full animate-pulse">
-                              <div className="w-2 h-2 rounded-full bg-white"></div>
-                              <span className="text-white text-[11px] font-black uppercase tracking-[0.15em] font-ui">Phòng Thi Mở</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center mb-6">
-                      <span className={`text-5xl font-tech font-black ${active ? 'text-brand-blue/10' : 'text-white/5'}`}>0{idx + 1}</span>
-                      {!ct.anh_banner && active && (
-                        <div className="flex items-center gap-2 px-4 py-1.5 bg-brand-red rounded-full animate-pulse">
-                          <div className="w-2 h-2 rounded-full bg-white"></div>
-                          <span className="text-white text-[11px] font-black uppercase tracking-[0.15em] font-ui">Phòng Thi Mở</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <h3 className={`text-2xl font-ui font-black mb-4 text-left ${titleCls}`}>{ct.ten}</h3>
-                    {ct.mo_ta && (
-                      <p className={`text-sm font-medium text-left mb-6 font-ui line-clamp-2 ${subCls}`}>{ct.mo_ta}</p>
-                    )}
-
-                    <div className={`space-y-4 text-left mb-8 font-medium text-base font-ui ${subCls}`}>
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                        <span>{formatDateTime(ct.bat_dau)}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                        <span>{ct.thoi_gian_lam_phut} phút làm bài</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Cpu className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                        <span>{ct.so_cau_hoi} câu hỏi trắc nghiệm</span>
-                      </div>
-                    </div>
-
-                    {active && (
-                      <button
-                        onClick={() => navigate(`/thi?changId=${ct.id}`)}
-                        className="w-full bg-brand-blue text-white font-bold text-base py-4 rounded-xl hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2 group font-ui"
-                      >
-                        Tham gia ngay
-                        <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayCuocs.map((ct) => (
+                <CuocThiCard
+                  key={ct.id}
+                  ct={ct}
+                  onJoin={() => navigate(`/thi?changId=${ct.id}`)}
+                />
+              ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* ─── Giải thưởng ─── */}
-      <section id="giai-thuong" className="py-28 bg-white relative">
-        <div className="section-container">
-          <div className="text-center mb-16">
-            <div className="inline-block px-5 py-2 bg-brand-yellow text-brand-blue text-xs font-black uppercase tracking-[0.2em] font-ui mb-5 rounded">Cơ cấu giải thưởng</div>
-            <h2 className="text-4xl md:text-5xl font-black text-brand-blue leading-tight font-ui">Giải thưởng</h2>
-            <div className="w-24 h-1.5 bg-brand-yellow mx-auto mt-6 rounded-full shadow-[0_0_20px_#FABD32]"></div>
-            <p className="text-slate-500 font-ui text-base mt-6 max-w-xl mx-auto">
-              Căn cứ kết quả chung cuộc, Ban Tổ chức trao giải kèm Bằng khen của Ban Chấp hành Thành đoàn Hải Phòng.
-            </p>
-          </div>
-
-          {/* Giải chính */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
-              <Trophy className="w-12 h-12 text-brand-yellow mb-5" />
-              <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">01 Giải Nhất</h3>
-              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
-            </div>
-            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
-              <Award className="w-12 h-12 text-brand-yellow mb-5" />
-              <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">01 Giải Nhì</h3>
-              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
-            </div>
-            <div className="rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/5 p-8 text-center flex flex-col items-center">
-              <Star className="w-12 h-12 text-brand-yellow mb-5" />
-              <h3 className="text-2xl font-black text-brand-blue font-ui mb-2">03 Giải Ba</h3>
-              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn + Phần thưởng tiền mặt</p>
-            </div>
-          </div>
-
-          {/* Giải phụ */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 text-center">
-              <ShieldCheck className="w-9 h-9 text-brand-blue mx-auto mb-3" />
-              <h3 className="text-lg font-black text-brand-blue font-ui mb-1">05 Giải Khuyến Khích</h3>
-              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn Hải Phòng</p>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 text-center">
-              <Globe className="w-9 h-9 text-brand-red mx-auto mb-3" />
-              <h3 className="text-lg font-black text-brand-blue font-ui mb-1">Giải Bình Chọn Facebook</h3>
-              <p className="text-slate-500 font-ui text-sm">Bằng khen BCH Thành đoàn Hải Phòng</p>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-6 text-center">
-              <Users className="w-9 h-9 text-emerald-600 mx-auto mb-3" />
-              <h3 className="text-lg font-black text-brand-blue font-ui mb-1">Giải Đơn Vị Xuất Sắc</h3>
-              <p className="text-slate-500 font-ui text-sm">Đơn vị có tổng điểm cao nhất Vòng Sơ khảo</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ─── Footer ─── */}
-      <footer className="bg-white border-t border-brand-blue/10 py-20 relative overflow-hidden">
-        <div className="section-container">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-16 lg:items-start text-center lg:text-left">
-            <div className="flex flex-col items-center lg:items-start gap-8">
-              <img src={LOGO_URL} alt="Logo" className="h-24 w-auto drop-shadow-xl" />
-              <div>
-                <p className="text-2xl sm:text-3xl font-ui font-black text-brand-blue">Thành Đoàn Hải Phòng</p>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 font-ui">Đoàn TNCS Hồ Chí Minh TP. Hải Phòng</p>
+      <footer className="bg-white border-t border-slate-100 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            {/* Left: Logos + School */}
+            <div className="flex items-center gap-4">
+              <img src={LOGO_DOAN} alt="Logo Đoàn" className="h-10 w-auto" />
+              <img src={LOGO_TRUONG} alt="Logo Trường" className="h-10 w-auto" />
+              <div className="border-l-2 border-slate-200 pl-4">
+                <p className="text-sm font-black text-brand-blue font-ui leading-tight">{SCHOOL_NAME}</p>
+                <a
+                  href={heroFanpage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-slate-400 hover:text-brand-blue text-xs font-bold font-ui mt-0.5 transition-colors"
+                >
+                  <Facebook className="w-3 h-3" />
+                  Fanpage
+                </a>
               </div>
             </div>
 
-            <div className="max-w-lg space-y-6">
-              <p className="text-brand-blue text-xl font-bold italic leading-relaxed font-ui">
-                "Thanh niên Hải Phòng:<br />
-                <span className="text-brand-red">Xung kích</span>
-                {' – '}
-                <span className="text-brand-yellow">Sáng tạo</span>
-                {' – '}
-                <span className="text-brand-blue">Chuyên nghiệp</span>"
-              </p>
-              <div className="text-sm font-semibold text-slate-500 space-y-3 font-ui">
-                <p className="flex items-center gap-3 justify-center lg:justify-start">
-                  <Globe size={16} className="text-brand-blue flex-shrink-0" />
-                  Lô 26A Lê Hồng Phong, phường Gia Viên, TP. Hải Phòng
-                </p>
-                <p className="flex items-center gap-3 justify-center lg:justify-start">
-                  <Star size={16} className="text-brand-yellow flex-shrink-0" />
-                  Hotline: 0921.545.555 | Email: banphongtrao.tdhp@gmail.com
-                </p>
-              </div>
+            {/* Right: Address */}
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-medium font-ui">
+              <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-brand-yellow" />
+              <span>{SCHOOL_ADDRESS}</span>
             </div>
           </div>
 
-          <div className="mt-16 pt-8 border-t border-brand-blue/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs font-semibold text-slate-300 font-ui">© 2026 Thành Đoàn Hải Phòng. Bảo lưu mọi quyền.</p>
-            {/* Admin link — chỉ dành cho quản trị viên */}
+          <div className="mt-8 pt-6 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-slate-300 font-ui">
+              © {new Date().getFullYear()} {SCHOOL_NAME}. Bảo lưu mọi quyền.
+            </p>
             <button
               onClick={() => navigate('/admin/login')}
-              className="text-xs text-slate-200 hover:text-slate-400 transition-colors font-ui"
+              className="text-xs text-slate-300 hover:text-slate-500 transition-colors font-ui"
             >
               Quản trị hệ thống
             </button>
