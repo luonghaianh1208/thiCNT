@@ -250,10 +250,12 @@ export async function getTrangChuAdmin(): Promise<TrangChu | null> {
 }
 
 export async function updateTrangChu(ct: Partial<TrangChu>): Promise<void> {
-  const { error } = await supabase
-    .from('trang_chu')
-    .update(ct)
-    .eq('id', 1);
+  const { error } = await supabase.rpc('update_trang_chu', {
+    p_tieu_de: ct.tieu_de ?? '',
+    p_mo_ta: ct.mo_ta ?? '',
+    p_anh_nen: ct.anh_nen ?? '',
+    p_duong_dan_fanpage: ct.duong_dan_fanpage ?? '',
+  });
   if (error) throw error;
 }
 
@@ -296,12 +298,21 @@ export async function addCauHoi(ch: Omit<CauHoi, 'id' | 'active'>): Promise<void
 }
 
 export async function updateCauHoi(id: number, ch: Partial<CauHoi>): Promise<void> {
-  const { error } = await supabase.from('cau_hoi').update(ch).eq('id', id);
+  const { error } = await supabase.rpc('update_cau_hoi', {
+    p_id: id,
+    p_noi_dung: ch.noi_dung ?? '',
+    p_dap_an_a: ch.dap_an_a ?? '',
+    p_dap_an_b: ch.dap_an_b ?? '',
+    p_dap_an_c: ch.dap_an_c ?? '',
+    p_dap_an_d: ch.dap_an_d ?? '',
+    p_dap_an_dung: ch.dap_an_dung ?? 'A',
+    p_active: ch.active ?? true,
+  });
   if (error) throw error;
 }
 
 export async function deleteCauHoi(id: number): Promise<void> {
-  const { error } = await supabase.from('cau_hoi').delete().eq('id', id);
+  const { error } = await supabase.rpc('delete_cau_hoi', { p_id: id });
   if (error) throw error;
 }
 

@@ -460,14 +460,68 @@ function CuocThiManager({ cuocs, refresh }: { cuocs: CuocThi[], refresh: () => v
 
 function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocThiId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Search state
   const [searchText, setSearchText] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ noi_dung: '', dap_an_a: '', dap_an_b: '', dap_an_c: '', dap_an_d: '', dap_an_dung: 'A', active: true });
+  const [savingEdit, setSavingEdit] = useState(false);
 
-  // Filtered data
   const filteredCauHois = cauHois.filter(q =>
     q.noi_dung.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  const startEdit = (q: CauHoi) => {
+    setEditingId(q.id);
+    setEditForm({
+      noi_dung: q.noi_dung,
+      dap_an_a: q.dap_an_a,
+      dap_an_b: q.dap_an_b,
+      dap_an_c: q.dap_an_c,
+      dap_an_d: q.dap_an_d,
+      dap_an_dung: q.dap_an_dung?.toUpperCase() || 'A',
+      active: q.active,
+    });
+  };
+
+  const cancelEdit = () => { setEditingId(null); };
+
+  const saveEdit = async () => {
+    if (!editForm.noi_dung.trim() || !editForm.dap_an_a.trim() || !editForm.dap_an_b.trim() || !editForm.dap_an_c.trim() || !editForm.dap_an_d.trim()) {
+      toast.error('Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await updateCauHoi(editingId!, {
+        noi_dung: editForm.noi_dung.trim(),
+        dap_an_a: editForm.dap_an_a.trim(),
+        dap_an_b: editForm.dap_an_b.trim(),
+        dap_an_c: editForm.dap_an_c.trim(),
+        dap_an_d: editForm.dap_an_d.trim(),
+        dap_an_dung: editForm.dap_an_dung.toUpperCase(),
+        active: editForm.active,
+      });
+      toast.success('Đã cập nhật câu hỏi!');
+      setEditingId(null);
+      refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error('Lỗi khi lưu.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Xóa câu hỏi này?')) return;
+    try {
+      await deleteCauHoi(id);
+      toast.success('Đã xóa câu hỏi.');
+      refresh();
+    } catch (e) {
+      console.error(e);
+      toast.error('Lỗi khi xóa.');
+    }
+  };
 
   const downloadTemplate = () => {
     const sample = [
@@ -546,6 +600,8 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
     reader.readAsBinaryString(file);
   };
 
+  const inputCls = "w-full border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-ui";
+
   return (
     <div className="p-4 space-y-6">
       {!cuocThiId ? (
@@ -557,7 +613,7 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
             <div>
               <h4 className="text-sm font-bold text-brand-blue font-ui">Ngân hàng câu hỏi</h4>
-              <p className="text-xs text-slate-500 font-ui mt-1">Hiện có <strong>{cauHois.length}</strong> câu hỏi trong chặng này.</p>
+              <p className="text-xs text-slate-500 font-ui mt-1">Hiện có <strong>{cauHois.length}</strong> câu hỏi trong cuộc thi này.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <button onClick={downloadTemplate} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 font-ui font-semibold text-sm px-4 py-2.5 rounded-xl hover:border-brand-blue hover:text-brand-blue transition-all">
@@ -570,7 +626,6 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -582,7 +637,6 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
             />
           </div>
 
-          {/* Summary */}
           {searchText && (
             <p className="text-xs text-slate-400 font-ui">
               Tìm thấy {filteredCauHois.length} / {cauHois.length} câu hỏi
@@ -591,23 +645,68 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
 
           <div className="space-y-3">
             {(searchText ? filteredCauHois : cauHois).map((q, idx) => (
-              <div key={q.id} className="p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all">
-                <div className="flex gap-4">
-                  <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-slate-800 mb-3 font-ui">{q.noi_dung}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-ui">
-                      {['a', 'b', 'c', 'd'].map(k => {
-                        const isCorrect = q.dap_an_dung.toUpperCase() === k.toUpperCase();
-                        return (
-                          <div key={k} className={`px-3 py-2 rounded-xl border font-semibold ${isCorrect ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
-                            {k.toUpperCase()}. {String(q[`dap_an_${k}` as keyof CauHoi])}
-                          </div>
-                        );
-                      })}
+              <div key={q.id} className="p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all group">
+                {editingId === q.id ? (
+                  /* ── Edit Form ── */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">Câu hỏi</label>
+                      <input value={editForm.noi_dung} onChange={e => setEditForm(f => ({ ...f, noi_dung: e.target.value }))} className={inputCls} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">A</label><input value={editForm.dap_an_a} onChange={e => setEditForm(f => ({ ...f, dap_an_a: e.target.value }))} className={inputCls} /></div>
+                      <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">B</label><input value={editForm.dap_an_b} onChange={e => setEditForm(f => ({ ...f, dap_an_b: e.target.value }))} className={inputCls} /></div>
+                      <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">C</label><input value={editForm.dap_an_c} onChange={e => setEditForm(f => ({ ...f, dap_an_c: e.target.value }))} className={inputCls} /></div>
+                      <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">D</label><input value={editForm.dap_an_d} onChange={e => setEditForm(f => ({ ...f, dap_an_d: e.target.value }))} className={inputCls} /></div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">Đáp án đúng</label>
+                        <select value={editForm.dap_an_dung} onChange={e => setEditForm(f => ({ ...f, dap_an_dung: e.target.value }))} className={inputCls}>
+                          <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-ui">Trạng thái</label>
+                        <select value={editForm.active ? '1' : '0'} onChange={e => setEditForm(f => ({ ...f, active: e.target.value === '1' }))} className={inputCls}>
+                          <option value="1">Hiệu lực</option><option value="0">Không hiệu lực</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <button onClick={cancelEdit} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all font-ui">Hủy</button>
+                      <button onClick={saveEdit} disabled={savingEdit} className="px-5 py-2.5 bg-brand-blue text-white font-bold text-sm rounded-xl hover:bg-brand-blue/90 transition-all font-ui disabled:opacity-50 flex items-center gap-2">
+                        {savingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Lưu
+                      </button>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* ── View Mode ── */
+                  <div className="flex gap-4">
+                    <span className="font-tech font-black text-brand-blue/20 text-2xl flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <p className="font-semibold text-slate-800 mb-3 font-ui">{q.noi_dung}</p>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
+                          <button onClick={() => startEdit(q)} className="p-1.5 text-slate-400 hover:text-brand-blue bg-slate-100 hover:bg-brand-blue/10 rounded-lg transition-all" title="Sửa"><Pencil size={14} /></button>
+                          <button onClick={() => handleDelete(q.id)} className="p-1.5 text-slate-400 hover:text-brand-red bg-slate-100 hover:bg-brand-red/10 rounded-lg transition-all" title="Xóa"><Trash2 size={14} /></button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-ui">
+                        {['a', 'b', 'c', 'd'].map(k => {
+                          const isCorrect = q.dap_an_dung?.toUpperCase() === k.toUpperCase();
+                          return (
+                            <div key={k} className={`px-3 py-2 rounded-xl border font-semibold ${isCorrect ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                              {k.toUpperCase()}. {String(q[`dap_an_${k}` as keyof CauHoi])}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {!q.active && <span className="inline-block mt-2 text-[10px] font-black uppercase tracking-widest text-brand-red bg-brand-red/10 px-2 py-1 rounded">Không hiệu lực</span>}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             {searchText && filteredCauHois.length === 0 && (
