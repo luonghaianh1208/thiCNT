@@ -753,37 +753,37 @@ function PreviewModal({
 }
 
 function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: any }) {
-  const [ten, setTen] = useState('');
-  const [lop, setLop] = useState('');
+  const [tenChiDoan, setTenChiDoan] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Search state
   const [searchText, setSearchText] = useState('');
 
-  // Filtered data — search by ten or lop
+  // Filtered data — search by chi doan name (lop field contains the chi doan name)
   const filteredDonVis = donVis.filter(dv => {
-    const matchSearch = dv.ten.toLowerCase().includes(searchText.toLowerCase()) ||
-      dv.lop.toLowerCase().includes(searchText.toLowerCase());
+    const matchSearch = dv.lop.toLowerCase().includes(searchText.toLowerCase()) ||
+      dv.ten.toLowerCase().includes(searchText.toLowerCase());
     return matchSearch;
   });
 
   const handleAdd = async () => {
-    if (!ten.trim() || !lop.trim()) return;
-    await addDonVi(ten.trim(), lop.trim());
-    setTen(''); setLop(''); refresh();
-    toast.success('Đã thêm lớp.');
+    if (!tenChiDoan.trim()) return;
+    // ten = school name (fixed), lop = chi doan name
+    await addDonVi('Trường THPT Chuyên Nguyễn Trãi', tenChiDoan.trim());
+    setTenChiDoan(''); refresh();
+    toast.success('Đã thêm chi đoàn.');
   };
 
   const downloadTemplate = () => {
     const sample = [
-      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '10A1' },
-      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '10A2' },
-      { 'Tên đơn vị': 'Trường THPT Chuyên Nguyễn Trãi', 'Lớp': '11A1' },
+      { 'Tên chi đoàn': 'Chi đoàn 10A1' },
+      { 'Tên chi đoàn': 'Chi đoàn 10A2' },
+      { 'Tên chi đoàn': 'Chi đoàn 11A1' },
     ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'DonVi');
-    XLSX.writeFile(wb, 'mau_don_vi.xlsx');
+    XLSX.writeFile(wb, 'mau_chi_doan.xlsx');
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -794,29 +794,28 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data: any[] = XLSX.utils.sheet_to_json(ws);
-      const valid = data.filter(r => r['Tên đơn vị'] && r['Lớp']);
+      const valid = data.filter(r => r['Tên chi đoàn']);
       if (valid.length === 0) {
         toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
         return;
       }
       const items = valid.map(r => ({
-        ten: String(r['Tên đơn vị']).trim(),
-        lop: String(r['Lớp']).trim(),
+        ten: 'Trường THPT Chuyên Nguyễn Trãi',
+        lop: String(r['Tên chi đoàn']).trim(),
       }));
       setPreviewState({
         open: true,
-        title: 'Xem trước import đơn vị',
+        title: 'Xem trước import chi đoàn',
         columns: [
-          { header: 'Tên đơn vị', key: 'ten', type: 'text' },
-          { header: 'Lớp', key: 'lop', type: 'text' },
+          { header: 'Tên chi đoàn', key: 'lop', type: 'text' },
         ],
-        data: items,
+        data: items.map(r => ({ lop: r.lop })),
         onConfirm: async (editedData) => {
-          const finalItems = editedData.map(r => ({ ten: r.ten, lop: r.lop }));
+          const finalItems = editedData.map(r => ({ ten: 'Trường THPT Chuyên Nguyễn Trãi', lop: r.lop }));
           await bulkInsertDonVi(finalItems);
           setPreviewState(prev => ({ ...prev, open: false }));
           refresh();
-          toast.success(`Đã import ${finalItems.length} đơn vị thành công.`);
+          toast.success(`Đã import ${finalItems.length} chi đoàn thành công.`);
         },
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -827,22 +826,15 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
   return (
     <div className="p-4 space-y-6">
 
-      {/* Thêm 1 lớp */}
+      {/* Thêm 1 chi đoàn */}
       <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
-        <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm lớp</h4>
+        <h4 className="text-sm font-bold text-brand-blue font-ui mb-4">Thêm chi đoàn</h4>
         <div className="flex gap-3">
           <input
             className="input-admin-tech flex-1"
-            placeholder="Nhập tên đơn vị (trường/đơn vị)..."
-            value={ten}
-            onChange={e => setTen(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          />
-          <input
-            className="input-admin-tech w-32"
-            placeholder="Lớp (VD: 10A1)"
-            value={lop}
-            onChange={e => setLop(e.target.value)}
+            placeholder="Nhập tên chi đoàn (VD: Chi đoàn 10A1)..."
+            value={tenChiDoan}
+            onChange={e => setTenChiDoan(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
           <button onClick={handleAdd} className="bg-brand-blue text-white font-ui font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-blue/90 transition-all whitespace-nowrap">
@@ -863,7 +855,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
             <FileSpreadsheet size={15} /> Import Excel
           </button>
         </div>
-        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên đơn vị</strong> và <strong>Lớp</strong></p>
+        <p className="text-xs text-slate-400 font-ui mt-3">File mẫu gồm cột: <strong>Tên chi đoàn</strong></p>
       </div>
 
       {/* Search Bar */}
@@ -872,7 +864,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm theo tên đơn vị hoặc lớp..."
+            placeholder="Tìm kiếm theo tên chi đoàn..."
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
@@ -883,18 +875,13 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
       {/* Danh sách */}
       {filteredDonVis.length === 0 ? (
         <div className="text-center py-12 text-slate-400 font-ui">
-          {searchText ? 'Không tìm thấy lớp phù hợp.' : 'Chưa có lớp nào.'}
+          {searchText ? 'Không tìm thấy chi đoàn phù hợp.' : 'Chưa có chi đoàn nào.'}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {filteredDonVis.map(dv => (
             <div key={dv.id} className="p-4 bg-white border border-slate-100 rounded-xl flex justify-between items-center group hover:border-brand-blue/30 transition-all">
-              <div>
-                <span className="font-semibold text-slate-700 text-sm font-ui">{dv.ten}</span>
-                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-lg font-ui border font-semibold bg-slate-100 text-slate-600 border-slate-200">
-                  {dv.lop}
-                </span>
-              </div>
+              <span className="font-semibold text-slate-700 text-sm font-ui">{dv.lop}</span>
               <button onClick={() => deleteDonVi(dv.id).then(refresh)} className="p-1.5 text-slate-300 hover:text-brand-red transition-colors opacity-0 group-hover:opacity-100">
                 <Trash2 size={14} />
               </button>
@@ -906,7 +893,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
       {/* Summary */}
       {searchText && (
         <p className="text-xs text-slate-400 font-ui">
-          Hiển thị {filteredDonVis.length} / {donVis.length} lớp
+          Hiển thị {filteredDonVis.length} / {donVis.length} chi đoàn
         </p>
       )}
     </div>

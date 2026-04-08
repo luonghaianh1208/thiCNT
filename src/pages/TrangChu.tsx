@@ -133,7 +133,20 @@ export default function TrangChu() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Realtime subscription cho cuộc thi — cập nhật khi admin thêm/sửa/xóa cuộc thi
+    const channel2 = supabase
+      .channel('cuoc_thi_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cuoc_thi' }, async () => {
+        // Refetch all competitions
+        const cc = await getAllCuocThiPublic();
+        setCuocs(cc);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(channel2);
+    };
   }, []);
 
   const heroTitle = trangChu?.tieu_de?.trim() || 'Hệ thống thi trực tuyến';
