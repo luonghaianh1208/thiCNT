@@ -362,7 +362,7 @@ function RegisterPage({
               <SearchableSelect
                 value={donViId}
                 onChange={setDonViId}
-                options={donVis.map(dv => ({ value: dv.id.toString(), label: dv.ten }))}
+                options={donVis.map(dv => ({ value: dv.id.toString(), label: dv.lop || dv.ten }))}
                 placeholder="CHỌN ĐƠN VỊ..."
                 className="w-full"
               />
@@ -1127,7 +1127,7 @@ export default function TrangThi() {
 
   // Result
   if (stage === 'result' && finalResult) {
-    const donViName = donVis.find(d => d.id === formDonViId)?.ten || '';
+    const donViName = donVis.find(d => d.id === formDonViId)?.lop || donVis.find(d => d.id === formDonViId)?.ten || '';
     const isCuocThiActive = cuocThi ? new Date() < new Date(cuocThi.ket_thuc) : false;
     return (
       <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-6 relative overflow-hidden circuit-pattern">
