@@ -270,24 +270,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Verify admin login
+-- Verify admin login (plain text password)
 CREATE OR REPLACE FUNCTION verify_admin_login(
   p_username TEXT,
   p_password TEXT
 )
 RETURNS BOOLEAN AS $$
 DECLARE
-  v_hash TEXT;
+  v_password TEXT;
 BEGIN
-  SELECT password_hash INTO v_hash
+  SELECT password_hash INTO v_password
   FROM admin_users
   WHERE username = p_username;
 
-  IF v_hash IS NULL THEN
+  IF v_password IS NULL THEN
     RETURN false;
   END IF;
 
-  RETURN crypt(p_password, v_hash) = v_hash;
+  RETURN v_password = p_password;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -385,7 +385,7 @@ CREATE POLICY "admin_users_admin_read" ON admin_users FOR SELECT USING (
 -- ============================================================
 
 INSERT INTO admin_users (username, password_hash)
-VALUES ('admin', '$2a$10$rQZ8K7xX5O9Y1Z2A3B4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3')
+VALUES ('admin', 'Admin@1234')
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
