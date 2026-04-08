@@ -54,7 +54,7 @@ export function SearchableSelect({ value, onChange, options, placeholder, classN
               className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold font-ui outline-none focus:border-brand-blue"
             />
           </div>
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto scrollbar-custom">
             {filteredOptions.length === 0 ? (
               <p className="p-4 text-center text-slate-400 text-sm font-ui">Không tìm thấy</p>
             ) : (
