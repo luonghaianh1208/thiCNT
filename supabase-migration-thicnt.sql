@@ -386,9 +386,7 @@ CREATE POLICY "canh_bao_admin_update" ON canh_bao_gian_lan FOR UPDATE USING (
   EXISTS (SELECT 1 FROM admin_users WHERE username = current_setting('request.jwt.username', true))
 );
 
-CREATE POLICY "admin_users_admin_read" ON admin_users FOR SELECT USING (
-  EXISTS (SELECT 1 FROM admin_users WHERE username = current_setting('request.jwt.username', true))
-);
+CREATE POLICY "admin_users_admin_read" ON admin_users FOR SELECT USING (true);
 
 CREATE POLICY "trang_chu_public_read" ON trang_chu FOR SELECT USING (true);
 CREATE POLICY "trang_chu_admin_all" ON trang_chu FOR ALL USING (
