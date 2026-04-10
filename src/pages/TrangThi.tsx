@@ -55,7 +55,7 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
   const shuffled = [...arr];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [shuffled[i]!, shuffled[j]!] = [shuffled[j]!, shuffled[i]!];
   }
   return shuffled;
 };
@@ -507,6 +507,7 @@ function ExamPage({
   onNext: () => void;
 }) {
   const q = questions[currentQuestionIdx];
+  if (!q) return null;
 
   const formatTime = (s: number) => {
     const min = Math.floor(s / 60);
@@ -897,7 +898,7 @@ export default function TrangThi() {
   useEffect(() => {
     submitStateRef.current = { questions, answers, thiSinhId, cuocThi };
     isSubmittingRef.current = isSubmitting;
-  });
+  }, [questions, answers, thiSinhId, cuocThi, isSubmitting]);
 
   useEffect(() => {
     if (stage !== 'exam') return;  // Chỉ depend vào stage, không phải timeLeft

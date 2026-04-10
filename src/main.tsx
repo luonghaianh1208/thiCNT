@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-console.log('Vite App Initializing...');
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  createRoot(rootEl).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

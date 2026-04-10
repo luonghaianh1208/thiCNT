@@ -90,6 +90,13 @@
     background-size: 50px 50px;
     opacity: 0.3;
   }
+
+  /* Admin form inputs */
+  .input-admin-tech {
+    @apply bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium
+           focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none
+           transition-all font-ui placeholder:text-slate-400;
+  }
 }
 
 /* Futuristic Text Effects */

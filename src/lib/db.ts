@@ -76,6 +76,22 @@ export interface CanhBaoGianLan {
   created_at: string;
 }
 
+export interface ThiSinhWithDonVi extends ThiSinh {
+  created_at: string;
+  don_vi: { ten: string } | null;
+}
+
+export interface KetQuaWithRelations extends KetQua {
+  thi_sinh: { ho_ten: string; so_dien_thoai: string; ten_lop: string; don_vi: { ten: string } | null } | null;
+  cuoc_thi: { ten: string } | null;
+  created_at: string;
+}
+
+export interface CanhBaoWithRelations extends CanhBaoGianLan {
+  thi_sinh: { ho_ten: string; so_dien_thoai: string; ten_lop: string; don_vi: { ten: string } | null } | null;
+  cuoc_thi: { ten: string } | null;
+}
+
 // ─── Public (Contestant) functions ───────────────────────────────────────────
 
 /** Lấy cuộc thi đang mở (hiện tại trong khoảng thời gian) */
@@ -175,7 +191,7 @@ export async function layCauHoiNgauNhien(cuocThiId: number, soCau: number): Prom
   const shuffled = [...data];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [shuffled[i]!, shuffled[j]!] = [shuffled[j]!, shuffled[i]!];
   }
   return shuffled.slice(0, Math.min(soCau, shuffled.length));
 }
@@ -215,7 +231,7 @@ export async function ghiCanhBaoGianLan(thiSinhId: number, cuocThiId: number): P
 }
 
 /** Lấy danh sách cảnh báo gian lận (kèm thông tin thí sinh và cuộc thi) */
-export async function getCanhBaoGianLan(cuocThiId?: number): Promise<any[]> {
+export async function getCanhBaoGianLan(cuocThiId?: number): Promise<CanhBaoWithRelations[]> {
   let query = supabase
     .from('canh_bao_gian_lan')
     .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_lop, don_vi(ten)), cuoc_thi(ten)')
@@ -223,7 +239,7 @@ export async function getCanhBaoGianLan(cuocThiId?: number): Promise<any[]> {
   if (cuocThiId) query = query.eq('cuoc_thi_id', cuocThiId);
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return (data ?? []) as unknown as CanhBaoWithRelations[];
 }
 
 // ─── Admin functions ──────────────────────────────────────────────────────────
@@ -344,13 +360,13 @@ export async function deleteDonVi(id: number): Promise<void> {
 }
 
 // Thí sinh
-export async function getAllThiSinh(): Promise<any[]> {
+export async function getAllThiSinh(): Promise<ThiSinhWithDonVi[]> {
   const { data, error } = await supabase
     .from('thi_sinh')
     .select('*, don_vi(ten)')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data ?? []) as unknown as ThiSinhWithDonVi[];
 }
 
 export async function bulkInsertThiSinh(list: { ho_ten: string; so_dien_thoai: string; don_vi_id?: number; ten_lop?: string }[]): Promise<void> {
@@ -364,7 +380,7 @@ export async function deleteThiSinh(id: number): Promise<void> {
 }
 
 // Kết quả
-export async function getKetQuaAdmin(cuocThiId?: number): Promise<any[]> {
+export async function getKetQuaAdmin(cuocThiId?: number): Promise<KetQuaWithRelations[]> {
   let query = supabase
     .from('ket_qua')
     .select('*, thi_sinh(ho_ten, so_dien_thoai, ten_lop, don_vi(ten)), cuoc_thi(ten)')
@@ -372,7 +388,7 @@ export async function getKetQuaAdmin(cuocThiId?: number): Promise<any[]> {
   if (cuocThiId) query = query.eq('cuoc_thi_id', cuocThiId);
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return (data ?? []) as unknown as KetQuaWithRelations[];
 }
 
 // Thống kê tổng quan — DB tính avg, chỉ trả về kết quả
@@ -386,11 +402,12 @@ export async function getThongKe(cuocThiId?: number): Promise<{
   });
   if (error) throw error;
   // RPC trả về array 1 row
-  const row = (data as any[])[0];
+  const rows = data as Array<{ tong_thi_sinh: number; tong_luot_thi: number; diem_trung_binh: number }> | null;
+  const row = rows?.[0];
   return {
-    tongThiSinh: Number(row.tong_thi_sinh),
-    tongLuotThi: Number(row.tong_luot_thi),
-    diemTrungBinh: Number(row.diem_trung_binh),
+    tongThiSinh: Number(row?.tong_thi_sinh ?? 0),
+    tongLuotThi: Number(row?.tong_luot_thi ?? 0),
+    diemTrungBinh: Number(row?.diem_trung_binh ?? 0),
   };
 }
 

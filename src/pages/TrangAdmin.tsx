@@ -8,7 +8,8 @@ import {
   getAllThiSinh, bulkInsertThiSinh, deleteThiSinh,
   getKetQuaAdmin, getCanhBaoGianLan,
   getTrangChuAdmin, updateTrangChu,
-  type CuocThi, type CauHoi, type DonVi, type TrangChu
+  type CuocThi, type CauHoi, type DonVi, type TrangChu,
+  type ThiSinhWithDonVi, type KetQuaWithRelations, type CanhBaoWithRelations
 } from '@/lib/db';
 import {
   BarChart3, LayoutDashboard, Database, HelpCircle, Users, Trophy, LogOut, Plus, Pencil, Trash2,
@@ -20,6 +21,16 @@ const LOGO_URL = "https://doantruong.chuyennguyentrai.edu.vn/wp-content/uploads/
 
 type Tab = 'dashboard' | 'cuoc-thi' | 'cau-hoi' | 'don-vi' | 'thi-sinh' | 'ket-qua' | 'gian-lan' | 'trang-chu';
 
+type PreviewCol = { header: string; key: string; type: 'text' | 'select'; options?: { value: string; label: string }[] };
+
+interface PreviewState {
+  open: boolean;
+  title: string;
+  columns: PreviewCol[];
+  data: Record<string, string>[];
+  onConfirm: (data: Record<string, string>[]) => void;
+}
+
 export default function TrangAdmin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -30,9 +41,9 @@ export default function TrangAdmin() {
   const [cuocs, setCuocs] = useState<CuocThi[]>([]);
   const [cauHois, setCauHois] = useState<CauHoi[]>([]);
   const [donVis, setDonVis] = useState<DonVi[]>([]);
-  const [thiSinhs, setThiSinhs] = useState<any[]>([]);
-  const [ketQuas, setKetQuas] = useState<any[]>([]);
-  const [gianLanLogs, setGianLanLogs] = useState<any[]>([]);
+  const [thiSinhs, setThiSinhs] = useState<ThiSinhWithDonVi[]>([]);
+  const [ketQuas, setKetQuas] = useState<KetQuaWithRelations[]>([]);
+  const [gianLanLogs, setGianLanLogs] = useState<CanhBaoWithRelations[]>([]);
   const [trangChu, setTrangChu] = useState<TrangChu | null>(null);
 
   // Selection
@@ -40,14 +51,10 @@ export default function TrangAdmin() {
   const [loading, setLoading] = useState(false);
 
   // Shared Preview Modal state (lifted to root to avoid overflow clipping)
-  type PreviewCol = { header: string; key: string; type: 'text' | 'select'; options?: { value: string; label: string }[] };
-  const [previewState, setPreviewState] = useState<{
-    open: boolean;
-    title: string;
-    columns: PreviewCol[];
-    data: Record<string, string>[];
-    onConfirm: (data: Record<string, string>[]) => void;
-  }>({ open: false, title: '', columns: [], data: [], onConfirm: () => { } });
+  const [previewState, setPreviewState] = useState<PreviewState>({
+    open: false, title: '', columns: [], data: [],
+    onConfirm: () => { },
+  });
 
   useEffect(() => {
     refreshData();
@@ -59,7 +66,7 @@ export default function TrangAdmin() {
       getAllCuocThi().then(data => {
         setCuocs(data);
         // Auto-select first cuoc_thi if none selected
-        if (!selectedCuocThiId && data.length > 0) {
+        if (!selectedCuocThiId && data.length > 0 && data[0]) {
           setSelectedCuocThiId(data[0].id);
         }
       });
@@ -458,7 +465,7 @@ function CuocThiManager({ cuocs, refresh }: { cuocs: CuocThi[], refresh: () => v
   );
 }
 
-function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocThiId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: any }) {
+function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocThiId: number | null, cauHois: CauHoi[], refresh: () => void, setPreviewState: React.Dispatch<React.SetStateAction<PreviewState>> }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchText, setSearchText] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -541,8 +548,11 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
     reader.onload = (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data: any[] = XLSX.utils.sheet_to_json(ws);
+      const firstSheet = wb.SheetNames[0];
+      if (!firstSheet) return;
+      const ws = wb.Sheets[firstSheet];
+      if (!ws) return;
+      const data: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws);
       const clean = data
         .filter(r => r['Câu hỏi'] && r['A'] && r['B'] && r['C'] && r['D'] && r['Đáp án đúng'])
         .map(r => ({
@@ -578,15 +588,15 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
           },
         ],
         data: clean,
-        onConfirm: async (editedData) => {
-          const toInsert = editedData.map(r => ({
+        onConfirm: async (editedData: Record<string, string>[]) => {
+          const toInsert = editedData.map((r: Record<string, string>) => ({
             cuoc_thi_id: Number(r.cuoc_thi_id),
-            noi_dung: r.noi_dung,
-            dap_an_a: r.dap_an_a,
-            dap_an_b: r.dap_an_b,
-            dap_an_c: r.dap_an_c,
-            dap_an_d: r.dap_an_d,
-            dap_an_dung: r.dap_an_dung,
+            noi_dung: r.noi_dung ?? '',
+            dap_an_a: r.dap_an_a ?? '',
+            dap_an_b: r.dap_an_b ?? '',
+            dap_an_c: r.dap_an_c ?? '',
+            dap_an_d: r.dap_an_d ?? '',
+            dap_an_dung: r.dap_an_dung ?? 'A',
             active: true,
           }));
           await bulkInsertCauHoi(toInsert);
@@ -806,7 +816,7 @@ function PreviewModal({
                             onChange={e => updateCell(rowIdx, col.key, e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 outline-none text-slate-700 font-medium text-[11px] sm:text-sm shadow-sm"
                           >
-                            {col.options.map(opt => (
+                            {(col.options ?? []).map(opt => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                           </select>
@@ -851,7 +861,7 @@ function PreviewModal({
   return modalContent;
 }
 
-function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: any }) {
+function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], refresh: () => void, setPreviewState: React.Dispatch<React.SetStateAction<PreviewState>> }) {
   const [tenChiDoan, setTenChiDoan] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -891,8 +901,11 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
     reader.onload = (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data: any[] = XLSX.utils.sheet_to_json(ws);
+      const firstSheet = wb.SheetNames[0];
+      if (!firstSheet) return;
+      const ws = wb.Sheets[firstSheet];
+      if (!ws) return;
+      const data: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws);
       const valid = data.filter(r => r['Tên chi đoàn']);
       if (valid.length === 0) {
         toast.error('Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại file mẫu.');
@@ -909,8 +922,8 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
           { header: 'Tên chi đoàn', key: 'lop', type: 'text' },
         ],
         data: items.map(r => ({ lop: r.lop })),
-        onConfirm: async (editedData) => {
-          const finalItems = editedData.map(r => ({ ten: 'Trường THPT Chuyên Nguyễn Trãi', lop: r.lop }));
+        onConfirm: async (editedData: Record<string, string>[]) => {
+          const finalItems = editedData.map((r: Record<string, string>) => ({ ten: 'Trường THPT Chuyên Nguyễn Trãi', lop: r.lop ?? '' }));
           await bulkInsertDonVi(finalItems);
           setPreviewState(prev => ({ ...prev, open: false }));
           refresh();
@@ -999,7 +1012,7 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
   );
 }
 
-function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () => void }) {
+function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: ThiSinhWithDonVi[], refresh: () => void }) {
   const [searchText, setSearchText] = useState('');
 
   const filteredThiSinhs = thiSinhs.filter(ts =>
@@ -1016,6 +1029,8 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
     toast.success('Đã xóa thí sinh.');
   };
 
+  const displayList = searchText ? filteredThiSinhs : thiSinhs;
+
   return (
     <div className="p-4 space-y-4">
       {/* Search Bar */}
@@ -1027,6 +1042,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
           className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-ui focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
+          aria-label="Tìm kiếm thí sinh"
         />
       </div>
 
@@ -1043,7 +1059,9 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
             <tr><th className="px-6 py-4">Họ tên</th><th className="px-6 py-4">SĐT</th><th className="px-6 py-4">Đơn vị</th><th className="px-6 py-4">Lớp</th><th className="px-6 py-4">Ngày tạo</th><th className="px-6 py-4"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {(searchText ? filteredThiSinhs : thiSinhs).map(ts => (
+            {displayList.length === 0 ? (
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-ui">Không tìm thấy thí sinh nào.</td></tr>
+            ) : displayList.map(ts => (
               <tr key={ts.id} className="hover:bg-slate-50 group">
                 <td className="px-6 py-4 text-brand-blue font-black">{ts.ho_ten}</td>
                 <td className="px-6 py-4 text-slate-500">{ts.so_dien_thoai}</td>
@@ -1051,7 +1069,7 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
                 <td className="px-6 py-4 text-slate-600 font-ui">{ts.ten_lop || '-'}</td>
                 <td className="px-6 py-4 text-slate-400">{new Date(ts.created_at).toLocaleDateString('vi-VN', { timeZone: VN_TZ })}</td>
                 <td className="px-6 py-4">
-                  <button onClick={() => handleDelete(ts.id)} className="p-2 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                  <button onClick={() => handleDelete(ts.id)} className="p-2 text-slate-300 hover:text-brand-red hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all" aria-label={`Xóa thí sinh ${ts.ho_ten}`}>
                     <Trash2 size={15} />
                   </button>
                 </td>
@@ -1059,15 +1077,12 @@ function ThiSinhManager({ thiSinhs, refresh }: { thiSinhs: any[], refresh: () =>
             ))}
           </tbody>
         </table>
-        {(searchText ? filteredThiSinhs : thiSinhs).length === 0 && (
-          <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-ui">Không tìm thấy thí sinh nào.</td></tr>
-        )}
       </div>
     </div>
   );
 }
 
-function KetQuaManager({ ketQuas, cuocs }: { ketQuas: any[]; cuocs: CuocThi[] }) {
+function KetQuaManager({ ketQuas, cuocs }: { ketQuas: KetQuaWithRelations[]; cuocs: CuocThi[] }) {
   const [sortBy, setSortBy] = useState<'diem' | 'time'>('diem');
   const [searchText, setSearchText] = useState('');
   const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
@@ -1199,7 +1214,7 @@ function KetQuaManager({ ketQuas, cuocs }: { ketQuas: any[]; cuocs: CuocThi[] })
   );
 }
 
-function GianLanManager({ logs, cuocs }: { logs: any[]; cuocs: CuocThi[] }) {
+function GianLanManager({ logs, cuocs }: { logs: CanhBaoWithRelations[]; cuocs: CuocThi[] }) {
   const [selectedCuocThiId, setSelectedCuocThiId] = useState<number | null>(null);
 
   const filteredLogs = selectedCuocThiId
