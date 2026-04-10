@@ -297,19 +297,19 @@ export async function deleteCuocThi(id: number): Promise<void> {
   if (error) throw error;
 }
 
-// Câu hỏi
+// Câu hỏi — dùng RPC SECURITY DEFINER để admin đọc được dap_an_dung
 export async function getCauHoiByCuocThi(cuocThiId: number): Promise<CauHoi[]> {
-  const { data, error } = await supabase
-    .from('cau_hoi')
-    .select('*')
-    .eq('cuoc_thi_id', cuocThiId)
-    .order('id');
+  const { data, error } = await supabase.rpc('admin_get_cau_hoi', {
+    p_cuoc_thi_id: cuocThiId,
+  });
   if (error) throw error;
-  return data || [];
+  return (data ?? []) as unknown as CauHoi[];
 }
 
 export async function addCauHoi(ch: Omit<CauHoi, 'id' | 'active'>): Promise<void> {
-  const { error } = await supabase.from('cau_hoi').insert({ ...ch, active: true });
+  const { error } = await supabase.rpc('admin_bulk_insert_cau_hoi', {
+    p_data: JSON.stringify([{ ...ch, active: true }]),
+  });
   if (error) throw error;
 }
 
@@ -333,7 +333,9 @@ export async function deleteCauHoi(id: number): Promise<void> {
 }
 
 export async function bulkInsertCauHoi(cauHois: Omit<CauHoi, 'id'>[]): Promise<void> {
-  const { error } = await supabase.from('cau_hoi').insert(cauHois);
+  const { error } = await supabase.rpc('admin_bulk_insert_cau_hoi', {
+    p_data: JSON.stringify(cauHois),
+  });
   if (error) throw error;
 }
 
