@@ -308,7 +308,7 @@ export async function getCauHoiByCuocThi(cuocThiId: number): Promise<CauHoi[]> {
 
 export async function addCauHoi(ch: Omit<CauHoi, 'id' | 'active'>): Promise<void> {
   const { error } = await supabase.rpc('admin_bulk_insert_cau_hoi', {
-    p_data: JSON.stringify([{ ...ch, active: true }]),
+    p_data: [{ ...ch, active: true }],
   });
   if (error) throw error;
 }
@@ -334,7 +334,7 @@ export async function deleteCauHoi(id: number): Promise<void> {
 
 export async function bulkInsertCauHoi(cauHois: Omit<CauHoi, 'id'>[]): Promise<void> {
   const { error } = await supabase.rpc('admin_bulk_insert_cau_hoi', {
-    p_data: JSON.stringify(cauHois),
+    p_data: cauHois,
   });
   if (error) throw error;
 }

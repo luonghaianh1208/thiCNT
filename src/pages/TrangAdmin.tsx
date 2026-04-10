@@ -589,20 +589,25 @@ function CauHoiManager({ cuocThiId, cauHois, refresh, setPreviewState }: { cuocT
         ],
         data: clean,
         onConfirm: async (editedData: Record<string, string>[]) => {
-          const toInsert = editedData.map((r: Record<string, string>) => ({
-            cuoc_thi_id: Number(r.cuoc_thi_id),
-            noi_dung: r.noi_dung ?? '',
-            dap_an_a: r.dap_an_a ?? '',
-            dap_an_b: r.dap_an_b ?? '',
-            dap_an_c: r.dap_an_c ?? '',
-            dap_an_d: r.dap_an_d ?? '',
-            dap_an_dung: r.dap_an_dung ?? 'A',
-            active: true,
-          }));
-          await bulkInsertCauHoi(toInsert);
-          setPreviewState(prev => ({ ...prev, open: false }));
-          refresh();
-          toast.success(`Đã import ${toInsert.length} câu hỏi thành công.`);
+          try {
+            const toInsert = editedData.map((r: Record<string, string>) => ({
+              cuoc_thi_id: Number(r.cuoc_thi_id),
+              noi_dung: r.noi_dung ?? '',
+              dap_an_a: r.dap_an_a ?? '',
+              dap_an_b: r.dap_an_b ?? '',
+              dap_an_c: r.dap_an_c ?? '',
+              dap_an_d: r.dap_an_d ?? '',
+              dap_an_dung: r.dap_an_dung ?? 'A',
+              active: true,
+            }));
+            await bulkInsertCauHoi(toInsert);
+            setPreviewState(prev => ({ ...prev, open: false }));
+            refresh();
+            toast.success(`Đã import ${toInsert.length} câu hỏi thành công.`);
+          } catch (err) {
+            console.error('Import error:', err);
+            toast.error(`Lỗi import: ${err instanceof Error ? err.message : String(err)}`);
+          }
         },
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -750,6 +755,8 @@ function PreviewModal({
   onConfirm: (data: Record<string, string>[]) => void;
   onCancel: () => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
+
   const updateCell = (rowIdx: number, key: string, value: string) => {
     const updated = data.map((row, i) => i === rowIdx ? { ...row, [key]: value } : row);
     onChange(updated);
@@ -757,6 +764,15 @@ function PreviewModal({
 
   const removeRow = (rowIdx: number) => {
     onChange(data.filter((_, i) => i !== rowIdx));
+  };
+
+  const handleConfirm = async () => {
+    setConfirming(true);
+    try {
+      await onConfirm(data);
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const modalContent = (
@@ -843,15 +859,16 @@ function PreviewModal({
 
         {/* Footer */}
         <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end gap-3 flex-shrink-0">
-          <button onClick={onCancel} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-ui font-semibold text-sm hover:bg-slate-200 transition-all">
+          <button onClick={onCancel} disabled={confirming} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-ui font-semibold text-sm hover:bg-slate-200 transition-all disabled:opacity-50">
             Hủy bỏ
           </button>
           <button
-            onClick={() => onConfirm(data)}
-            disabled={data.length === 0}
-            className="px-6 py-2.5 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-blue/20"
+            onClick={handleConfirm}
+            disabled={data.length === 0 || confirming}
+            className="px-6 py-2.5 rounded-xl bg-brand-blue text-white font-ui font-semibold text-sm hover:bg-brand-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-blue/20 flex items-center gap-2"
           >
-            Xác nhận import ({data.length})
+            {confirming && <Loader2 size={16} className="animate-spin" />}
+            {confirming ? 'Đang import...' : `Xác nhận import (${data.length})`}
           </button>
         </div>
       </div>
@@ -923,11 +940,16 @@ function DonViManager({ donVis, refresh, setPreviewState }: { donVis: DonVi[], r
         ],
         data: items.map(r => ({ lop: r.lop })),
         onConfirm: async (editedData: Record<string, string>[]) => {
-          const finalItems = editedData.map((r: Record<string, string>) => ({ ten: 'Trường THPT Chuyên Nguyễn Trãi', lop: r.lop ?? '' }));
-          await bulkInsertDonVi(finalItems);
-          setPreviewState(prev => ({ ...prev, open: false }));
-          refresh();
-          toast.success(`Đã import ${finalItems.length} chi đoàn thành công.`);
+          try {
+            const finalItems = editedData.map((r: Record<string, string>) => ({ ten: 'Trường THPT Chuyên Nguyễn Trãi', lop: r.lop ?? '' }));
+            await bulkInsertDonVi(finalItems);
+            setPreviewState(prev => ({ ...prev, open: false }));
+            refresh();
+            toast.success(`Đã import ${finalItems.length} chi đoàn thành công.`);
+          } catch (err) {
+            console.error('Import error:', err);
+            toast.error(`Lỗi import: ${err instanceof Error ? err.message : String(err)}`);
+          }
         },
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
