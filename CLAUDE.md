@@ -23,7 +23,7 @@ This is a Vietnamese contest/quiz application for the Ho Chi Minh Communist Yout
 ## Tech Stack
 
 - **React 19** + TypeScript, **Vite 6** (build tool)
-- **Tailwind CSS v4** (utility-first styling, via `@tailwindcss/vite`)
+- **Tailwind CSS v3** (utility-first styling via PostCSS — v4 was downgraded due to `@tailwindcss/oxide` native binding failures on Netlify Linux builds)
 - **Supabase** (`@supabase/supabase-js`) — auth, database (PostgreSQL), and RPC functions
 - **React Router v7** — client-side routing
 - **xlsx** — Excel import/export for bulk data operations
@@ -55,10 +55,10 @@ GEMINI_API_KEY and APP_URL are injected at runtime by AI Studio and are not need
 ### Routing
 
 ```
-/                    → TrangChu (home)
-                    → TrangThi (exam interface)
-/admin/login         → AdminLogin
-/admin               → TrangAdmin (protected, requires admin_token in sessionStorage)
+/              → TrangChu (home page)
+/thi           → TrangThi (exam: pending → register → exam → result)
+/admin/login   → AdminLogin
+/admin         → TrangAdmin (protected, requires admin_token in sessionStorage)
 ```
 
 The `AdminRoute` component guards `/admin` — it checks `sessionStorage.getItem('admin_token') === 'authenticated'`.
@@ -68,7 +68,7 @@ The `AdminRoute` component guards `/admin` — it checks `sessionStorage.getItem
 All data access goes through Supabase. Key patterns:
 
 - **Server-side scoring**: `dap_an_dung` (correct answer) is NEVER sent to the client. Questions are fetched without it (`select` excludes it), and grading happens via `nop_bai_va_cham_diem` RPC.
-- **RPC functions**: Used for `kiem_tra_luot_thi`, `dem_luot_da_thi`, `lay_diem_cao_nhat`, `nop_bai_va_cham_diem`, `verify_admin_login`, `get_thong_ke`, `ghi_canh_bao_gian_lan`.
+- **RPC functions**: Used for admin write operations that bypass RLS (`update_trang_chu`, `update_cau_hoi`, `delete_cau_hoi`) and exam logic (`kiem_tra_luot_thi`, `dem_luot_da_thi`, `lay_diem_cao_nhat`, `nop_bai_va_cham_diem`, `verify_admin_login`, `get_thong_ke`, `ghi_canh_bao_gian_lan`). All admin RPC functions use `SECURITY DEFINER` to bypass RLS.
 - **Time handling**: All DB timestamps are UTC. The admin uses `Asia/Ho_Chi_Minh` (`VN_TZ`) for display, converting via `fmtVN`, `toInputVN`, `fromInputVN` helpers.
 
 ### Exam / Multi-attempt
@@ -85,7 +85,7 @@ No external state library — React `useState` + `useEffect` + `useRef` patterns
 
 ### Styling
 
-Tailwind v4 with CSS-first config in `src/index.css` (via `@import "tailwindcss"`). Custom theme tokens defined via `@theme`:
+Tailwind v3 with PostCSS config (`postcss.config.js`). Custom theme tokens defined in `tailwind.config.js` and component classes in `src/index.css` (`@layer components`):
 
 ```
 brand-blue: #1E459F   brand-red: #CF2A2A
@@ -95,21 +95,22 @@ font-tech: Orbitron   font-ui: Be Vietnam Pro
 
 Key components: `card-tech`, `btn-cyber`, `btn-cyber-gold` for the cyberpunk-tech aesthetic.
 
-### DonVi (Units = Classes)
+### DonVi (Chi đoàn)
 
-`don_vi` table has `id, ten, lop` (no `loai`). The admin manages them as "Lớp" — the `ten` field is the school name, `lop` is the free-text class name (e.g., "10A1"). Excel import template headers: `Tên đơn vị`, `Lớp`.
+`don_vi` table has `id, ten, lop`. The admin manages them as "Chi đoàn" — `ten` is the school name fixed to "Trường THPT Chuyên Nguyễn Trãi", `lop` is the chi đoàn name (e.g., "Chi đoàn 10A1"). Exam UI displays `lop` (chi đoàn name), not `ten` (school name). Excel import template header: `Tên chi đoàn`.
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/lib/supabase.ts` | Supabase client initialization |
-| `src/lib/db.ts` | All DB operations (types + functions) — `CuocThi`, `DonVi`, `KetQua` with `luot_thi` |
-| `src/App.tsx` | Router, AdminRoute guard, PageWrapper |
+| `src/lib/db.ts` | All DB operations (types + functions), RPC wrappers |
+| `src/App.tsx` | Router, AdminRoute guard, lazy-loaded pages |
 | `src/pages/TrangThi.tsx` | Exam flow: pending → register → exam → result. Handles multi-attempt and retake logic. |
-| `src/pages/TrangAdmin.tsx` | Admin dashboard with tabs: Cuộc thi, Câu hỏi, Đơn vị, Thí sinh, Kết quả, Cảnh báo |
-| `src/pages/TrangChu.tsx` | Home page — shows competition cards with `anh_banner` images |
+| `src/pages/TrangAdmin.tsx` | Admin dashboard with 8 tabs: Tổng quan, Cuộc thi, Câu hỏi, Đơn vị, Thí sinh, Kết quả, Gian lận, Trang chủ |
+| `src/pages/TrangChu.tsx` | Home page — shows competition cards with `anh_banner` images, realtime subscriptions |
 | `src/components/SearchableSelect.tsx` | Searchable dropdown for unit/DonVi selection |
+| `supabase-migration-thicnt.sql` | Full DB schema, all RPC functions (SECURITY DEFINER), RLS policies, seeds |
 
 ## Development Notes
 
@@ -118,3 +119,4 @@ Key components: `card-tech`, `btn-cyber`, `btn-cyber-gold` for the cyberpunk-tec
 - Anti-cheat uses `visibilitychange` + `blur` events; violations are recorded via `ghi_canh_bao_gian_lan` RPC; limit is `cuoc_thi.gioi_han_gian_lan`
 - Exam questions are shuffled (Fisher-Yates) and answer options are independently shuffled per question via `optionOrders` state
 - `ket_qua.luot_thi` tracks which attempt number this row represents (1, 2, 3...)
+- **RLS bypass**: Supabase RLS blocks UPDATE/DELETE via anon key. Admin write operations use `SECURITY DEFINER` RPC functions (`update_trang_chu`, `update_cau_hoi`, `delete_cau_hoi`). Admin policies use `USING (true)` since authorization is handled inside the RPC functions.
